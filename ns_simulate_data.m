@@ -20,17 +20,18 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
     
     fprintf('\n'); drawnow();
     
+    % Initialize variables. These variables will store one time
+    % series per tiral per neuron in the broadband pool (ts_bb) and
+    % one time series per trial per neuron in the gamma pool (ts_g)
+    ts_bb = zeros(length(t), num_broadband, num_trials);
+    ts_g  = zeros(length(t), num_gamma, num_trials);
+    
+    fprintf('[%s]: Simulating time series ', mfilename);
+    drawdots = round((1:10)/10*num_trials);
+    
     % generate the simulated data: time x neuron x trial
     switch ns_get(NS, 'simulate_method')
-        
         case 'FAST' % a random walk
-            % Initialize variables. These variables will store one time
-            % series per tiral per neuron in the broadband pool (ts_bb) and
-            % one time series per trial per neuron in the gamma pool (ts_g)
-            ts_bb = zeros(length(t), num_broadband, num_trials);
-            ts_g  = zeros(length(t), num_gamma, num_trials);
-            
-            drawdots = round((1:10)/10*num_trials);
             for ii = 1:num_trials
                 if ismember(ii,drawdots), fprintf('.'); drawnow(); end
                 % Generate seed time series with random numbers scaled by
@@ -43,7 +44,7 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
                 % across neurons with coherence <gamma_coh>. Note that we
                 % generate a time series with power at all frequencies for
                 % the gamma signal, and then band pass filter the result.
-                % This is more efficient than generate a band limited
+                % This is more efficient than generating a band limited
                 % random walk.
                 mu        = zeros(1,num_gamma);
                 sigma     = eye(num_gamma) + (1-eye(num_gamma))* ns_get(NS, 'gamma_coh');
@@ -56,18 +57,61 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
                 
             end
             
+            fprintf('Done\n');
             % The time series of random numbers are turned into random
             % walks by computing the cummualtive sum. This computation
             % turns a white noise stimulus into a brown noise stimulus.
             ts_bb = cumsum(ts_bb);
             ts_g  = cumsum(ts_g);
-            % Combine the gamma and broadband populations into a single
-            % neural pool.
-            ts(:,:,:,sim_number) = cat(2, ts_bb, ts_g);            
             
         case 'SLOW' % a more complicated leaky integrator
-            error('Slow method not yet implemented')
+            alpha = 0.010;
+            dt    = ns_get(NS, 'dt');
+            for ii = 1:num_trials
+                if ismember(ii,drawdots), fprintf('.'); drawnow(); end
+                % Generate seed time series with random numbers scaled by
+                % the expected broadband level for the given stimulus class
+                this_rate = poisson_rate_bb(ii) + poisson_baseline;
+                pre_bb    = randn(length(t), num_broadband)*this_rate;
+                
+                mu        = zeros(1,num_gamma);
+                sigma     = eye(num_gamma) + (1-eye(num_gamma))* ns_get(NS, 'gamma_coh');
+                pre_gamma = mvnrnd(mu,sigma,length(t));
+                
+                
+                gamma_signal    = poisson_rate_g(ii)*filter(gamma_filter, pre_gamma);
+                baseline        = randn(length(t), num_gamma)*poisson_baseline;
+                pre_gamma       = bsxfun(@plus, gamma_signal, baseline);
+                
+                for jj = 1:length(t)-1
+                    
+                    % rate of change in current
+                    dIdt = (pre_bb(jj,:) - ts_bb(jj,:,ii)) / alpha;
+                    
+                    % stepwise change in current
+                    dI = dIdt * dt;
+                    
+                    % current at next time point
+                    ts_bb(jj+1,:,ii) = ts_bb(jj,:,ii) + dI;
+                    
+                    
+                    % rate of change in current
+                    dIdt = (pre_gamma(jj,:) - ts_g(jj,:,ii)) / alpha;
+                    
+                    % stepwise change in current
+                    dI = dIdt * dt;
+                    
+                    % current at next time point
+                    ts_g(jj+1,:,ii) = ts_g(jj,:,ii) + dI;
+                end
+            end
+            fprintf('Done\n');
     end
+    
+    
+    % Combine the gamma and broadband populations into a single
+    % neural pool.
+    ts(:,:,:,sim_number) = cat(2, ts_bb, ts_g);
     
     NS = ns_set(NS, 'ts', ts);
     

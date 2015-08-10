@@ -14,12 +14,14 @@ NS = neural_sim_defaults; disp(NS.params)
 NS = ns_make_trial_struct(NS); disp(NS.trial)
 
 % Simulate. This will produce a time series for each neuron in each trial
+NS = ns_set(NS, 'simulate_method', 'SLOW');
+
 NS = ns_simulate_data(NS); 
 
 % Convert the neural time series into instrument measures
 NS = ns_neural2instruments(NS); disp(NS.data)
 
-% 
+% Compute the correlations between different instrument measures 
 NS = ns_summary_statistics(NS); disp(NS.stats)
 
 %% PLOT
