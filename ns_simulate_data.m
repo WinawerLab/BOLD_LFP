@@ -93,8 +93,7 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
                     
                     % current at next time point
                     ts_bb(jj+1,:,ii) = ts_bb(jj,:,ii) + dI;
-                    
-                    
+                                        
                     % rate of change in current
                     dIdt = (pre_gamma(jj,:) - ts_g(jj,:,ii)) / alpha;
                     

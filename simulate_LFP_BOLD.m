@@ -9,13 +9,15 @@ NS = neural_sim_defaults; disp(NS.params)
 % Change these to change the simulation. 
 % For example:  NS = ns_set(NS, 'num_neurons', 300);
 % Or, NS = ns_set(NS, 'num_neurons', 50); NS = ns_set(NS, 'num_experiments', 2);
+% NS = ns_set(NS, 'num_averages', 10);
+NS = ns_set(NS, 'poisson_bb_rg', [0 .3]);
+NS = ns_set(NS, 'poisson_g_rg', [0 .3]);
+NS = ns_set(NS, 'gamma_coh', 1);
 
 % Assign expected values of broadband and gamma levels for each stimulus class and each trial
 NS = ns_make_trial_struct(NS); disp(NS.trial)
 
 % Simulate. This will produce a time series for each neuron in each trial
-NS = ns_set(NS, 'simulate_method', 'SLOW');
-
 NS = ns_simulate_data(NS); 
 
 % Convert the neural time series into instrument measures
