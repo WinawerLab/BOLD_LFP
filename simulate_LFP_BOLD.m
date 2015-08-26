@@ -35,10 +35,11 @@ alpha_avg = ns_mean_by_stimulus(NS, ns_get(NS, 'alpha'));
 num_conditions = ns_get(NS, 'num_conditions');
 freq_bb = ns_get(NS, 'freq_bb');
 
-fH=figure(300); clf;
+fH=figure(300); clf; set(fH, 'Color', 'w')
+fs = [18 12]; % fontsize
 
 % ---- Plot Spectra for different stimuli -----
-subplot(1,3,1)
+subplot(1,3,1), set(gca, 'FontSize', fs(1));
 plot_colors = [0 0 0; jet(num_conditions)];
 set(gca, 'ColorOrder', plot_colors); hold all
 plot(ns_get(NS, 'f'), ns_mean_by_stimulus(NS, ns_get(NS, 'power')), '-', ...
@@ -49,60 +50,44 @@ ylabel('Power')
 xlim([min(freq_bb) max(freq_bb)]);
 
 % ---- Plot BOLD v ECoG measures ----------------
-subplot(3,3,2)
-p = polyfit(bb_avg, bold_avg,1);
-scatter(bb_avg, bold_avg), axis tight square
-hold on; plot(bb_avg, polyval(p, bb_avg), 'k-', 'LineWidth', 1)
-xlabel('broadband'), ylabel('BOLD')
-title(sprintf('r = %4.2f', corr(bb_avg, bold_avg)));
-
-subplot(3,3,5)
-p = polyfit(lfp_avg, bold_avg,1);
-scatter(lfp_avg, bold_avg), axis tight square
-hold on; plot(lfp_avg, polyval(p, lfp_avg), 'k-', 'LineWidth', 1)
-xlabel('Total LFP power'), ylabel('BOLD')
-title(sprintf('r = %4.2f', corr(lfp_avg(:), bold_avg)));
-
-subplot(3,3,8)
-p = polyfit(gamma_avg, bold_avg,1);
-scatter(gamma_avg, bold_avg), axis tight square
-hold on; plot(gamma_avg, polyval(p, gamma_avg), 'k-', 'LineWidth', 1)
-xlabel('Gamma'), ylabel('BOLD')
-title(sprintf('r = %4.2f', corr(gamma_avg, bold_avg)));
-
-% % sanity check: plot (BOLD + COV) v LFP: they should be identical
-% figure(5), clf
-% scatter(lfp, bold+cov)
-% xlabel('LFP'), ylabel('BOLD + COV')
-% xl = get(gca, 'XLim');
-% set(gca, 'YLim', xl)
-% hold on;
-% plot(xl, xl, 'k--'); hold off
+num_subplots = 4; % broadband; total LFP; gamma; alpha
+x_data = {bb_avg, lfp_avg, gamma_avg, alpha_avg};
+xl     = {'broadband', 'Total LFP power', 'Gamma', 'Alpha'};
+for ii = 1:num_subplots
+    this_subplot = 3*(ii-1)+2;
+    subplot(num_subplots,3,this_subplot), set(gca, 'FontSize', fs(2)); hold on
+    p = polyfit(x_data{ii}, bold_avg,1);
+    scatter(x_data{ii}, bold_avg), axis tight square
+    hold on; plot(x_data{ii}, polyval(p, x_data{ii}), 'k-', 'LineWidth', 1)
+    xlabel(xl{ii}), ylabel('BOLD')
+    title(sprintf('r = %4.2f', corr(x_data{ii}, bold_avg)));
+end
 
 
 % ---- Plot BOLD and ECoG measures as function of simulation inputs -----
-subplot(2,3,3)
-poisson_bb = ns_get(NS, 'poisson_bb');
-poisson_g  = ns_get(NS, 'poisson_g');
+num_subplots = 3; % broadband; total LFP; gamma; alpha
+x_data_name = {'poisson_bb', 'poisson_g', 'poisson_a'};
+xl     = {'broadband', 'Gamma', 'Alpha'};
 
-[~, inds] = sort(poisson_bb);
-plot(...
-    poisson_bb(inds), zscore(bold_avg(inds)), 'o-',...
-    poisson_bb(inds), zscore(bb_avg(inds)),  'd-',...
-    poisson_bb(inds), zscore(lfp_avg(inds)),  's-',...
-    poisson_bb(inds), zscore(gamma_avg(inds)), 'x-', 'LineWidth', 3)
-xlabel('bb level (inputs)'), ylabel('response (z-scores)')
-legend({'BOLD', 'Broadband',  'LFP power',  'Gammma'}, 'Location', 'Best', 'Box', 'off')
-
-subplot(2,3,6)
-[~, inds] = sort(poisson_g);
-plot(...
-    poisson_g(inds), zscore(bold_avg(inds)), 'o-',...
-    poisson_g(inds), zscore(bb_avg(inds)),  'd-',...
-    poisson_g(inds), zscore(lfp_avg(inds)),  's-',...
-    poisson_g(inds), zscore(gamma_avg(inds)), 'x-', 'LineWidth', 3)
-xlabel('gamma level (inputs)'), ylabel('response (z-scores)')
-%legend({'BOLD', 'Broadband',  'LFP power',  'Gammma'}, 'Location', 'Best', 'Box', 'off')
+for ii = 1:num_subplots
+    this_subplot = 3 * (ii-1)+3;
+    subplot(num_subplots,3,this_subplot), set(gca, 'FontSize', fs(2));
+    x_data = ns_get(NS, x_data_name{ii});
+    
+    [~, inds] = sort(x_data);
+    plot(...
+        x_data(inds), zscore(bold_avg(inds)), 'o-',...
+        x_data(inds), zscore(bb_avg(inds)),  'd-',...
+        x_data(inds), zscore(lfp_avg(inds)),  's-',...
+        x_data(inds), zscore(gamma_avg(inds)), 'x-',...
+        x_data(inds), zscore(alpha_avg(inds)), '*-',...
+        'LineWidth', 3)
+    xlabel(sprintf('%s (inputs)', xl{ii})), ylabel('response (z-scores)')
+    if ii == 1
+        legend({'BOLD', 'Broadband',  'LFP power',  'Gamma', 'Alpha'},...
+            'Location', 'Best', 'Box', 'off')
+    end
+end
 
 return
 %%

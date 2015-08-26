@@ -37,7 +37,7 @@ end
 poisson_g = b(ind,:);
 
 % Randomize alpha levels across trials
-poisson_a =  [0 poisson_a(randperm(num_conditions-1))];
+poisson_a =  [max(poisson_a) poisson_a(randperm(num_conditions-1))];
 
 % At this point we have one gamma level and one broadband level for each
 % unique condition / stimulus. We now assign levels to all trials (which

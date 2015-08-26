@@ -79,6 +79,11 @@ switch lower(param)
         % type (1 x num conditions)
         val = NS.params.poisson_g;
     
+    case 'poisson_a'
+        % Poisson rates for alpha signal for each unique condition/stimulus
+        % type (1 x num conditions)
+        val = NS.params.poisson_a;
+
     case 'poisson_bb'
         % Poisson rates for broadband signal for each unique condition/stimulus
         % type (1 x num conditions)
