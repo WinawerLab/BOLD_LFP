@@ -4,6 +4,7 @@ function NS = ns_neural2instruments(NS)
 
 freq_bb         = ns_get(NS, 'freq_bb');
 freq_gamma      = ns_get(NS, 'freq_gamma');
+freq_alpha      = ns_get(NS, 'freq_alpha');
 num_trials      = ns_get(NS, 'num_trials');
 all_ts          = ns_get(NS, 'ts');
 num_experiments = ns_get(NS, 'num_experiments');
@@ -20,12 +21,14 @@ bold_fun  = @(x) sum(mean(x.^2)); % sum(var(x));
 lfp_fun   = @(x) var(sum(x,2));
 bb_fun    = @(x, power_law_baseline) exp(mean(log(x) - power_law_baseline));
 gamma_fun = @(x) exp(mean(log(x)));
+alpha_fun = @(x) exp(mean(log(x)));
 
 % intialize variables to summarize trial data
 lfp   = zeros(num_trials,num_experiments);
 bold  = zeros(num_trials,num_experiments);
 bb    = zeros(num_trials,num_experiments);
 gamma = zeros(num_trials,num_experiments);
+alpha = zeros(num_trials,num_experiments);
 
 
 for sim_number = 1:num_experiments
@@ -38,6 +41,7 @@ for sim_number = 1:num_experiments
         bold(ii,sim_number)  = bold_fun(ts(:,:,ii));
         bb(ii,sim_number)    = bb_fun(data_power(freq_bb,ii), power_law(:,sim_number));
         gamma(ii,sim_number) = gamma_fun(data_power(freq_gamma,ii));
+        alpha(ii,sim_number) = alpha_fun(data_power(freq_alpha,ii));
     end
         
 end
@@ -46,5 +50,6 @@ NS = ns_set(NS, 'lfp', lfp);
 NS = ns_set(NS, 'bold', bold);
 NS = ns_set(NS, 'bb', bb);
 NS = ns_set(NS, 'gamma', gamma);
+NS = ns_set(NS, 'alpha', alpha);
 
 

@@ -5,10 +5,13 @@ t                = ns_get(NS, 't');
 num_trials       = ns_get(NS, 'num_trials');
 num_broadband    = ns_get(NS, 'num_broadband');
 num_gamma        = ns_get(NS, 'num_gamma');
+num_alpha        = ns_get(NS, 'num_alpha');
 poisson_rate_bb  = ns_get(NS, 'poisson_rate_bb');
 poisson_baseline = ns_get(NS, 'poisson_baseline');
 poisson_rate_g   = ns_get(NS, 'poisson_rate_g');
+poisson_rate_a   = ns_get(NS, 'poisson_rate_a');
 gamma_filter     = ns_get(NS, 'gamma_filter');
+alpha_filter     = ns_get(NS, 'alpha_filter');
 
 % Initialize the time series array, which will hold data for all neurons at
 % all time points in all trials across all experiments
@@ -25,6 +28,7 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
     % one time series per trial per neuron in the gamma pool (ts_g)
     ts_bb = zeros(length(t), num_broadband, num_trials);
     ts_g  = zeros(length(t), num_gamma, num_trials);
+    ts_a  = zeros(length(t), num_alpha, num_trials);
     
     fprintf('[%s]: Simulating time series ', mfilename);
     drawdots = round((1:10)/10*num_trials);
@@ -48,10 +52,10 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
                 % random walk.
                 mu        = zeros(1,num_gamma);
                 sigma     = eye(num_gamma) + (1-eye(num_gamma))* ns_get(NS, 'gamma_coh');
-                pre_gamma = mvnrnd(mu,sigma,length(t));
+                gamma_inputs = mvnrnd(mu,sigma,length(t));
                 
                 
-                gamma_signal    = poisson_rate_g(ii)*filter(gamma_filter, pre_gamma);
+                gamma_signal    = poisson_rate_g(ii)*filter(gamma_filter, gamma_inputs);
                 baseline        = randn(length(t), num_gamma)*poisson_baseline;
                 ts_g(:,:,ii)    = bsxfun(@plus, gamma_signal, baseline);
                 
@@ -67,26 +71,42 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
         case 'SLOW' % a more complicated leaky integrator
             alpha = 0.010;
             dt    = ns_get(NS, 'dt');
+            
+            % generate data for one trial at a time
             for ii = 1:num_trials
                 if ismember(ii,drawdots), fprintf('.'); drawnow(); end
-                % Generate seed time series with random numbers scaled by
-                % the expected broadband level for the given stimulus class
+                
+                % Broadband inputs
                 this_rate = poisson_rate_bb(ii) + poisson_baseline;
-                pre_bb    = randn(length(t), num_broadband)*this_rate;
+                bb_inputs    = randn(length(t), num_broadband)*this_rate;
                 
-                mu        = zeros(1,num_gamma);
-                sigma     = eye(num_gamma) + (1-eye(num_gamma))* ns_get(NS, 'gamma_coh');
-                pre_gamma = mvnrnd(mu,sigma,length(t));
+                % Gamma inputs
+                mu           = zeros(1,num_gamma);
+                sigma        = eye(num_gamma) + (1-eye(num_gamma))* ns_get(NS, 'gamma_coh');
+                gamma_inputs = mvnrnd(mu,sigma,length(t));
                 
                 
-                gamma_signal    = poisson_rate_g(ii)*filter(gamma_filter, pre_gamma);
+                gamma_signal    = poisson_rate_g(ii)*filter(gamma_filter, gamma_inputs);
                 baseline        = randn(length(t), num_gamma)*poisson_baseline;
-                pre_gamma       = bsxfun(@plus, gamma_signal, baseline);
+                gamma_inputs    = bsxfun(@plus, gamma_signal, baseline);
+                                
+                % Alpha inputs
+                mu           = zeros(1,num_broadband);
+                sigma        = eye(num_broadband) + (1-eye(num_broadband))* ns_get(NS, 'alpha_coh');
+                alpha_inputs = mvnrnd(mu,sigma,length(t));
+                
+                
+                alpha_signal    = poisson_rate_a(ii)*filter(alpha_filter, alpha_inputs);
+                baseline        = randn(length(t), num_broadband)*poisson_baseline;
+                alpha_inputs    = bsxfun(@plus, alpha_signal, baseline);
+
+                % combine broadband and alpha
+                bb_inputs = bb_inputs + alpha_inputs;
                 
                 for jj = 1:length(t)-1
                     
                     % rate of change in current
-                    dIdt = (pre_bb(jj,:) - ts_bb(jj,:,ii)) / alpha;
+                    dIdt = (bb_inputs(jj,:) - ts_bb(jj,:,ii)) / alpha;
                     
                     % stepwise change in current
                     dI = dIdt * dt;
@@ -95,7 +115,7 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
                     ts_bb(jj+1,:,ii) = ts_bb(jj,:,ii) + dI;
                                         
                     % rate of change in current
-                    dIdt = (pre_gamma(jj,:) - ts_g(jj,:,ii)) / alpha;
+                    dIdt = (gamma_inputs(jj,:) - ts_g(jj,:,ii)) / alpha;
                     
                     % stepwise change in current
                     dI = dIdt * dt;

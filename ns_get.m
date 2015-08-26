@@ -88,6 +88,17 @@ switch lower(param)
         % Alpha poisson rate range (arbitrary units)
         val = NS.params.poisson_a_rg;
         
+        if ~isempty(varargin) && strcmpi(varargin{1}, 'scaled')
+            % Scale the alpha amplitude based on the coherence of the alpha
+            % signal across the neural population - the more coherent the
+            % oscillation, the bigger the ratio of population response to
+            % single neuron response. We would like to control the
+            % population response, because that is what is measured by an
+            % electrode. 
+            val = val * ns_get(NS, 'num_alpha').^ ((1-ns_get(NS, 'alpha_coh'))/2);
+        end
+        
+        
     case 'gamma_coh'
         % Coherence of gamma neurons within gamma band ([0 1])
         val =  NS.params.gamma_coh;
@@ -106,6 +117,11 @@ switch lower(param)
     case 'num_gamma'
         % Number of neurons in gamma-only pools
         val = ns_get(NS, 'num_neurons') - ns_get(NS, 'num_broadband');
+
+    case 'num_alpha'
+        % Number of neurons with alpha response. Assume equal to the
+        % broadband pool.
+         val = round(ns_get(NS, 'num_neurons') * ns_get(NS, 'bb_fraction'));
 
     case 'num_trials'
         % Number of trials per experiment
@@ -136,9 +152,13 @@ switch lower(param)
 
     case 'freq_bb'
         % see 'freq_gamma'
-        f = ns_get(NS, 'f'); gamma_range = ns_get(NS, 'gamma_range');
-        val = f((f>2 & f<gamma_range(1)*.75) | (f>gamma_range(2)*1.25 & f<200));
-        
+        f = ns_get(NS, 'f'); 
+        gamma_range = ns_get(NS, 'gamma_range');
+        alpha_range = ns_get(NS, 'alpha_range');
+        val = f(...
+            ((f<gamma_range(1)*.75) | (f>gamma_range(2)*1.25)) & ... % exclude gamma
+        ((f<alpha_range(1)*.75) | (f>alpha_range(2)*1.25))  ... % exclude alpha
+         & f<200 & f>2);
     case 'freq_alpha'
         % see 'freq_gamma'
         f = ns_get(NS, 'f'); alpha_range = ns_get(NS, 'alpha_range');
@@ -150,7 +170,13 @@ switch lower(param)
         d = fdesign.bandpass('N,F3dB1,F3dB2',10,gamma_range(1),gamma_range(2),1/dt);
         val = design(d,'butter');
         
-    % ---------------------------
+    case 'alpha_filter'
+        % Band-pass Butterworth filter for alpha response
+        dt = ns_get(NS, 'dt');  alpha_range = ns_get(NS, 'alpha_range');
+        d = fdesign.bandpass('N,F3dB1,F3dB2',10,alpha_range(1),alpha_range(2),1/dt);
+        val = design(d,'butter');
+
+        % ---------------------------
     % -- trial variables --------
     % ---------------------------    
     case 'condition_num'
@@ -163,7 +189,9 @@ switch lower(param)
     case 'poisson_rate_g'
         % Get the Poisson rate for the gamma inputs for each trial
         val = NS.trial.poisson_rate_g;
-
+    case 'poisson_rate_a'
+        % Get the Poisson rate for the alpha inputs for each trial
+        val = NS.trial.poisson_rate_a;        
     % ---------------------------
     % -- data -------------------
     % ---------------------------    
@@ -183,6 +211,10 @@ switch lower(param)
         % Get the ecog gamma measures (num_trials x num_experiments)
         val = NS.data.gamma; 
         
+    case 'alpha'
+        % Get the ecog alpha measures (num_trials x num_experiments)
+        val = NS.data.alpha; 
+
     case 'bold'
         % Get the bold measures (num_trials x num_experiments)
         val = NS.data.bold; 

@@ -31,6 +31,7 @@ bb_avg    = ns_mean_by_stimulus(NS, ns_get(NS, 'bb'));
 bold_avg  = ns_mean_by_stimulus(NS, ns_get(NS, 'bold'));
 lfp_avg   = ns_mean_by_stimulus(NS, ns_get(NS, 'lfp'));
 gamma_avg = ns_mean_by_stimulus(NS, ns_get(NS, 'gamma'));
+alpha_avg = ns_mean_by_stimulus(NS, ns_get(NS, 'alpha'));
 num_conditions = ns_get(NS, 'num_conditions');
 freq_bb = ns_get(NS, 'freq_bb');
 

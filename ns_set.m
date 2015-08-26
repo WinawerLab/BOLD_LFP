@@ -73,6 +73,11 @@ switch lower(param)
         % type (1 x num conditions)
         NS.params.poisson_g = val;
     
+    case 'poisson_a'
+        % Poisson rates for alpha signal for each unique condition/stimulus
+        % type (1 x num conditions)
+        NS.params.poisson_a = val;
+
     case 'poisson_bb'
         % Poisson rates for broadband signal for each unique condition/stimulus
         % type (1 x num conditions)
@@ -99,6 +104,9 @@ switch lower(param)
     case 'poisson_rate_g'
         % Set the Poisson rate for the gamma inputs for each trial
         NS.trial.poisson_rate_g =  val;
+    case 'poisson_rate_a'
+        % Set the Poisson rate for the alpha inputs for each trial
+        NS.trial.poisson_rate_a =  val;
     % ---------------------------
     % -- data -------------------
     % ---------------------------
@@ -119,7 +127,9 @@ switch lower(param)
     case 'gamma'
         % Set the ecog gamma measures (num_trials x num_experiments)
         NS.data.gamma = val; 
-        
+    case 'alpha'
+        % Set the ecog alpha measures (num_trials x num_experiments)
+        NS.data.alpha = val;         
     % ---------------------------
     % -- statistics -------------
     % ---------------------------
@@ -129,6 +139,8 @@ switch lower(param)
         % NS = ns_set(NS, 'r2', r2data, 'bold_bb');
         NS.stats.(varargin{1}) = val;         
      
+    otherwise
+        error('Unknown parameter %s', param);
 end
 
 return

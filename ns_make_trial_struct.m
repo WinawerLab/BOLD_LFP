@@ -9,8 +9,10 @@ function NS = ns_make_trial_struct(NS)
 num_conditions = ns_get(NS, 'num_conditions');
 poisson_bb_rg  = ns_get(NS, 'poisson_bb_rg');
 poisson_g_rg   = ns_get(NS, 'poisson_g_rg', 'scaled');
+poisson_a_rg   = ns_get(NS, 'poisson_a_rg', 'scaled');
 poisson_bb     = [0 linspace(poisson_bb_rg(1),poisson_bb_rg(2), num_conditions-1)];
 poisson_g      = linspace(poisson_g_rg(1), poisson_g_rg(2),  num_conditions-1);
+poisson_a      = linspace(poisson_a_rg(1), poisson_a_rg(2),  num_conditions-1);
 
 % Decorrelate expected broadband and gamma levels across conditions /
 % stimuli. We would like the measures to be decorrelated across trials 
@@ -34,6 +36,9 @@ end
 [~, ind]  = min(abs(c));
 poisson_g = b(ind,:);
 
+% Randomize alpha levels across trials
+poisson_a =  [0 poisson_a(randperm(num_conditions-1))];
+
 % At this point we have one gamma level and one broadband level for each
 % unique condition / stimulus. We now assign levels to all trials (which
 % can include repeated conditions / stimuli).
@@ -42,13 +47,17 @@ vectorize = @(data,repeats) reshape(repmat(data, repeats, 1), num_trials, 1);
 NS = ns_set(NS, 'condition_num',   vectorize(0:num_conditions-1, ns_get(NS, 'num_averages')));
 NS = ns_set(NS, 'poisson_rate_bb', vectorize(poisson_bb, ns_get(NS, 'num_averages')));
 NS = ns_set(NS, 'poisson_rate_g',  vectorize(poisson_g, ns_get(NS, 'num_averages')));
+NS = ns_set(NS, 'poisson_rate_a',  vectorize(poisson_a, ns_get(NS, 'num_averages')));
 NS = ns_set(NS, 'poisson_g', poisson_g);
 NS = ns_set(NS, 'poisson_bb', poisson_bb);
+NS = ns_set(NS, 'poisson_a', poisson_a);
 
-% % Visualize
-% figure;  plot(NS.trial.condition_num, 'o'); hold on;
-% plot(NS.trial.poisson_rate_bb, 'x'); plot(NS.trial.poisson_rate_g, 'd');
-% legend('Condition number', 'Broadband poisson rate', 'Gamma poisson rate')
+% Visualize
+figure;  plot(NS.trial.condition_num, 'o'); hold on;
+plot(NS.trial.poisson_rate_bb, 'x'); 
+plot(NS.trial.poisson_rate_g, 'd');
+plot(NS.trial.poisson_rate_a, '*');
+legend('Condition number', 'Broadband poisson rate', 'Gamma poisson rate', 'Alpha poisson rate')
 
 return
 
