@@ -28,7 +28,6 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
     % one time series per trial per neuron in the gamma pool (ts_g)
     ts_bb = zeros(length(t), num_broadband, num_trials);
     ts_g  = zeros(length(t), num_gamma, num_trials);
-    ts_a  = zeros(length(t), num_alpha, num_trials);
     
     fprintf('[%s]: Simulating time series ', mfilename);
     drawdots = round((1:10)/10*num_trials);
@@ -76,30 +75,32 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
             for ii = 1:num_trials
                 if ismember(ii,drawdots), fprintf('.'); drawnow(); end
                 
-                % Broadband inputs
+                %%%%% Broadband inputs
                 this_rate = poisson_rate_bb(ii) + poisson_baseline;
                 bb_inputs    = randn(length(t), num_broadband)*this_rate;
                 
-                % Gamma inputs
+                %%%%% Gamma inputs
                 mu           = zeros(1,num_gamma);
                 sigma        = eye(num_gamma) + (1-eye(num_gamma))* ns_get(NS, 'gamma_coh');
                 gamma_inputs = mvnrnd(mu,sigma,length(t));
                 
-                
                 gamma_signal    = poisson_rate_g(ii)*filter(gamma_filter, gamma_inputs);
                 baseline        = randn(length(t), num_gamma)*poisson_baseline;
                 gamma_inputs    = bsxfun(@plus, gamma_signal, baseline);
-                                
-                % Alpha inputs
-                mu           = zeros(1,num_broadband);
+                
+                %%%%% Alpha inputs
+                mu           = zeros(1,num_broadband); % if you add offset here it would get filtered out
                 sigma        = eye(num_broadband) + (1-eye(num_broadband))* ns_get(NS, 'alpha_coh');
                 alpha_inputs = mvnrnd(mu,sigma,length(t));
                 
+                % get the alpha signal
+                alpha_signal = ns_alpha_signal(alpha_inputs,poisson_rate_a(ii),dt,0);
+                                
+                % do we need to add baseline here? broadband already has baseline
+%                 baseline        = randn(length(t), num_broadband)*poisson_baseline;
+%                 alpha_inputs    = bsxfun(@plus, alpha_signal, baseline);
+                alpha_inputs    = alpha_signal;
                 
-                alpha_signal    = poisson_rate_a(ii)*filter(alpha_filter, alpha_inputs);
-                baseline        = randn(length(t), num_broadband)*poisson_baseline;
-                alpha_inputs    = bsxfun(@plus, alpha_signal, baseline);
-
                 % combine broadband and alpha
                 bb_inputs = bb_inputs + alpha_inputs;
                 

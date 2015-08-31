@@ -47,7 +47,8 @@ plot(ns_get(NS, 'f'), ns_mean_by_stimulus(NS, ns_get(NS, 'power')), '-', ...
 set(gca, 'XScale', 'log', 'YScale', 'log')
 xlabel ('Frequency')
 ylabel('Power')
-xlim([min(freq_bb) max(freq_bb)]);
+% xlim([min(freq_bb) max(freq_bb)]);
+xlim([1 max(freq_bb)]);
 
 % ---- Plot BOLD v ECoG measures ----------------
 num_subplots = 4; % broadband; total LFP; gamma; alpha
@@ -90,6 +91,59 @@ for ii = 1:num_subplots
 end
 
 return
+
+%% check alpha and mean signal and bb
+alpha_avg = ns_mean_by_stimulus(NS, ns_get(NS, 'alpha'));
+bb_avg  = ns_mean_by_stimulus(NS, ns_get(NS, 'bb'));
+gamma_avg  = ns_mean_by_stimulus(NS, ns_get(NS, 'gamma'));
+bold_avg  = ns_mean_by_stimulus(NS, ns_get(NS, 'bold'));
+
+all_alpha_input = NS.trial.poisson_rate_a;
+all_mean_data = squeeze(mean(sum(NS.data.ts(:,:,:),2),1));
+all_alpha_data = NS.data.alpha;
+all_bb_data = NS.data.bb;
+
+mean_avg = zeros(max(NS.trial.condition_num),1);
+for k=1:max(NS.trial.condition_num)+1
+    mean_avg(k) = mean(all_mean_data(NS.trial.condition_num==k-1));
+end
+
+figure,
+subplot(2,4,1)
+plot(all_alpha_input,all_alpha_data,'k.')
+xlabel('alpha input'),ylabel('alpha response')
+
+subplot(2,4,2)
+plot(all_alpha_input,all_mean_data,'k.')
+xlabel('alpha input'),ylabel('mean response')
+
+subplot(2,4,3)
+plot(all_alpha_data,all_mean_data,'k.')
+xlabel('alpha response'),ylabel('mean response')
+
+subplot(2,4,4)
+plot(all_mean_data,all_bb_data,'k.')
+xlabel('mean response'),ylabel('bb response')
+
+
+subplot(2,4,5)
+plot(NS.params.poisson_a,alpha_avg,'k.')
+xlabel('alpha input'),ylabel('alpha response')
+
+subplot(2,4,6)
+plot(NS.params.poisson_a,mean_avg,'k.')
+xlabel('alpha input'),ylabel('mean response')
+
+subplot(2,4,7)
+plot(alpha_avg,mean_avg,'k.')
+xlabel('alpha response'),ylabel('mean response')
+
+subplot(2,4,8)
+plot(mean_avg,bb_avg,'k.')
+r = corr(mean_avg,bb_avg)
+title(['r^2 = ' int2str(r.^2*100)])
+xlabel('mean response'),ylabel('bb response')
+
 %%
 
 
