@@ -36,8 +36,18 @@ end
 [~, ind]  = min(abs(c));
 poisson_g = b(ind,:);
 
+% Decorrelate alpha (in same way as bb/gamma
 % Randomize alpha levels across trials
-poisson_a =  [max(poisson_a) poisson_a(randperm(num_conditions-1))];
+b = zeros(100, num_conditions);
+c = zeros(num_conditions,2); % correlation with bb and gamma
+for ii = 1:100;
+    tmp =  [0 poisson_a(randperm(num_conditions-1))];
+    b(ii,:) = tmp;
+    c(ii,1) = corr(poisson_bb', tmp');
+    c(ii,2) = corr(poisson_g', tmp');
+end
+[~, ind]  = min(sum(abs(c),2));
+poisson_a = b(ind,:);
 
 % At this point we have one gamma level and one broadband level for each
 % unique condition / stimulus. We now assign levels to all trials (which
