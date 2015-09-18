@@ -132,6 +132,10 @@ switch lower(param)
         % Number of trials per experiment
         val = ns_get(NS, 'num_conditions') * ns_get(NS, 'num_averages');
 
+    case 'baseline_trials'
+        % Index to baseline trials (at the start of the experiment)
+        val = [1:ns_get(NS,'num_averages')];
+
     case 't'
         % Time vector for one trial (in seconds)
         dt  = ns_get(NS, 'dt'); 
@@ -179,7 +183,7 @@ switch lower(param)
     case 'alpha_filter'
         % Band-pass Butterworth filter for alpha response
         dt = ns_get(NS, 'dt');  alpha_range = ns_get(NS, 'alpha_range');
-        d = fdesign.bandpass('N,F3dB1,F3dB2',10,alpha_range(1),alpha_range(2),1/dt);
+        d = fdesign.bandpass('N,F3dB1,F3dB2',500,alpha_range(1),alpha_range(2),1/dt);
         val = design(d,'butter');
 
         % ---------------------------

@@ -12,10 +12,12 @@ NS = neural_sim_defaults; disp(NS.params)
 % NS = ns_set(NS, 'num_averages', 10);
 % alpha should only vary between 0 and 1, since it is 1 during basline, and
 % reduced with more alpha inputs
-NS = ns_set(NS, 'poisson_bb_rg', [0 .3]);
+NS = ns_set(NS, 'poisson_bb_rg', [0 .01]);
 NS = ns_set(NS, 'poisson_g_rg', [0 .3]);
-NS = ns_set(NS, 'poisson_a_rg', [0 .3]); 
+NS = ns_set(NS, 'poisson_a_rg', [0 1]); 
 NS = ns_set(NS, 'gamma_coh', 1);
+
+NS = ns_set(NS, 'num_neurons', 200);
 
 NS = ns_set(NS, 'num_conditions', 8);
 
