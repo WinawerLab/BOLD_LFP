@@ -94,7 +94,8 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
                 alpha_inputs = mvnrnd(mu,sigma,length(t));
                 
                 % get the alpha signal
-                alpha_signal = ns_alpha_signal(alpha_inputs,poisson_rate_a(ii),dt,0);
+                % use the poisson baseline - poisson_rate_a: less alpha during more alpha inputs, alpha should only vary between 0 and 2 
+                alpha_signal = ns_alpha_signal(alpha_inputs,poisson_baseline-poisson_rate_a(ii),dt,0);
                                 
                 % do we need to add baseline here? broadband already has baseline
 %                 baseline        = randn(length(t), num_broadband)*poisson_baseline;

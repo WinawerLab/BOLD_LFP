@@ -10,9 +10,14 @@ NS = neural_sim_defaults; disp(NS.params)
 % For example:  NS = ns_set(NS, 'num_neurons', 300);
 % Or, NS = ns_set(NS, 'num_neurons', 50); NS = ns_set(NS, 'num_experiments', 2);
 % NS = ns_set(NS, 'num_averages', 10);
+% alpha should only vary between 0 and 1, since it is 1 during basline, and
+% reduced with more alpha inputs
 NS = ns_set(NS, 'poisson_bb_rg', [0 .3]);
 NS = ns_set(NS, 'poisson_g_rg', [0 .3]);
+NS = ns_set(NS, 'poisson_a_rg', [0 .3]); 
 NS = ns_set(NS, 'gamma_coh', 1);
+
+NS = ns_set(NS, 'num_conditions', 8);
 
 % Assign expected values of broadband and gamma levels for each stimulus class and each trial
 NS = ns_make_trial_struct(NS); disp(NS.trial)
@@ -92,6 +97,11 @@ end
 
 return
 
+% set(gcf,'PaperPositionMode','auto')
+% print('-dpng','-r300',['../figures/results_with_alpha4'])
+% print('-depsc','-r300',['../figures/results_with_alpha4'])
+
+
 %% check alpha and mean signal and bb
 alpha_avg = ns_mean_by_stimulus(NS, ns_get(NS, 'alpha'));
 bb_avg  = ns_mean_by_stimulus(NS, ns_get(NS, 'bb'));
@@ -108,45 +118,95 @@ for k=1:max(NS.trial.condition_num)+1
     mean_avg(k) = mean(all_mean_data(NS.trial.condition_num==k-1));
 end
 
-figure,
-subplot(2,4,1)
+figure('Position',[0 0 800 300]),
+subplot(2,5,1)
 plot(all_alpha_input,all_alpha_data,'k.')
 xlabel('alpha input'),ylabel('alpha response')
 
-subplot(2,4,2)
+subplot(2,5,2)
 plot(all_alpha_input,all_mean_data,'k.')
 xlabel('alpha input'),ylabel('mean response')
 
-subplot(2,4,3)
+subplot(2,5,3)
 plot(all_alpha_data,all_mean_data,'k.')
 xlabel('alpha response'),ylabel('mean response')
 
-subplot(2,4,4)
+subplot(2,5,4)
 plot(all_mean_data,all_bb_data,'k.')
 xlabel('mean response'),ylabel('bb response')
 
-
-subplot(2,4,5)
+subplot(2,5,6)
 plot(NS.params.poisson_a,alpha_avg,'k.')
 xlabel('alpha input'),ylabel('alpha response')
 
-subplot(2,4,6)
+subplot(2,5,7)
 plot(NS.params.poisson_a,mean_avg,'k.')
 xlabel('alpha input'),ylabel('mean response')
 
-subplot(2,4,7)
+subplot(2,5,8)
 plot(alpha_avg,mean_avg,'k.')
 xlabel('alpha response'),ylabel('mean response')
 
-subplot(2,4,8)
+subplot(2,5,9),hold on
 plot(mean_avg,bb_avg,'k.')
-r = corr(mean_avg,bb_avg)
-title(['r^2 = ' int2str(r.^2*100)])
+r1 = corr(mean_avg,bb_avg);
+title(['r^2 = ' int2str(r1.^2*100)])
 xlabel('mean response'),ylabel('bb response')
 
+subplot(2,5,10),hold on
+plot(NS.params.poisson_a',NS.params.poisson_bb','r.')
+r2 = corr(NS.params.poisson_a',NS.params.poisson_bb');
+title(['r^2 = ' int2str(r2.^2*100)])
+xlabel('alpha inputs'),ylabel('bb inputs')
+
+% set(gcf,'PaperPositionMode','auto')
+% print('-dpng','-r300',['../figures/alpha_mean_bb_corr4'])
+% print('-depsc','-r300',['../figures/alpha_mean_bb_corr4'])
+
+
 %%
+%% make initial figures SfN poster
+
+[~,high_bb_trial] = max(NS.trial.poisson_rate_bb);
+[~,high_gamma_trial] = max(NS.trial.poisson_rate_g);
+[~,high_alpha_trial] = max(NS.trial.poisson_rate_a);
+neuron_nr = 1;
+figure
 
 
+subplot(4,1,1),hold on
+% plot(NS.data.ts(:,neuron_nr,high_bb_trial))
+plot(mean(NS.data.ts(:,:,1),2),'k')
+title('baseline - sum of 600 neurons')
+xlabel('time (ms)')
+
+subplot(4,1,2),hold on
+% plot(NS.data.ts(:,neuron_nr,high_bb_trial))
+plot(mean(NS.data.ts(:,:,high_bb_trial),2),'k')
+title('high broadband trial - sum of 600 neurons')
+xlabel('time (ms)')
+
+subplot(4,1,3),hold on
+% plot(NS.data.ts(:,trial_nr,high_gamma_trial))
+plot(mean(NS.data.ts(:,:,high_gamma_trial),2),'k')
+title('high gamma trial - sum of 600 neurons')
+xlabel('time (ms)')
+
+subplot(4,1,4),hold on
+plot(mean(NS.data.ts(:,:,high_alpha_trial),2),'k')
+title('high alpha trial - sum of 600 neurons')
+xlabel('time (ms)')
+
+set(gcf,'PaperPositionMode','auto')
+% print('-dpng','-r300',['../figures/simulated_timeseries'])
+% print('-depsc','-r300',['../figures/simulated_timeseries'])
+
+stats = regstats(bold_avg,[bb_avg]);
+[stats.rsquare stats.adjrsquare]
+stats = regstats(bold_avg,[bb_avg alpha_avg]);
+[stats.rsquare stats.adjrsquare]
+
+%%
 % Summarize R2 values acorss experiments and measurement types (BOLD v
 % broadband, total LFP, or gamma)
 if num_experiments > 1

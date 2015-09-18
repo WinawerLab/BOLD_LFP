@@ -36,11 +36,11 @@ end
 [~, ind]  = min(abs(c));
 poisson_g = b(ind,:);
 
-% Decorrelate alpha (in same way as bb/gamma
+% Decorrelate alpha (in same way as bb/gamma)
 % Randomize alpha levels across trials
-b = zeros(100, num_conditions);
+b = zeros(1000, num_conditions);
 c = zeros(num_conditions,2); % correlation with bb and gamma
-for ii = 1:100;
+for ii = 1:1000;
     tmp =  [0 poisson_a(randperm(num_conditions-1))];
     b(ii,:) = tmp;
     c(ii,1) = corr(poisson_bb', tmp');

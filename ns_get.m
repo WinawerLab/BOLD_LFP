@@ -160,10 +160,11 @@ switch lower(param)
         f = ns_get(NS, 'f'); 
         gamma_range = ns_get(NS, 'gamma_range');
         alpha_range = ns_get(NS, 'alpha_range');
-        val = f(...
-            ((f<gamma_range(1)*.75) | (f>gamma_range(2)*1.25)) & ... % exclude gamma
-        ((f<alpha_range(1)*.5) | (f>alpha_range(2)*1.5))  ... % exclude alpha
-         & f<200 & f>6);
+%         val = f(...
+%             ((f<gamma_range(1)*.75) | (f>gamma_range(2)*1.25)) & ... % exclude gamma
+%         ((f<alpha_range(1)*.5) | (f>alpha_range(2)*1.5))  ... % exclude alpha
+%          & f<200 & f>6);
+        val = f(f>90 & f<200);
     case 'freq_alpha'
         % see 'freq_gamma'
         f = ns_get(NS, 'f'); alpha_range = ns_get(NS, 'alpha_range');

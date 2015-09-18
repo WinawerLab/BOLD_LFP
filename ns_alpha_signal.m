@@ -28,6 +28,51 @@ for k=1:size(alpha_inputs,2)
     % get alpha signal to use:
     alpha_use = alpha_inputs(:,k);
 
+    % filter for alpha
+%     alpha_useF = poisson_rate_a*filtfilt(a_bf_b, a_bf_a, alpha_use);
+    
+%     %%%% option 1, but alpha does not correlate with mean response
+%     %%%% anymore...
+%     % add (DC offset) to signal
+%     alpha_signal(:,k) = alpha_useF - 1/(1+poisson_rate_a);
+%     
+%     % make sure there is no broadband added with adding the envelope
+%     alpha_useF_fft = fft(alpha_useF);
+%     alpha_signal_fft = fft(alpha_signal(:,k));
+%     alpha_signal_fft(10:end-9) = alpha_useF_fft(10:end-9);
+%     alpha_signal(:,k) = real(ifft(alpha_signal_fft));
+
+    %%%% option 2, complex...
+%     % zero-pad alpha inputs
+%     alpha_use = cat(1,zeros(size(alpha_use)),alpha_use,zeros(size(alpha_use)));
+% 
+%     % filter for alpha
+%     alpha_useF = poisson_rate_a*filtfilt(a_bf_b, a_bf_a, alpha_use);
+%     
+%     % get alpha envelope
+%     alpha_envelope = abs(hilbert(alpha_useF));
+%     
+%     % invert envelope
+%     alpha_envelope = -1./(1+alpha_envelope);
+% 
+%     % filter the envelope
+%     alpha_envelopeF = filtfilt(low_bf_b, low_bf_a, alpha_envelope);
+%     
+%     % get non-zeropadded alpha signal and envelope back
+%     alpha_useFS = alpha_useF(size(alpha_inputs,1)+1:size(alpha_inputs,1)*2);
+%     alpha_envelopeFS = alpha_envelopeF(size(alpha_inputs,1)+1:size(alpha_inputs,1)*2);
+%            
+%     % add filtered envelope (DC offset) to signal
+%     alpha_signal(:,k) = alpha_useFS + alpha_envelopeFS;
+%     
+%     % make sure there is no broadband added with adding the envelope
+%     alpha_useFS_fft = fft(alpha_useFS);
+%     alpha_signal_fft = fft(alpha_signal(:,k));
+%     alpha_signal_fft(10:end-9) = alpha_useFS_fft(10:end-9);
+%     alpha_signal(:,k) = real(ifft(alpha_signal_fft));
+    
+    %%%% option 3, 
+    % add assymetry to signal
     % zero-pad alpha inputs
     alpha_use = cat(1,zeros(size(alpha_use)),alpha_use,zeros(size(alpha_use)));
 
@@ -36,25 +81,23 @@ for k=1:size(alpha_inputs,2)
     
     % get alpha envelope
     alpha_envelope = abs(hilbert(alpha_useF));
-
+    
     % filter the envelope
     alpha_envelopeF = filtfilt(low_bf_b, low_bf_a, alpha_envelope);
-    
-    % phase shift the envelope?
     
     % get non-zeropadded alpha signal and envelope back
     alpha_useFS = alpha_useF(size(alpha_inputs,1)+1:size(alpha_inputs,1)*2);
     alpha_envelopeFS = alpha_envelopeF(size(alpha_inputs,1)+1:size(alpha_inputs,1)*2);
-    
+           
     % add filtered envelope (DC offset) to signal
-    alpha_signal(:,k) = alpha_useFS + alpha_envelopeFS;
-    
+    alpha_signal(:,k) = alpha_envelopeFS.*(1+alpha_useFS);
+
     % make sure there is no broadband added with adding the envelope
     alpha_useFS_fft = fft(alpha_useFS);
     alpha_signal_fft = fft(alpha_signal(:,k));
     alpha_signal_fft(10:end-9) = alpha_useFS_fft(10:end-9);
     alpha_signal(:,k) = real(ifft(alpha_signal_fft));
-    
+
     %%%%% plot if do_plot==1 for k=1
     if k==1 && do_plot==1
         figure
