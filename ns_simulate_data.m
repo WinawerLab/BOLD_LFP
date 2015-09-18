@@ -68,8 +68,8 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
             ts_g  = cumsum(ts_g);
             
         case 'SLOW' % a more complicated leaky integrator
-            alpha = 0.010;
-            dt    = ns_get(NS, 'dt');
+            tau = 0.010;              % time constant of leaky integrator (seconds)
+            dt    = ns_get(NS, 'dt'); % step size for simulation, in seconds
             
             % generate data for one trial at a time
             for ii = 1:num_trials
@@ -108,7 +108,7 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
                 for jj = 1:length(t)-1
                     
                     % rate of change in current
-                    dIdt = (bb_inputs(jj,:) - ts_bb(jj,:,ii)) / alpha;
+                    dIdt = (bb_inputs(jj,:) - ts_bb(jj,:,ii)) / tau;
                     
                     % stepwise change in current
                     dI = dIdt * dt;
@@ -117,7 +117,7 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
                     ts_bb(jj+1,:,ii) = ts_bb(jj,:,ii) + dI;
                                         
                     % rate of change in current
-                    dIdt = (gamma_inputs(jj,:) - ts_g(jj,:,ii)) / alpha;
+                    dIdt = (gamma_inputs(jj,:) - ts_g(jj,:,ii)) / tau;
                     
                     % stepwise change in current
                     dI = dIdt * dt;
