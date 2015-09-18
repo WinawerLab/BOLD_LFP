@@ -92,10 +92,10 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
                 mu           = zeros(1,num_broadband); % if you add offset here it would get filtered out
                 sigma        = eye(num_broadband) + (1-eye(num_broadband))* ns_get(NS, 'alpha_coh');
                 alpha_inputs = mvnrnd(mu,sigma,length(t));
+                alpha_inputs = poisson_rate_a(ii)*filter(alpha_filter, alpha_inputs);
                 
                 % get the alpha signal
-                % use the poisson baseline - poisson_rate_a: less alpha during more alpha inputs, alpha should only vary between 0 and 2 
-                alpha_signal = ns_alpha_signal(alpha_inputs,poisson_baseline-poisson_rate_a(ii),dt,0);
+                alpha_signal = ns_alpha_signal(alpha_inputs,dt,0);
                                 
                 % do we need to add baseline here? broadband already has baseline
 %                 baseline        = randn(length(t), num_broadband)*poisson_baseline;
@@ -133,6 +133,10 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
     % Combine the gamma and broadband populations into a single
     % neural pool.
     ts(:,:,:,sim_number) = cat(2, ts_bb, ts_g);
+    
+    % subtract baseline mean now
+    baseline_ts = ts(:,:,ns_get(NS,'baseline_trials'),sim_number);
+    ts = ts - mean(baseline_ts(:));
     
     NS = ns_set(NS, 'ts', ts);
     
