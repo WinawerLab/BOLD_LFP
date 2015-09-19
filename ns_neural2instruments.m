@@ -18,7 +18,6 @@ power_law       = ns_get(NS, 'power_law');
 % as the metric of the LFP response. We also compute the sum of the
 % covariance, excluding the diagonal of the covariance matrix
 bold_fun  = @(x) sum(mean(x.^2)); % sum(var(x));
-% bold_fun  = @(x) sum(var(x));
 lfp_fun   = @(x) var(sum(x,2));
 bb_fun    = @(x, power_law_baseline) exp(mean(log(x) - power_law_baseline));
 gamma_fun = @(x) exp(mean(log(x)));

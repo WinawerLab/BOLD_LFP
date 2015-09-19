@@ -63,12 +63,12 @@ NS = ns_set(NS, 'poisson_bb', poisson_bb);
 NS = ns_set(NS, 'poisson_a', poisson_a);
 
 % Visualize
-figure;  plot(NS.trial.condition_num, 'o'); hold on;
-plot(NS.trial.poisson_rate_bb, 'x'); 
-plot(NS.trial.poisson_rate_g, 'd');
-plot(NS.trial.poisson_rate_a, '*');
-legend('Condition number', 'Broadband poisson rate', 'Gamma poisson rate', 'Alpha poisson rate')
-
+% figure;  
+% plot(NS.trial.poisson_rate_bb, 'x');  hold on;
+% plot(NS.trial.poisson_rate_g, 'd');
+% plot(NS.trial.poisson_rate_a, '*');
+% legend('Broadband poisson rate', 'Gamma poisson rate', 'Alpha poisson rate')
+% set(gca, 'XTick', (0:num_conditions)*ns_get(NS, 'num_averages'), 'XGrid', 'on'); 
 return
 
 

@@ -33,111 +33,74 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
     drawdots = round((1:10)/10*num_trials);
     
     % generate the simulated data: time x neuron x trial
-    switch ns_get(NS, 'simulate_method')
-        case 'FAST' % a random walk
-            for ii = 1:num_trials
-                if ismember(ii,drawdots), fprintf('.'); drawnow(); end
-                % Generate seed time series with random numbers scaled by
-                % the expected broadband level for the given stimulus class
-                this_rate       = poisson_rate_bb(ii) + poisson_baseline;
-                ts_bb(:,:,ii)   = randn(length(t), num_broadband)*this_rate;
+    
+    tau = 0.010;              % time constant of leaky integrator (seconds)
+    dt    = ns_get(NS, 'dt'); % step size for simulation, in seconds
+    
+    % generate data for one trial at a time
+    for ii = 1:num_trials
+        if ismember(ii,drawdots), fprintf('.'); drawnow(); end
+        
+        %%%%% Broadband inputs
+        this_rate = poisson_rate_bb(ii) + poisson_baseline;
+        bb_inputs    = randn(length(t), num_broadband)*this_rate;
+        
+        %%%%% Gamma inputs
+        mu           = zeros(1,num_gamma);
+        sigma        = eye(num_gamma) + (1-eye(num_gamma))* ns_get(NS, 'gamma_coh');
+        gamma_inputs = mvnrnd(mu,sigma,length(t));
+        
+        gamma_inputs    = poisson_rate_g(ii)*filter(gamma_filter, gamma_inputs);
+        baseline        = randn(length(t), num_gamma)*poisson_baseline;
+        gamma_inputs    = bsxfun(@plus, gamma_inputs, baseline);
+        
+        %%%%% Alpha inputs
+        mu              = zeros(1,num_broadband); % if you add offset here it would get filtered out
+        sigma           = eye(num_broadband) + (1-eye(num_broadband))* ns_get(NS, 'alpha_coh');
+        alpha_inputs    = mvnrnd(mu,sigma,length(t));
+        alpha_inputs    = poisson_rate_a(ii)*filter(alpha_filter, alpha_inputs);        
+        alpha_envelope  = abs(hilbert(alpha_inputs));
+        alpha_inputs    = alpha_inputs + alpha_envelope;
+
+        % combine broadband and alpha
+        bb_inputs = bb_inputs + alpha_inputs;
                 
-                % We do the same for the gamma time series subject to the
-                % additional constraint that the gamma signal is correlated
-                % across neurons with coherence <gamma_coh>. Note that we
-                % generate a time series with power at all frequencies for
-                % the gamma signal, and then band pass filter the result.
-                % This is more efficient than generating a band limited
-                % random walk.
-                mu        = zeros(1,num_gamma);
-                sigma     = eye(num_gamma) + (1-eye(num_gamma))* ns_get(NS, 'gamma_coh');
-                gamma_inputs = mvnrnd(mu,sigma,length(t));
-                
-                
-                gamma_signal    = poisson_rate_g(ii)*filter(gamma_filter, gamma_inputs);
-                baseline        = randn(length(t), num_gamma)*poisson_baseline;
-                ts_g(:,:,ii)    = bsxfun(@plus, gamma_signal, baseline);
-                
-            end
+        % Leaky integrator loop 
+        for jj = 1:length(t)-1
             
-            fprintf('Done\n');
-            % The time series of random numbers are turned into random
-            % walks by computing the cummualtive sum. This computation
-            % turns a white noise stimulus into a brown noise stimulus.
-            ts_bb = cumsum(ts_bb);
-            ts_g  = cumsum(ts_g);
+            % rate of change in current
+            dIdt = (bb_inputs(jj,:) - ts_bb(jj,:,ii)) / tau;
+             
+            % stepwise change in current
+            dI = dIdt * dt;
             
-        case 'SLOW' % a more complicated leaky integrator
-            tau = 0.010;              % time constant of leaky integrator (seconds)
-            dt    = ns_get(NS, 'dt'); % step size for simulation, in seconds
+            % current at next time point
+            ts_bb(jj+1,:,ii) = ts_bb(jj,:,ii) + dI;
             
-            % generate data for one trial at a time
-            for ii = 1:num_trials
-                if ismember(ii,drawdots), fprintf('.'); drawnow(); end
-                
-                %%%%% Broadband inputs
-                this_rate = poisson_rate_bb(ii) + poisson_baseline;
-                bb_inputs    = randn(length(t), num_broadband)*this_rate;
-                
-                %%%%% Gamma inputs
-                mu           = zeros(1,num_gamma);
-                sigma        = eye(num_gamma) + (1-eye(num_gamma))* ns_get(NS, 'gamma_coh');
-                gamma_inputs = mvnrnd(mu,sigma,length(t));
-                
-                gamma_signal    = poisson_rate_g(ii)*filter(gamma_filter, gamma_inputs);
-                baseline        = randn(length(t), num_gamma)*poisson_baseline;
-                gamma_inputs    = bsxfun(@plus, gamma_signal, baseline);
-                
-                %%%%% Alpha inputs
-                mu           = zeros(1,num_broadband); % if you add offset here it would get filtered out
-                sigma        = eye(num_broadband) + (1-eye(num_broadband))* ns_get(NS, 'alpha_coh');
-                alpha_inputs = mvnrnd(mu,sigma,length(t));
-                alpha_inputs = poisson_rate_a(ii)*filter(alpha_filter, alpha_inputs);
-                
-                % get the alpha signal
-                alpha_signal = ns_alpha_signal(alpha_inputs,dt,0);
-                                
-                % do we need to add baseline here? broadband already has baseline
-%                 baseline        = randn(length(t), num_broadband)*poisson_baseline;
-%                 alpha_inputs    = bsxfun(@plus, alpha_signal, baseline);
-                alpha_inputs    = alpha_signal;
-                
-                % combine broadband and alpha
-                bb_inputs = bb_inputs + alpha_inputs;
-                
-                for jj = 1:length(t)-1
-                    
-                    % rate of change in current
-                    dIdt = (bb_inputs(jj,:) - ts_bb(jj,:,ii)) / tau;
-                    
-                    % stepwise change in current
-                    dI = dIdt * dt;
-                    
-                    % current at next time point
-                    ts_bb(jj+1,:,ii) = ts_bb(jj,:,ii) + dI;
-                                        
-                    % rate of change in current
-                    dIdt = (gamma_inputs(jj,:) - ts_g(jj,:,ii)) / tau;
-                    
-                    % stepwise change in current
-                    dI = dIdt * dt;
-                    
-                    % current at next time point
-                    ts_g(jj+1,:,ii) = ts_g(jj,:,ii) + dI;
-                end
-            end
-            fprintf('Done\n');
+            % rate of change in current
+            dIdt = (gamma_inputs(jj,:) - ts_g(jj,:,ii)) / tau;
+            
+            % stepwise change in current
+            dI = dIdt * dt;
+            
+            % current at next time point
+            ts_g(jj+1,:,ii) = ts_g(jj,:,ii) + dI;
+        end
+        
+    ts_bb(:,:,ii) = ts_bb(:,:,ii) + alpha_envelope;
+        
     end
+    fprintf('Done\n');        
     
     
-    % Combine the gamma and broadband populations into a single
-    % neural pool.
+    % Combine all populations into a single neural pool.
     ts(:,:,:,sim_number) = cat(2, ts_bb, ts_g);
     
-    % subtract baseline mean now
-    baseline_ts = ts(:,:,ns_get(NS,'baseline_trials'),sim_number);
-    ts = ts - mean(baseline_ts(:));
+%     % subtract baseline mean
+     baseline_ts = ts(:,:,ns_get(NS,'baseline_trials'),sim_number);
+     ts = ts - mean(baseline_ts(:));
     
+    % Store the time series in the NS struct
     NS = ns_set(NS, 'ts', ts);
     
     

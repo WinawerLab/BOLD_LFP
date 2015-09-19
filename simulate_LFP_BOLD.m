@@ -7,18 +7,11 @@
 % Set default parameters.
 NS = neural_sim_defaults; disp(NS.params)
 % Change these to change the simulation. 
-% For example:  NS = ns_set(NS, 'num_neurons', 300);
-% Or, NS = ns_set(NS, 'num_neurons', 50); NS = ns_set(NS, 'num_experiments', 2);
-% NS = ns_set(NS, 'num_averages', 10);
-% alpha should only vary between 0 and 1, since it is 1 during basline, and
-% reduced with more alpha inputs
-NS = ns_set(NS, 'poisson_bb_rg', [0 .01]);
-NS = ns_set(NS, 'poisson_g_rg', [0 .3]);
+
+NS = ns_set(NS, 'poisson_bb_rg', [0 .5]);
+NS = ns_set(NS, 'poisson_g_rg', [0 .5]);
 NS = ns_set(NS, 'poisson_a_rg', [0 1]); 
-NS = ns_set(NS, 'gamma_coh', 1);
-
-NS = ns_set(NS, 'num_neurons', 200);
-
+NS = ns_set(NS, 'num_neurons', 100);
 NS = ns_set(NS, 'num_conditions', 8);
 
 % Assign expected values of broadband and gamma levels for each stimulus class and each trial
@@ -97,7 +90,7 @@ for ii = 1:num_subplots
     end
 end
 
-return
+
 
 % set(gcf,'PaperPositionMode','auto')
 % print('-dpng','-r300',['../figures/results_with_alpha4'])
@@ -208,6 +201,7 @@ stats = regstats(bold_avg,[bb_avg]);
 stats = regstats(bold_avg,[bb_avg alpha_avg]);
 [stats.rsquare stats.adjrsquare]
 
+return
 %%
 % Summarize R2 values acorss experiments and measurement types (BOLD v
 % broadband, total LFP, or gamma)

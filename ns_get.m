@@ -183,7 +183,7 @@ switch lower(param)
     case 'alpha_filter'
         % Band-pass Butterworth filter for alpha response
         dt = ns_get(NS, 'dt');  alpha_range = ns_get(NS, 'alpha_range');
-        d = fdesign.bandpass('N,F3dB1,F3dB2',500,alpha_range(1),alpha_range(2),1/dt);
+        d = fdesign.bandpass('N,F3dB1,F3dB2',30,alpha_range(1),alpha_range(2),1/dt);
         val = design(d,'butter');
 
         % ---------------------------
