@@ -2,17 +2,6 @@ function alpha_signal = ns_alpha_signal(alpha_inputs,dt,do_plot)
 
 srate = 1/dt;
 
-%%%% DESIGN ALPHA FILTER
-% band = [8 15];
-% a_Rp = 3; a_Rs = 60; % order Butterworth
-% a_delta = 0.001*2/srate;
-% a_low_p = band(2)*2/srate;
-% a_high_p = band(1)*2/srate;
-% a_high_s = max(a_delta, a_high_p - 0.1);
-% a_low_s = min(1-a_delta, a_low_p + 0.1);
-% [a_n_band, a_wn_band] = buttord([a_high_p a_low_p], [a_high_s a_low_s], a_Rp, a_Rs);
-% [a_bf_b, a_bf_a] = butter(a_n_band, a_wn_band);
-
 %%%% DESIGN LOWPASS FILTER
 band = [3];
 low_Rp = 3; low_Rs = 60; % order Butterworth
@@ -31,8 +20,9 @@ for k=1:size(alpha_inputs,2)
     % get alpha envelope
     alpha_envelope = abs(hilbert(alpha_use));
 
-    %%%% option 1, but alpha does not correlate with mean response
-    %%%% anymore...
+    % lowpass filter the envelope
+    alpha_envelope = filtfilt(low_bf_b, low_bf_a, alpha_envelope);
+   
     % add (DC offset) to signal
     alpha_signal(:,k) = alpha_use + alpha_envelope;
     

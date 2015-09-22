@@ -13,6 +13,16 @@ poisson_rate_a   = ns_get(NS, 'poisson_rate_a');
 gamma_filter     = ns_get(NS, 'gamma_filter');
 alpha_filter     = ns_get(NS, 'alpha_filter');
 
+% currently not used, I am not sure whether this is necessary
+%%%% DESIGN LOWPASS FILTER FOR THE ENVELOPE
+band = [3];
+srate = 1/NS.params.dt;
+low_Rp = 3; low_Rs = 60; % order Butterworth
+low_high_p = band(1)*2/srate;
+low_high_s = (band(1)+20)*2/srate;
+[low_n_band, low_wn_band] = buttord(low_high_p, low_high_s, low_Rp, low_Rs);
+[low_bf_b, low_bf_a] = butter(low_n_band, low_wn_band,'low');
+
 % Initialize the time series array, which will hold data for all neurons at
 % all time points in all trials across all experiments
 ts  = zeros(length(t), ns_get(NS, 'num_neurons'), num_trials, ...
@@ -60,6 +70,8 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
         alpha_inputs    = mvnrnd(mu,sigma,length(t));
         alpha_inputs    = poisson_rate_a(ii)*filter(alpha_filter, alpha_inputs);        
         alpha_envelope  = abs(hilbert(alpha_inputs));
+        % I am not sure that this is necessary:
+%         alpha_envelope  = filtfilt(low_bf_b, low_bf_a, alpha_envelope); % lowpass filter the envelope
         alpha_inputs    = alpha_inputs + alpha_envelope;
 
         % combine broadband and alpha

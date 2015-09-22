@@ -233,7 +233,14 @@ switch lower(param)
         % Compute the population power spectra (averaging over neurons)
         % Power is frequency x trial x experiment
         ts = ns_get(NS, 'ts');
-        val = abs(fft(squeeze(mean(ts,2)))).^2;
+        ts_for_fft = squeeze(mean(ts,2));
+        
+        % apply a window
+        w = window(@hann,1/NS.params.dt);
+        for k=1:size(ts_for_fft,2)
+            ts_for_fft(:,k) = ts_for_fft(:,k).*w;
+        end
+        val = abs(fft(ts_for_fft)).^2;
         
     case 'power_law'
         % derive power law parameters for baseline
