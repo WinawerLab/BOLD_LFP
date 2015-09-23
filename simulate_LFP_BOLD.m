@@ -8,9 +8,9 @@
 NS = neural_sim_defaults; disp(NS.params)
 % Change these to change the simulation. 
 
-NS = ns_set(NS, 'poisson_bb_rg', [0 0]);
+NS = ns_set(NS, 'poisson_bb_rg', [0 1]);
 NS = ns_set(NS, 'poisson_g_rg', [0 .5]);
-NS = ns_set(NS, 'poisson_a_rg', [0 1]); 
+NS = ns_set(NS, 'poisson_a_rg', [0 0]); 
 NS = ns_set(NS, 'num_neurons', 100);
 NS = ns_set(NS, 'num_conditions', 8);
 
@@ -91,8 +91,8 @@ for ii = 1:num_subplots
 end
 
 % set(gcf,'PaperPositionMode','auto')
-% print('-dpng','-r300',['../figures/results_with_alpha4'])
-% print('-depsc','-r300',['../figures/results_with_alpha4'])
+% print('-dpng','-r300',['../figures/results_with_alpha_windowOFF_withBB'])
+% print('-depsc','-r300',['../figures/results_with_alpha_windowOFF_withBB'])
 
 %% check alpha and mean signal and bb
 alpha_avg = ns_mean_by_stimulus(NS, ns_get(NS, 'alpha'));

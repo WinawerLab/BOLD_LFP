@@ -177,14 +177,23 @@ switch lower(param)
     case 'gamma_filter'
         % Band-pass Butterworth filter for gamma response
         dt = ns_get(NS, 'dt');  gamma_range = ns_get(NS, 'gamma_range');
-        d = fdesign.bandpass('N,F3dB1,F3dB2',10,gamma_range(1),gamma_range(2),1/dt);
-        val = design(d,'butter');
+        val = designfilt('bandpassiir','FilterOrder',10, ...
+            'HalfPowerFrequency1',gamma_range(1),'HalfPowerFrequency2',gamma_range(2),...
+            'SampleRate',1/dt,'DesignMethod','butter');
         
     case 'alpha_filter'
         % Band-pass Butterworth filter for alpha response
         dt = ns_get(NS, 'dt');  alpha_range = ns_get(NS, 'alpha_range');
-        d = fdesign.bandpass('N,F3dB1,F3dB2',30,alpha_range(1),alpha_range(2),1/dt);
-        val = design(d,'butter');
+        val = designfilt('bandpassiir','FilterOrder',30, ...
+            'HalfPowerFrequency1',alpha_range(1),'HalfPowerFrequency2',alpha_range(2),...
+            'SampleRate',1/dt,'DesignMethod','butter');
+    
+    case 'envelope_filter'
+        % LOW-pass Butterworth filter for alpha envelope
+        dt = ns_get(NS, 'dt');  
+        val = designfilt('lowpassiir','FilterOrder',30, ...
+            'HalfPowerFrequency',5,...
+            'SampleRate',1/dt,'DesignMethod','butter');
 
         % ---------------------------
     % -- trial variables --------
@@ -237,9 +246,10 @@ switch lower(param)
         
         % apply a window
         w = window(@hann,1/NS.params.dt);
-        for k=1:size(ts_for_fft,2)
-            ts_for_fft(:,k) = ts_for_fft(:,k).*w;
-        end
+        ts_for_fft = bsxfun(@times, ts_for_fft, w);
+%         for k=1:size(ts_for_fft,2)
+%             ts_for_fft(:,k) = ts_for_fft(:,k).*w;
+%         end
         val = abs(fft(ts_for_fft)).^2;
         
     case 'power_law'
