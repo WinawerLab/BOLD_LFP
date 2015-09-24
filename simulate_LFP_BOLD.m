@@ -8,11 +8,9 @@
 NS = neural_sim_defaults; disp(NS.params)
 % Change these to change the simulation. 
 
-NS = ns_set(NS, 'poisson_bb_rg', [0 1]);
+NS = ns_set(NS, 'poisson_bb_rg', [0 .5]);
 NS = ns_set(NS, 'poisson_g_rg', [0 .5]);
-NS = ns_set(NS, 'poisson_a_rg', [0 0]); 
-NS = ns_set(NS, 'num_neurons', 100);
-NS = ns_set(NS, 'num_conditions', 8);
+NS = ns_set(NS, 'poisson_a_rg', [0 .5]); 
 
 % Assign expected values of broadband and gamma levels for each stimulus class and each trial
 NS = ns_make_trial_struct(NS); disp(NS.trial)

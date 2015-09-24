@@ -188,6 +188,16 @@ switch lower(param)
             'HalfPowerFrequency1',alpha_range(1),'HalfPowerFrequency2',alpha_range(2),...
             'SampleRate',1/dt,'DesignMethod','butter');
     
+    case 'alpha_filter_delay'
+        % Delay, in samples, caused by alpha filter
+        alpha_filter = ns_get(NS, 'alpha_filter');  
+        sample_rate  = 1/ns_get(NS, 'dt');
+        alpha_range  = ns_get(NS, 'alpha_range');
+        [delays, w] = grpdelay(alpha_filter); 
+        f = w/pi * sample_rate;
+        val = mean(delays(f>= alpha_range(1) & f < alpha_range(2)));
+        val = round(val);
+        
     case 'envelope_filter'
         % LOW-pass Butterworth filter for alpha envelope
         dt = ns_get(NS, 'dt');  

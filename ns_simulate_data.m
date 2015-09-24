@@ -12,6 +12,7 @@ poisson_rate_g   = ns_get(NS, 'poisson_rate_g');
 poisson_rate_a   = ns_get(NS, 'poisson_rate_a');
 gamma_filter     = ns_get(NS, 'gamma_filter');
 alpha_filter     = ns_get(NS, 'alpha_filter');
+alpha_delay      = ns_get(NS, 'alpha_filter_delay');
 envelope_filter  = ns_get(NS, 'envelope_filter');
 
 % Initialize the time series array, which will hold data for all neurons at
@@ -57,14 +58,13 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
         
         %%%%% Alpha inputs
         mu              = zeros(1,num_broadband); % if you add offset here it would get filtered out
-        sigma           = eye(num_broadband) + (1-eye(num_broadband))* ns_get(NS, 'alpha_coh');
+        %sigma           = eye(num_broadband) + (1-eye(num_broadband))* ns_get(NS, 'alpha_coh');
+        sigma           = eye(num_broadband) + (1-eye(num_broadband))* poisson_rate_a(ii) / max(poisson_rate_a);
         alpha_inputs    = mvnrnd(mu,sigma,length(t));
-        alpha_inputs    = poisson_rate_a(ii)*filtfilt(alpha_filter, alpha_inputs);        
+        %alpha_inputs    = poisson_rate_a(ii)*filtfilt(alpha_filter, alpha_inputs);        
+        alpha_inputs    = max(poisson_rate_a)*filter(alpha_filter, padarray(alpha_inputs, [alpha_delay 0], 0, 'post'));        
+        alpha_inputs    = alpha_inputs(alpha_delay+1:end, :);
         alpha_envelope  = abs(hilbert(alpha_inputs));
-        %%%% invert the alpha envelope 
-%         alpha_envelope = .05./(1+25*alpha_envelope);       
-        % filter envelope to only add some low frequencies:
-%         alpha_envelope  = filtfilt(envelope_filter, alpha_envelope); % lowpass filter the envelope
         alpha_inputs    = alpha_inputs + alpha_envelope;
 
         % combine broadband and alpha
@@ -91,9 +91,7 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
             % current at next time point
             ts_g(jj+1,:,ii) = ts_g(jj,:,ii) + dI;
         end
-        
-    ts_bb(:,:,ii) = ts_bb(:,:,ii) + alpha_envelope;
-        
+                
     end
     fprintf('Done\n');        
     
@@ -101,9 +99,9 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
     % Combine all populations into a single neural pool.
     ts(:,:,:,sim_number) = cat(2, ts_bb, ts_g);
     
-%     % subtract baseline mean
-     baseline_ts = ts(:,:,ns_get(NS,'baseline_trials'),sim_number);
-     ts = ts - mean(baseline_ts(:));
+        % subtract baseline mean
+        baseline_ts = ts(:,:,ns_get(NS,'baseline_trials'),sim_number);
+        ts = ts - mean(baseline_ts(:));
     
     % Store the time series in the NS struct
     NS = ns_set(NS, 'ts', ts);
