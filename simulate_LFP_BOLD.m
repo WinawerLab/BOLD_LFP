@@ -8,7 +8,7 @@
 NS = neural_sim_defaults; disp(NS.params)
 % Change these to change the simulation. 
 
-NS = ns_set(NS, 'poisson_bb_rg', [0 .5]);
+NS = ns_set(NS, 'poisson_bb_rg', [0 0]);
 NS = ns_set(NS, 'poisson_g_rg', [0 .5]);
 NS = ns_set(NS, 'poisson_a_rg', [0 .5]); 
 
@@ -101,6 +101,7 @@ bold_avg  = ns_mean_by_stimulus(NS, ns_get(NS, 'bold'));
 all_alpha_input = NS.trial.poisson_rate_a;
 all_mean_data = squeeze(mean(sum(NS.data.ts(:,:,:),2),1));
 all_alpha_data = NS.data.alpha;
+all_gamma_data = NS.data.gamma;
 all_bb_data = NS.data.bb;
 
 mean_avg = zeros(max(NS.trial.condition_num),1);
@@ -162,7 +163,6 @@ xlabel('alpha inputs'),ylabel('bb inputs')
 [~,high_alpha_trial] = max(NS.trial.poisson_rate_a);
 neuron_nr = 1;
 figure
-
 
 subplot(4,1,1),hold on
 % plot(NS.data.ts(:,neuron_nr,high_bb_trial))
