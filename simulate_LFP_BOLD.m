@@ -8,7 +8,7 @@
 NS = neural_sim_defaults; disp(NS.params)
 % Change these to change the simulation. 
 
-NS = ns_set(NS, 'poisson_bb_rg', [0 0]);
+NS = ns_set(NS, 'poisson_bb_rg', [0 .5]);
 NS = ns_set(NS, 'poisson_g_rg', [0 .5]);
 NS = ns_set(NS, 'poisson_a_rg', [0 .5]); 
 
@@ -196,7 +196,6 @@ stats = regstats(bold_avg,[bb_avg]);
 stats = regstats(bold_avg,[bb_avg alpha_avg]);
 [stats.rsquare stats.adjrsquare]
 
-return
 %%
 % Summarize R2 values acorss experiments and measurement types (BOLD v
 % broadband, total LFP, or gamma)
