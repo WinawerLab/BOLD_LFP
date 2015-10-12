@@ -8,9 +8,11 @@
 NS = neural_sim_defaults; disp(NS.params)
 % Change these to change the simulation. 
 
-NS = ns_set(NS, 'poisson_bb_rg', [0 .5]);
+NS = ns_set(NS, 'poisson_bb_rg', [0 .1]);
 NS = ns_set(NS, 'poisson_g_rg', [0 .5]);
-NS = ns_set(NS, 'poisson_a_rg', [0 .5]); 
+NS = ns_set(NS, 'poisson_a_rg', [0 1]); 
+
+NS = ns_set(NS,'num_conditions',8);
 
 % Assign expected values of broadband and gamma levels for each stimulus class and each trial
 NS = ns_make_trial_struct(NS); disp(NS.trial)
@@ -216,3 +218,42 @@ if num_experiments > 1
     plot([1 1]*median(R2_gamma_bold), get(gca, 'YLim'), 'k-')
     title(sprintf('gamma v BOLD R^2, %4.2f',median(R2_gamma_bold))), xlim([0 1])
 end
+
+%% correlate over all frequencies 
+
+bold_avg  = ns_mean_by_stimulus(NS, ns_get(NS, 'bold'));
+
+ts_for_fft = squeeze(mean(ns_get(NS, 'ts'),2));
+
+% fft settings just like in the other correlation
+fft_w = 250; % window width
+fft_ov = 0; % overlap
+srate = 1/ns_get(NS,'dt');
+% initialize 
+[~,f] = pwelch(ts_for_fft(:,1),fft_w,fft_ov,srate,srate);
+pxx_all = zeros(size(ts_for_fft,2),length(f));
+% loop over trials
+for m = 1:size(ts_for_fft,2)
+    pxx_all(m,:) = pwelch(ts_for_fft(:,m),fft_w,fft_ov,srate,srate);
+end
+
+% mean power by stimulus
+pxx_avg = zeros(NS.params.num_conditions,length(f));
+for m=1:NS.params.num_conditions
+    pxx_avg(m,:) = mean(pxx_all(NS.trial.condition_num==m-1,:));
+end
+
+% power change
+pxx_change = bsxfun(@minus, log10(pxx_avg), log10(pxx_avg(1,:)));
+r = zeros(size(pxx_change,2),1);
+
+for m=1:size(pxx_change,2)
+    r(m) = corr(bold_avg,pxx_change(:,m));
+end
+
+figure('Position',[0 0 200 150]),hold on
+plot(f,zeros(size(f)),'Color',[.5 .5 .5])
+plot(f,r,'k','LineWidth',2)
+xlabel('Frequency'),ylabel('correlation with BOLD (r)')
+xlim([0 200])
+ylim([-1 1])

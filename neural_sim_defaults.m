@@ -7,7 +7,8 @@ function NS = neural_sim_defaults()
 % see ns_set for description of parameters
 NS = ns_set([], 'simulate_method', 'SLOW'); 
 NS = ns_set(NS, 'num_neurons', 600);      
-NS = ns_set(NS, 'bb_fraction', .5);  
+% NS = ns_set(NS, 'bb_fraction', .5);     
+NS = ns_set(NS, 'bb_fraction', 1);  
 NS = ns_set(NS, 'num_conditions', 8);       
 NS = ns_set(NS, 'num_averages', 30);       
 NS = ns_set(NS, 'num_experiments', 1);
