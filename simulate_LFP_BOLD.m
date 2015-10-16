@@ -11,6 +11,7 @@ NS = neural_sim_defaults; disp(NS.params)
 NS = ns_set(NS, 'poisson_bb_rg', [0 .1]);
 NS = ns_set(NS, 'poisson_g_rg', [0 .5]);
 NS = ns_set(NS, 'poisson_a_rg', [0 1]); 
+NS = ns_set(NS, 'poisson_baseline', .1); 
 
 NS = ns_set(NS,'num_conditions',8);
 
@@ -19,7 +20,7 @@ NS = ns_make_trial_struct(NS); disp(NS.trial)
 
 % Simulate. This will produce a time series for each neuron in each trial
 NS = ns_simulate_data(NS); 
-%%
+
 % Convert the neural time series into instrument measures
 NS = ns_neural2instruments(NS); disp(NS.data)
 

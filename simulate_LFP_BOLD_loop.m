@@ -1,25 +1,17 @@
 
-%% ECOG BOLD simulation
+%% ECOG BOLD simulation RUN A LOOP
 
 % Purpose: Simulate neural data - time varying membrane potentials - and
 % then ask whether the simulated BOLD signal and various metrics of the
 % simulated field potentials are correlated.
 
 %%%%% vary broadband 
-% sim_nr = 1;
-% poisson_bb_rg_in = [0 .5; 0 .4;0 .3;0 .2;0 .1;0 0];
-% sim_nr = 2;
-% poisson_bb_rg_in = [0 .5; 0 .4;0 .3;0 .2;0 .1;0 0.08;0 0.06;0 0.04;0 0.02; 0 0];
-% sim_nr = 3;
-% poisson_bb_rg_in = [0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1];
-% sim_nr = 4;
-% poisson_bb_rg_in = [0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1];
-% sim_nr = 5;
-% poisson_bb_rg_in = [0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1];
-% sim_nr = 6;
-% poisson_bb_rg_in = [0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5];
-sim_nr = 7;
-poisson_bb_rg_in = [0 .05;0 .05;0 .05;0 .05;0 .05;0 .05;0 .05;0 .05;0 .05;0 .05];
+sim_nr = 5;
+poisson_bb_rg_in = [0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1];
+sim_nr = 6;
+poisson_bb_rg_in = [0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5];
+% sim_nr = 7;
+% poisson_bb_rg_in = [0 .05;0 .05;0 .05;0 .05;0 .05;0 .05;0 .05;0 .05;0 .05;0 .05];
 tic
 
 for k=1:size(poisson_bb_rg_in,1)
@@ -35,10 +27,7 @@ for k=1:size(poisson_bb_rg_in,1)
     elseif sim_nr == 4
         NS = ns_set(NS, 'poisson_g_rg', [0 .5]);
         NS = ns_set(NS, 'poisson_a_rg', [0 .5]); 
-    elseif sim_nr == 5 || sim_nr == 6
-        NS = ns_set(NS, 'poisson_g_rg', [0 .8]);
-        NS = ns_set(NS, 'poisson_a_rg', [0 .8]); 
-    elseif sim_nr == 7
+    elseif sim_nr == 5 || sim_nr == 6 || sim_nr == 7
         NS = ns_set(NS, 'poisson_g_rg', [0 .8]);
         NS = ns_set(NS, 'poisson_a_rg', [0 .8]); 
     else
@@ -64,18 +53,21 @@ end
 
 %% get all the correlation values 
 clear all
-% sim_nr = 1;
-% poisson_bb_rg_in = [0 .5; 0 .4;0 .3;0 .2;0 .1;0 0];
-% sim_nr = 2;
-% poisson_bb_rg_in = [0 .5; 0 .4;0 .3;0 .2;0 .1;0 0.08;0 0.06;0 0.04;0 0.02; 0 0];
-sim_nr = 5;
-poisson_bb_rg_in = [0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1];
-% sim_nr = 6;
-% poisson_bb_rg_in = [0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5];
+% sim_nr = 5;
+% poisson_bb_rg_in = [0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1];
+sim_nr = 6;
+poisson_bb_rg_in = [0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5];
+% sim_nr = 7;
+% poisson_bb_rg_in = [0 .05;0 .05;0 .05;0 .05;0 .05;0 .05;0 .05;0 .05;0 .05;0 .05];
 
 bold_corr=zeros(size(poisson_bb_rg_in,1),5);
 bold_beta=zeros(size(poisson_bb_rg_in,1),6);
 r_all = zeros(size(poisson_bb_rg_in,1),501);
+out.bold_vals = zeros(size(poisson_bb_rg_in,1),8);
+out.bb_vals = zeros(size(poisson_bb_rg_in,1),8);
+out.gamma_vals = zeros(size(poisson_bb_rg_in,1),8);
+out.alpha_vals = zeros(size(poisson_bb_rg_in,1),8);
+out.mean_vals = zeros(size(poisson_bb_rg_in,1),8);
 
 for k=1:size(poisson_bb_rg_in,1)
 %     load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_varyBB0-0p' int2str(100*poisson_bb_rg_in(k,2)) '_nr' int2str(sim_nr)],'NS')
@@ -88,12 +80,19 @@ for k=1:size(poisson_bb_rg_in,1)
     bold_avg  = zscore(ns_mean_by_stimulus(NS, ns_get(NS, 'bold')));
     all_mean_data = squeeze(mean(sum(NS.data.ts(:,:,:),2),1));
     mean_avg = zeros(max(NS.trial.condition_num),1);
-    
     for m=1:max(NS.trial.condition_num)+1
         mean_avg(m) = mean(all_mean_data(NS.trial.condition_num==m-1));
     end
     mean_avg = zscore(mean_avg);
     
+    % put in output
+    out.bold_vals(k,:) = bold_avg;
+    out.bb_vals(k,:) = bb_avg;
+    out.gamma_vals(k,:) = gamma_avg;
+    out.alpha_vals(k,:) = alpha_avg;
+    out.mean_vals(k,:) = mean_avg;
+    
+    % do stats
     stats = regstats(bold_avg,bb_avg);
     bold_corr(k,1) = stats.rsquare;
     bold_beta(k,1) = stats.beta(2);
@@ -175,17 +174,26 @@ print('-depsc','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/
 figure('Position',[0 0 200 300])    
 subplot(2,1,1),hold on
 bar(1,mean(bold_corr(:,1)),1,'r')
+errorbar(1,mean(bold_corr(:,1)),std(bold_corr(:,1))/sqrt(length(bold_corr(:,1))),'k')
 bar(2,mean(bold_corr(:,2)),1,'y')
+errorbar(2,mean(bold_corr(:,2)),std(bold_corr(:,2))/sqrt(length(bold_corr(:,2))),'k')
 bar(3,mean(bold_corr(:,3)),1,'b')
+errorbar(3,mean(bold_corr(:,3)),std(bold_corr(:,3))/sqrt(length(bold_corr(:,3))),'k')
 bar(4,mean(bold_corr(:,5)),1,'FaceColor',[1 0 1])
+errorbar(4,mean(bold_corr(:,5)),std(bold_corr(:,5))/sqrt(length(bold_corr(:,5))),'k')
 xlim([.5 4.5]),ylim([0 1])
 
 subplot(2,1,2),hold on
 bar(1-.3,mean(bold_beta(:,1)),.3,'FaceColor',[.9 .9 .9])
+errorbar(1-.3,mean(bold_beta(:,1)),std(bold_beta(:,1))/sqrt(length(bold_beta(:,1))),'k')
 bar(2.3-.3,mean(bold_beta(:,2)),.3,'FaceColor',[.6 .6 .6])
+errorbar(2.3-.3,mean(bold_beta(:,2)),std(bold_beta(:,2))/sqrt(length(bold_beta(:,2))),'k')
 bar(3.6-.3,mean(bold_beta(:,3)),.3,'FaceColor',[.2 .3 .3])
+errorbar(3.6-.3,mean(bold_beta(:,3)),std(bold_beta(:,3))/sqrt(length(bold_beta(:,3))),'k')
 bar(4-.3,mean(bold_beta(:,5)),.3,'FaceColor',[.9 .9 .9])
+errorbar(4-.3,mean(bold_beta(:,5)),std(bold_beta(:,5))/sqrt(length(bold_beta(:,5))),'k')
 bar(4.6-.3,mean(bold_beta(:,6)),.3,'FaceColor',[.2 .3 .3])
+errorbar(4.6-.3,mean(bold_beta(:,6)),std(bold_beta(:,6))/sqrt(length(bold_beta(:,6))),'k')
 xlim([.5 4.5])
 set(gcf,'PaperPositionMode','auto')
 print('-dpng','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/r_varyBB_sim' int2str(sim_nr) '_av'])
@@ -204,18 +212,25 @@ set(gcf,'PaperPositionMode','auto')
 print('-dpng','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/allfreq_corr1val_nr' int2str(sim_nr)])
 print('-depsc','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/allfreq_corr1val_nr' int2str(sim_nr)])
 
-%% for SfN poster, plot inputs table
+%% load a set and plot stuff 
+%%
+%% plot inputs table
+%%
+
 clear all
 
-sim_nr = 5;
-poisson_bb_rg_in = [0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1];
-k=1;
+% sim_nr = 5;
+% poisson_bb_rg_in = [0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1;0 .1];
+% s=1;
+sim_nr = 6;
+poisson_bb_rg_in = [0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5];
+s=6; % S4 cond 1-5; S6 c1-6; S8 c1-3;
 
 bold_corr=zeros(size(poisson_bb_rg_in,1),5);
 bold_beta=zeros(size(poisson_bb_rg_in,1),6);
 r_all = zeros(size(poisson_bb_rg_in,1),501);
 
-load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_nr' int2str(sim_nr) '_' int2str(k) ],'NS')
+load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_nr' int2str(sim_nr) '_' int2str(s) ],'NS')
 
 % to plot the mean with alpha
 all_mean_data = squeeze(mean(sum(NS.data.ts(:,:,:),2),1));
@@ -226,40 +241,61 @@ end
 
 
 %%
+
+plot_colors = [0 0 0; jet(NS.params.num_conditions)];
+
 figure('Position',[0 0 400 400])
-subplot(7,1,1)
-bar(NS.params.poisson_bb,'r')
+subplot(7,1,1),hold on
+for k=1:length(NS.params.poisson_bb)
+    bar(k,NS.params.poisson_baseline+NS.params.poisson_bb(k),'FaceColor',plot_colors(k,:))
+end
+ylim([.99 1.5])
+set(gca,'YTick',[1 1.5])
 ylabel('bb level')
-subplot(7,1,2)
-bar(zeros(size(NS.params.poisson_g))+NS.params.poisson_g_rg(2),'g')
+subplot(7,1,2),hold on
+for k=1:length(NS.params.poisson_g)
+    bar(k,0+NS.params.poisson_g_rg(2),'FaceColor',plot_colors(k,:))
+end
 ylabel('gamma level')
-subplot(7,1,3)
-bar(zeros(size(NS.params.poisson_a))+NS.params.poisson_a_rg(2),'b')
+subplot(7,1,3),hold on
+for k=1:length(NS.params.poisson_a)
+    bar(k,0+NS.params.poisson_a_rg(2),'FaceColor',plot_colors(k,:))
+end
 ylabel('alpha level')
 
-subplot(7,1,4)
-bar(zeros(size(NS.params.poisson_bb)),'r')
+subplot(7,1,4),hold on
+for k=1:length(NS.params.poisson_bb)
+    bar(k,0,'FaceColor',plot_colors(k,:))
+end
 ylabel('bb coh')
-subplot(7,1,5)
-bar(NS.params.poisson_g,'g')
+subplot(7,1,5),hold on
+for k=1:length(NS.params.poisson_g)
+    bar(k,NS.params.poisson_g(k)/max(NS.params.poisson_g),'FaceColor',plot_colors(k,:))
+end
 ylabel('gamma coh')
-subplot(7,1,6)
-bar(NS.params.poisson_a,'b')
+subplot(7,1,6),hold on
+for k=1:length(NS.params.poisson_a)
+    bar(k,NS.params.poisson_a(k)/max(NS.params.poisson_a),'FaceColor',plot_colors(k,:))
+end
 ylabel('alpha coh')
 
 subplot(7,1,7),hold on
-bar([1:8],mean_avg,.5,'c')
+for k=1:length(NS.params.poisson_a)
+    bar(k,mean_avg(k),.5,'FaceColor',plot_colors(k,:))
+end
 ylabel('mean')
-% bar([1:8],1./NS.params.poisson_a,.5,'c')
+% bar([1:8],1./(1+NS.params.poisson_a),.5,'c')
 % ylabel('mean inputs')
 
 for k=1:7
     subplot(7,1,k)
     box off
+    xlim([0 9])
+    set(gca,'XTick',[1:8])
 end
 set(gcf,'PaperPositionMode','auto')
-% print('-dpng','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/example_inputs'])
-% print('-depsc','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/example_inputs'])
+print('-dpng','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/example_inputs' int2str(sim_nr) '_' int2str(s)])
+print('-depsc','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/example_inputs' int2str(sim_nr) '_' int2str(s)])
 
 %% figure for SfN poster
 %% PLOT
@@ -273,41 +309,52 @@ set(gcf,'PaperPositionMode','auto')
 % load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_nr' int2str(sim_nr) '_' int2str(k) ],'NS')
 sim_nr = 6;
 poisson_bb_rg_in = [0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5];
-k=1;
-load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_nr' int2str(sim_nr) '_' int2str(k) ],'NS')
+s=6;
+load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_nr' int2str(sim_nr) '_' int2str(s) ],'NS')
 
-bb_avg    = ns_mean_by_stimulus(NS, ns_get(NS, 'bb'));
-bold_avg  = ns_mean_by_stimulus(NS, ns_get(NS, 'bold'));
-lfp_avg   = ns_mean_by_stimulus(NS, ns_get(NS, 'lfp'));
-gamma_avg = ns_mean_by_stimulus(NS, ns_get(NS, 'gamma'));
-alpha_avg = ns_mean_by_stimulus(NS, ns_get(NS, 'alpha'));
-num_conditions = ns_get(NS, 'num_conditions');
-freq_bb = ns_get(NS, 'freq_bb');
+%%
+[bb_avg,bb_std]         = ns_mean_by_stimulus(NS, ns_get(NS, 'bb'));
+[bold_avg,bold_std]     = ns_mean_by_stimulus(NS, ns_get(NS, 'bold'));
+[lfp_avg,lfp_std]       = ns_mean_by_stimulus(NS, ns_get(NS, 'lfp'));
+[gamma_avg,gamma_std]   = ns_mean_by_stimulus(NS, ns_get(NS, 'gamma'));
+[alpha_avg,alpha_std]   = ns_mean_by_stimulus(NS, ns_get(NS, 'alpha'));
+num_conditions          = ns_get(NS, 'num_conditions');
+freq_bb                 = ns_get(NS, 'freq_bb');
 
-fH=figure; clf; set(fH, 'Color', 'w')
+fH=figure('Position',[0 0 900 700]); clf; set(fH, 'Color', 'w')
 fs = [18 12]; % fontsize
 
 % ---- Plot Spectra for different stimuli -----
-subplot(1,3,1), set(gca, 'FontSize', fs(1));
+subplot(3,3,[1 4]), set(gca, 'FontSize', fs(1));
 plot_colors = [0 0 0; jet(num_conditions)];
 set(gca, 'ColorOrder', plot_colors); hold all
 plot(ns_get(NS, 'f'), ns_mean_by_stimulus(NS, ns_get(NS, 'power')), '-', ...
     freq_bb, exp(ns_get(NS, 'power_law')), 'k-', 'LineWidth', 2);
-set(gca, 'XScale', 'log', 'YScale', 'log')
+set(gca, 'XScale', 'log', 'YScale', 'log','XTick',[10 100])
 xlabel ('Frequency')
 ylabel('Power')
 % xlim([min(freq_bb) max(freq_bb)]);
-xlim([1 max(freq_bb)]);
+xlim([5 max(freq_bb)]);
 
 % ---- Plot BOLD v ECoG measures ----------------
 num_subplots = 4; % broadband; total LFP; gamma; alpha
 x_data = {bb_avg, lfp_avg, gamma_avg, alpha_avg};
+x_err = {bb_std, lfp_std, gamma_std, alpha_std};
+for ii=1:length(x_err)
+    x_err{ii} = x_err{ii}./sqrt(NS.params.num_averages);
+end
+bold_err = bold_std./sqrt(NS.params.num_averages);
 xl     = {'broadband', 'Total LFP power', 'Gamma', 'Alpha'};
 for ii = 1:num_subplots
     this_subplot = 3*(ii-1)+2;
     subplot(num_subplots,3,this_subplot), set(gca, 'FontSize', fs(2)); hold on
     p = polyfit(x_data{ii}, bold_avg,1);
-    scatter(x_data{ii}, bold_avg), axis tight square
+    error_x = [x_data{ii}-x_err{ii} x_data{ii}+x_err{ii}];
+    error_y = [bold_avg-bold_err bold_avg+bold_err];
+    plot([x_data{ii} x_data{ii}]',error_y','Color',[.5 .5 .5]);
+    plot(error_x',[bold_avg bold_avg]','Color',[.5 .5 .5]);
+    scatter(x_data{ii}, bold_avg,40,plot_colors(2:end,:)), axis tight square
+    
     hold on; plot(x_data{ii}, polyval(p, x_data{ii}), 'k-', 'LineWidth', 1)
     xlabel(xl{ii}), ylabel('BOLD')
     title(sprintf('r = %4.2f', corr(x_data{ii}, bold_avg)));
@@ -340,13 +387,14 @@ for ii = 1:num_subplots
 end
 
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/powerspectra_example'])
-print('-depsc','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/powerspectra_example'])
+print('-dpng','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/powerspectra_example_set' int2str(sim_nr) '_' int2str(s)])
+print('-depsc','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/powerspectra_example_set' int2str(sim_nr) '_' int2str(s)])
 %%
 figure('Position',[0 0 300 300]),hold on
 for k=1:8
     bar(k,bold_avg(k),'FaceColor',plot_colors(k,:))
 end
+set(gca,'XTick',[1:8])
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/powerspectra_example_BOLD'])
-print('-depsc','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/powerspectra_example_BOLD'])
+print('-dpng','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/powerspectra_example_BOLDset' int2str(sim_nr) '_' int2str(s)])
+print('-depsc','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/powerspectra_example_BOLDset' int2str(sim_nr) '_' int2str(s)])

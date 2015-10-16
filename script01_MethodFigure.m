@@ -6,20 +6,27 @@
 NS = neural_sim_defaults; disp(NS.params)
 % Change these to change the simulation. 
 
-NS = ns_set(NS, 'poisson_bb_rg', [0 .1]);
+NS = ns_set(NS, 'poisson_bb_rg', [0 .5]);
 NS = ns_set(NS, 'poisson_g_rg', [0 1]);
 NS = ns_set(NS, 'poisson_a_rg', [0 1]); 
+NS = ns_set(NS, 'poisson_baseline', .1); 
 
 NS = ns_set(NS,'num_conditions',3);
-NS = ns_set(NS,'num_conditions',6);
+NS = ns_set(NS,'num_conditions',2);
 NS = ns_set(NS,'num_averages',1);
 
 % Assign expected values of broadband and gamma levels for each stimulus class and each trial
 NS = ns_make_trial_struct(NS); disp(NS.trial)
 
-NS.params.poisson_bb = [1 .1 0 0 0 0];
-NS.params.poisson_a = [0 0 1 .1 0 0];
-NS.params.poisson_g = [0 0 0 0 1 .1];
+% NS.params.poisson_bb = [1 .1 0 0 0 0];
+% NS.params.poisson_a = [0 0 1 .1 0 0];
+% NS.params.poisson_g = [0 0 0 0 1 .1];
+% settings simulation set 6, iteration 6 (of 10)
+NS.params.poisson_bb = [0 .333]; 
+NS.params.poisson_g = [0 0.4];
+NS.params.poisson_a = [.8 0];
+
+cond_color={[0 0 0],[0 1 0]};
 
 % Get variables from NS struct before simulating
 t                = ns_get(NS, 't');
@@ -59,12 +66,13 @@ dt      = ns_get(NS, 'dt'); % step size for simulation, in seconds
 t       = ns_get(NS,'t');
 
 %% SIMULATE AND PLOT
-figure('Position',[0 0 800 400])
 
 t_idx_plot=[1:200];
 
 % generate data for one trial at a time
 for ii = 1:num_trials
+    figure('Position',[0 0 800 400])
+
     if ismember(ii,drawdots), fprintf('.'); drawnow(); end
 
     %%%%% Broadband inputs
@@ -72,18 +80,17 @@ for ii = 1:num_trials
     bb_inputs       = randn(length(t), num_broadband)*this_rate;
     
     % for the first trial, plot the time-series
-    if ii==1
         subplot(4,5,1),
-        plot(t(t_idx_plot),bb_inputs(t_idx_plot,1),'r');
+        plot(t(t_idx_plot),bb_inputs(t_idx_plot,1),'Color',cond_color{ii});
         title('bb inputs')
-        axis tight 
+        ylim([-1.5 1.5]),xlim([t(t_idx_plot(1)) t(t_idx_plot(end))])
         subplot(4,5,6),
-        plot(t(t_idx_plot),bb_inputs(t_idx_plot,2),'r');
-        axis tight 
+        plot(t(t_idx_plot),bb_inputs(t_idx_plot,2),'Color',cond_color{ii});
+        ylim([-1.5 1.5]),xlim([t(t_idx_plot(1)) t(t_idx_plot(end))])
         subplot(4,5,11),
-        plot(t(t_idx_plot),bb_inputs(t_idx_plot,3),'r');
-        axis tight 
-    end
+        plot(t(t_idx_plot),bb_inputs(t_idx_plot,3),'Color',cond_color{ii});
+        ylim([-1.5 1.5]),xlim([t(t_idx_plot(1)) t(t_idx_plot(end))])
+
     
     %%%%% Gamma inputs
     mu              = zeros(1,num_gamma);
@@ -92,18 +99,17 @@ for ii = 1:num_trials
     gamma_inputs    = padarray(gamma_inputs, [length_zero_pad 0], 0, 'both'); % zero pad 
     gamma_inputs    = max(poisson_rate_g)*filtfilt(gamma_filter, gamma_inputs);
     gamma_inputs    = gamma_inputs(length(t)+1:2*length(t),:); % remove zero pad 
-    if ii==1
+    
         subplot(4,5,2),
-        plot(t(t_idx_plot),gamma_inputs(t_idx_plot,1),'g');
+        plot(t(t_idx_plot),gamma_inputs(t_idx_plot,1),'Color',cond_color{ii});
         title('gamma inputs')
-        axis tight 
+        ylim([-.5 .5]),xlim([t(t_idx_plot(1)) t(t_idx_plot(end))])
         subplot(4,5,7),
-        plot(t(t_idx_plot),gamma_inputs(t_idx_plot,2),'g');
-        axis tight 
+        plot(t(t_idx_plot),gamma_inputs(t_idx_plot,2),'Color',cond_color{ii});
+        ylim([-.5 .5]),xlim([t(t_idx_plot(1)) t(t_idx_plot(end))])
         subplot(4,5,12),
-        plot(t(t_idx_plot),gamma_inputs(t_idx_plot,3),'g');
-        axis tight 
-    end
+        plot(t(t_idx_plot),gamma_inputs(t_idx_plot,3),'Color',cond_color{ii});
+        ylim([-.5 .5]),xlim([t(t_idx_plot(1)) t(t_idx_plot(end))])
     
     %%%%% Alpha inputs
     mu              = zeros(1,num_broadband); % if you add offset here it would get filtered out
@@ -116,33 +122,33 @@ for ii = 1:num_trials
     alpha_inputs    = alpha_inputs(length(t)+1:2*length(t),:); % remove zero pad 
     % add 1/alpha envelope to invert the relation between power and bold
     alpha_inputs    = alpha_inputs + (1/(1+poisson_rate_a(ii)))*alpha_envelope;
-    if ii==1
+    
         subplot(4,5,3),
-        plot(t(t_idx_plot),alpha_inputs(t_idx_plot,1),'b');
+        plot(t(t_idx_plot),alpha_inputs(t_idx_plot,1),'Color',cond_color{ii});
         title('alpha inputs')
-        axis tight 
+        ylim([-.2 .7]),xlim([t(t_idx_plot(1)) t(t_idx_plot(end))])
         subplot(4,5,8),
-        plot(t(t_idx_plot),alpha_inputs(t_idx_plot,2),'b');
-        axis tight 
+        plot(t(t_idx_plot),alpha_inputs(t_idx_plot,2),'Color',cond_color{ii});
+        ylim([-.2 .7]),xlim([t(t_idx_plot(1)) t(t_idx_plot(end))])
         subplot(4,5,13),
-        plot(t(t_idx_plot),alpha_inputs(t_idx_plot,3),'b');
-        axis tight 
-    end
+        plot(t(t_idx_plot),alpha_inputs(t_idx_plot,3),'Color',cond_color{ii});
+        ylim([-.2 .7]),xlim([t(t_idx_plot(1)) t(t_idx_plot(end))])
+    
     
     % combine broadband, gamma and alpha
     bb_inputs = bb_inputs + gamma_inputs + alpha_inputs;
-    if ii==1
+    
         subplot(4,5,4),
-        plot(t(t_idx_plot),bb_inputs(t_idx_plot,1),'k');
+        plot(t(t_idx_plot),bb_inputs(t_idx_plot,1),'Color',cond_color{ii});
         title('bb+a+g')
-        axis tight 
+        ylim([-1.5 1.5]),xlim([t(t_idx_plot(1)) t(t_idx_plot(end))])
         subplot(4,5,9),
-        plot(t(t_idx_plot),bb_inputs(t_idx_plot,2),'k');
-        axis tight 
+        plot(t(t_idx_plot),bb_inputs(t_idx_plot,2),'Color',cond_color{ii});
+        ylim([-1.5 1.5]),xlim([t(t_idx_plot(1)) t(t_idx_plot(end))])
         subplot(4,5,14),
-        plot(t(t_idx_plot),bb_inputs(t_idx_plot,3),'k');
-        axis tight 
-    end
+        plot(t(t_idx_plot),bb_inputs(t_idx_plot,3),'Color',cond_color{ii});
+        ylim([-1.5 1.5]),xlim([t(t_idx_plot(1)) t(t_idx_plot(end))])
+    
     
     % Leaky integrator loop 
     for jj = 1:length(t)-1
@@ -153,31 +159,37 @@ for ii = 1:num_trials
         % current at next time point
         ts_bb(jj+1,:,ii) = ts_bb(jj,:,ii) + dI;
     end
-    if ii==1
+    
         subplot(4,5,5),
-        plot(t(t_idx_plot),ts_bb(t_idx_plot,1,1),'k');
-        title('after leaky integration')
+        plot(t(t_idx_plot),ts_bb(t_idx_plot,1,ii),'Color',cond_color{ii});
+        title(['post leakyintegr sum(x^2)=' num2str(mean(ts_bb(:,1,ii).^2))])
         axis tight 
         subplot(4,5,10),
-        plot(t(t_idx_plot),ts_bb(t_idx_plot,2,1),'k');
+        plot(t(t_idx_plot),ts_bb(t_idx_plot,2,ii),'Color',cond_color{ii});
+        title(['sum(x^2)=' num2str(mean(ts_bb(:,2,ii).^2))])
         axis tight 
         subplot(4,5,15),
-        plot(t(t_idx_plot),ts_bb(t_idx_plot,3,1),'k');
+        plot(t(t_idx_plot),ts_bb(t_idx_plot,3,ii),'Color',cond_color{ii});
+        title(['sum(x^2)=' num2str(mean(ts_bb(:,3,ii).^2))])
         axis tight 
         
-    end 
+    for k=1:20
+        subplot(4,5,k)
+        box off
+        set(gca,'XTick',[],'XColor',[1 1 1])
+    end
     
-%     if ii==1
-%         set(gcf,'PaperPositionMode','auto')
-%         print('-dpng','-r300',['../neural_sim_output/figures/simulated_timeseries01'])
-%         print('-depsc','-r300',['../neural_sim_output/figures/simulated_timeseries01'])
-%     end
+    set(gcf,'PaperPositionMode','auto')
+    print('-dpng','-r300',['../neural_sim_output/figures/simTS2_tstable_trial' int2str(ii)])
+    print('-depsc','-r300',['../neural_sim_output/figures/simTS2_tstable_trial' int2str(ii)])
 end
 
 ts = ts_bb;
 
-subplot(4,5,20),
-plot(t(t_idx_plot),sum(ts_bb(t_idx_plot,:,1),2),'k');
+figure('Position',[0 0 200 200])
+subplot(2,1,1),hold on
+plot(t(t_idx_plot),sum(ts_bb(t_idx_plot,:,1),2),'Color',cond_color{1});
+plot(t(t_idx_plot),sum(ts_bb(t_idx_plot,:,2),2),'Color',cond_color{2});
 title('sum across neurons')
 axis tight 
 
@@ -192,23 +204,24 @@ NS = ns_set(NS, 'ts', ts);
 
 % save(['../neural_sim_output/data/examplesetB'],'NS') % set B is nice
 
-subplot(4,5,19),hold on
+subplot(2,1,2),hold on
 
-cond_color={[.5 0 0],[1 0.1 0.1],[0 0 .5],[.1 .1 1],[0 .5 0],[.1 1 .1]};
-
-for k=1:6
+for k=1:2
     [pxx,f]=pwelch(sum(ts(:,:,k),2),250,0,1000,1000);
     plot(f,pxx,'Color',cond_color{k})
     axis tight
     set(gca, 'XScale', 'log', 'YScale', 'log')
     xlim([5 200])
 end
-
+    
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['../neural_sim_output/figures/simTS_tstable'])
-print('-depsc','-r300',['../neural_sim_output/figures/simTS_tstable'])
+print('-dpng','-r300',['../neural_sim_output/figures/simTS2_tstable_trialSum'])
+print('-depsc','-r300',['../neural_sim_output/figures/simTS2_tstable_trialSum'])
 
 
+
+%% 
+%% OLD CODE
 %%
 %% single neuron figure
 %%
