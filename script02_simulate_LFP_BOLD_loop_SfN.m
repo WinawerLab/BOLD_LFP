@@ -46,7 +46,7 @@ for k=1:size(poisson_bb_rg_in,1)
     % Compute the correlations between different instrument measures 
     NS = ns_summary_statistics(NS); %disp(NS.stats)
     
-    save(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_nr' int2str(sim_nr) '_' int2str(k) ],'NS')
+    save(['/Volumes/DoraBigDrive/github/neural_sim_output/data_SfN/NS_nr' int2str(sim_nr) '_' int2str(k) ],'NS')
     disp(['done simulation ' int2str(k) ' of ' int2str(size(poisson_bb_rg_in,1))])
     toc
 end
@@ -70,8 +70,8 @@ out.alpha_vals = zeros(size(poisson_bb_rg_in,1),8);
 out.mean_vals = zeros(size(poisson_bb_rg_in,1),8);
 
 for k=1:size(poisson_bb_rg_in,1)
-%     load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_varyBB0-0p' int2str(100*poisson_bb_rg_in(k,2)) '_nr' int2str(sim_nr)],'NS')
-    load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_nr' int2str(sim_nr) '_' int2str(k) ],'NS')
+%     load(['/Volumes/DoraBigDrive/github/neural_sim_output/data_SfN/NS_varyBB0-0p' int2str(100*poisson_bb_rg_in(k,2)) '_nr' int2str(sim_nr)],'NS')
+    load(['/Volumes/DoraBigDrive/github/neural_sim_output/data_SfN/NS_nr' int2str(sim_nr) '_' int2str(k) ],'NS')
     
     %- to correlate bold and neurophys
     alpha_avg = zscore(ns_mean_by_stimulus(NS, ns_get(NS, 'alpha')));
@@ -166,8 +166,8 @@ for k=1%:size(poisson_bb_rg_in,1)
 end
 xlim([.5 1.9])%,ylim([0 1])
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/r_varyBB_sim6_k1'])
-print('-depsc','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/r_varyBB_sim6_k1'])
+print('-dpng','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures_SfN/r_varyBB_sim6_k1'])
+print('-depsc','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures_SfN/r_varyBB_sim6_k1'])
 
 
 %% Plot average r2 and beta and std across models
@@ -196,8 +196,8 @@ bar(4.6-.3,mean(bold_beta(:,6)),.3,'FaceColor',[.2 .3 .3])
 errorbar(4.6-.3,mean(bold_beta(:,6)),std(bold_beta(:,6))/sqrt(length(bold_beta(:,6))),'k')
 xlim([.5 4.5])
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/r_varyBB_sim' int2str(sim_nr) '_av'])
-print('-depsc','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/r_varyBB_sim' int2str(sim_nr) '_av'])
+print('-dpng','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures_SfN/r_varyBB_sim' int2str(sim_nr) '_av'])
+print('-depsc','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures_SfN/r_varyBB_sim' int2str(sim_nr) '_av'])
 
 %%
 figure('Position',[0 0 200 150]),hold on
@@ -209,8 +209,8 @@ xlim([0 200])
 ylim([-1 1])
 
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/allfreq_corr1val_nr' int2str(sim_nr)])
-print('-depsc','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/allfreq_corr1val_nr' int2str(sim_nr)])
+print('-dpng','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures_SfN/allfreq_corr1val_nr' int2str(sim_nr)])
+print('-depsc','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures_SfN/allfreq_corr1val_nr' int2str(sim_nr)])
 
 %% load a set and plot stuff 
 %%
@@ -230,7 +230,7 @@ bold_corr=zeros(size(poisson_bb_rg_in,1),5);
 bold_beta=zeros(size(poisson_bb_rg_in,1),6);
 r_all = zeros(size(poisson_bb_rg_in,1),501);
 
-load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_nr' int2str(sim_nr) '_' int2str(s) ],'NS')
+load(['/Volumes/DoraBigDrive/github/neural_sim_output/data_SfN/NS_nr' int2str(sim_nr) '_' int2str(s) ],'NS')
 
 % to plot the mean with alpha
 all_mean_data = squeeze(mean(sum(NS.data.ts(:,:,:),2),1));
@@ -294,8 +294,8 @@ for k=1:7
     set(gca,'XTick',[1:8])
 end
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/example_inputs' int2str(sim_nr) '_' int2str(s)])
-print('-depsc','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/example_inputs' int2str(sim_nr) '_' int2str(s)])
+print('-dpng','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures_SfN/example_inputs' int2str(sim_nr) '_' int2str(s)])
+print('-depsc','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures_SfN/example_inputs' int2str(sim_nr) '_' int2str(s)])
 
 %% figure for SfN poster
 %% PLOT
@@ -310,7 +310,7 @@ print('-depsc','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/
 sim_nr = 6;
 poisson_bb_rg_in = [0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5;0 .5];
 s=6;
-load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_nr' int2str(sim_nr) '_' int2str(s) ],'NS')
+load(['/Volumes/DoraBigDrive/github/neural_sim_output/data_SfN/NS_nr' int2str(sim_nr) '_' int2str(s) ],'NS')
 
 %%
 [bb_avg,bb_std]         = ns_mean_by_stimulus(NS, ns_get(NS, 'bb'));
@@ -387,8 +387,8 @@ for ii = 1:num_subplots
 end
 
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/powerspectra_example_set' int2str(sim_nr) '_' int2str(s)])
-print('-depsc','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/powerspectra_example_set' int2str(sim_nr) '_' int2str(s)])
+print('-dpng','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures_SfN/powerspectra_example_set' int2str(sim_nr) '_' int2str(s)])
+print('-depsc','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures_SfN/powerspectra_example_set' int2str(sim_nr) '_' int2str(s)])
 %%
 figure('Position',[0 0 300 300]),hold on
 for k=1:8
@@ -396,5 +396,5 @@ for k=1:8
 end
 set(gca,'XTick',[1:8])
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/powerspectra_example_BOLDset' int2str(sim_nr) '_' int2str(s)])
-print('-depsc','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/powerspectra_example_BOLDset' int2str(sim_nr) '_' int2str(s)])
+print('-dpng','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures_SfN/powerspectra_example_BOLDset' int2str(sim_nr) '_' int2str(s)])
+print('-depsc','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures_SfN/powerspectra_example_BOLDset' int2str(sim_nr) '_' int2str(s)])

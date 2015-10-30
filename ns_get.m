@@ -18,11 +18,6 @@ switch lower(param)
         % synchronous signals.
         val = NS.params.num_neurons;
         
-    case 'bb_fraction'
-        % Fraction of neurons that comprise broadband population (broadband signal
-        % only). The rest of the neurons have gamma response as well.
-        val = NS.params.bb_fraction;
-        
     case 'num_conditions'
         % Number of stimulus conditions. Each condition is defined by a
         % broadband and a gamma amplitude.
@@ -56,24 +51,34 @@ switch lower(param)
         % Baseline Poisson rate (arbitrary units)
         val = NS.params.poisson_baseline;
         
+    % rates    
     case 'poisson_bb_rg'
         % Broadband poisson rate range (arbitrary units).
         val = NS.params.poisson_bb_rg;
+                
+    case 'poisson_g_val'
+        % Broadband poisson rate range (arbitrary units).
+        val = NS.params.poisson_g_val;
         
-    case 'poisson_g_rg'
-        % Gamma poisson rate range (arbitrary units)
-        val = NS.params.poisson_g_rg;
+    case 'poisson_a_val'
+        % Broadband poisson rate range (arbitrary units).
+        val = NS.params.poisson_a_val;
+
+    % coherences
+    case 'gamma_coh_rg'
+        % Coherence of gamma neurons within gamma band ([0 1])
+        val =  NS.params.gamma_coh;
         
-        if ~isempty(varargin) && strcmpi(varargin{1}, 'scaled')
-            % Scale the gamma amplitude based on the coherence of the gamma
-            % signal across the neural population - the more coherent the
-            % oscillation, the bigger the ratio of population response to
-            % single neuron response. We would like to control the
-            % population response, because that is what is measured by an
-            % electrode. 
-            val = val * ns_get(NS, 'num_gamma').^ ((1-ns_get(NS, 'gamma_coh'))/2);
-        end
-        
+    case 'alpha_coh_rg'
+        % Coherence of response across neurons within alpha band ([0 1])
+        val = NS.params.alpha_coh;
+
+    % rates for each condition
+    case 'poisson_bb'
+        % Poisson rates for broadband signal for each unique condition/stimulus
+        % type (1 x num conditions)
+       val =  NS.params.poisson_bb;
+
     case 'poisson_g'
         % Poisson rates for gamma signal for each unique condition/stimulus
         % type (1 x num conditions)
@@ -83,50 +88,21 @@ switch lower(param)
         % Poisson rates for alpha signal for each unique condition/stimulus
         % type (1 x num conditions)
         val = NS.params.poisson_a;
-
-    case 'poisson_bb'
-        % Poisson rates for broadband signal for each unique condition/stimulus
-        % type (1 x num conditions)
-       val =  NS.params.poisson_bb;
-
-    case 'poisson_a_rg'
-        % Alpha poisson rate range (arbitrary units)
-        val = NS.params.poisson_a_rg;
-        
-        if ~isempty(varargin) && strcmpi(varargin{1}, 'scaled')
-            % Scale the alpha amplitude based on the coherence of the alpha
-            % signal across the neural population - the more coherent the
-            % oscillation, the bigger the ratio of population response to
-            % single neuron response. We would like to control the
-            % population response, because that is what is measured by an
-            % electrode. 
-            val = val * ns_get(NS, 'num_alpha').^ ((1-ns_get(NS, 'alpha_coh'))/2);
-        end
-        
-        
-    case 'gamma_coh'
-        % Coherence of gamma neurons within gamma band ([0 1])
-        val =  NS.params.gamma_coh;
-        
-    case 'alpha_coh'
-        % Coherence of response across neurons within alpha band ([0 1])
-        val = NS.params.alpha_coh;
     
+    % coherences for each condition
+    case 'coherence_g'
+        % Coherence rates for gamma signal for each unique condition/stimulus
+        % type (1 x num conditions)
+        val =  NS.params.coherence_g;
+    
+    case 'coherence_a'
+        % Coherence rates for alpha signal for each unique condition/stimulus
+        % type (1 x num conditions)
+        val =  NS.params.coherence_a;
+
     % -------------------------------------------------------------------
     % Derived parameters. These can be returned by get but cannot be set
     % -------------------------------------------------------------------
-    case 'num_broadband'
-        % Number of neurons in the broadband-only pools
-         val = round(ns_get(NS, 'num_neurons') * ns_get(NS, 'bb_fraction'));
-               
-    case 'num_gamma'
-        % Number of neurons in gamma-only pools
-        val = ns_get(NS, 'num_neurons') - ns_get(NS, 'num_broadband');
-
-    case 'num_alpha'
-        % Number of neurons with alpha response. Assume equal to the
-        % broadband pool.
-         val = round(ns_get(NS, 'num_neurons') * ns_get(NS, 'bb_fraction'));
 
     case 'num_trials'
         % Number of trials per experiment
@@ -205,7 +181,7 @@ switch lower(param)
             'HalfPowerFrequency',5,...
             'SampleRate',1/dt,'DesignMethod','butter');
 
-        % ---------------------------
+    % ---------------------------
     % -- trial variables --------
     % ---------------------------    
     case 'condition_num'
@@ -216,11 +192,18 @@ switch lower(param)
         % Get the Poisson rate for the broadband inputs for each trial
         val = NS.trial.poisson_rate_bb;
     case 'poisson_rate_g'
-        % Get the Poisson rate for the gamma inputs for each trial
+        % Get the Poisson rate for the broadband inputs for each trial
         val = NS.trial.poisson_rate_g;
     case 'poisson_rate_a'
+        % Get the Poisson rate for the broadband inputs for each trial
+        val = NS.trial.poisson_rate_a;
+    case 'coherence_rate_g'
+        % Get the Poisson rate for the gamma inputs for each trial
+        val = NS.trial.coherence_rate_g;
+    case 'coherence_rate_a'
         % Get the Poisson rate for the alpha inputs for each trial
-        val = NS.trial.poisson_rate_a;        
+        val = NS.trial.coherence_rate_a;
+        
     % ---------------------------
     % -- data -------------------
     % ---------------------------    
