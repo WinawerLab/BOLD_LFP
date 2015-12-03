@@ -8,7 +8,7 @@ poisson_baseline = ns_get(NS, 'poisson_baseline');
 poisson_rate_bb  = ns_get(NS, 'poisson_rate_bb');
 poisson_rate_g   = ns_get(NS, 'poisson_rate_g');
 poisson_rate_a   = ns_get(NS, 'poisson_rate_a');
-coherence_rate_g = ns_get(NS, 'coherence_rate_g');
+coherence_rate_g = ns_get(NS, 'coherence_rate_g'); % call just coherence
 coherence_rate_a = ns_get(NS, 'coherence_rate_a');
 gamma_filter     = ns_get(NS, 'gamma_filter');
 alpha_filter     = ns_get(NS, 'alpha_filter');
@@ -58,16 +58,32 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
 %         gamma_inputs    = bsxfun(@plus, gamma_inputs, baseline);
         
         %%%%% Alpha inputs
-        mu              = zeros(1,num_neurons); % if you add offset here it would get filtered out
-        sigma           = eye(num_neurons) + (1-eye(num_neurons))* coherence_rate_a(ii);
-        alpha_inputs    = mvnrnd(mu,sigma,length(t));
-        alpha_inputs    = padarray(alpha_inputs, [length_zero_pad 0], 0, 'both'); % zero pad 
-        alpha_inputs    = poisson_rate_a(ii)*filtfilt(alpha_filter, alpha_inputs);       
-        alpha_envelope  = abs(hilbert(alpha_inputs));
-        alpha_envelope  = alpha_envelope(length(t)+1:2*length(t),:); % remove zero pad 
-        alpha_inputs    = alpha_inputs(length(t)+1:2*length(t),:); % remove zero pad 
-        alpha_inputs    = alpha_inputs + (1/(1+coherence_rate_a(ii)))*alpha_envelope;
+        t_total = dt:dt:num_neurons;
+        f = (0:length(t_total)-1)/max(t_total);
+        alpha_pulses = zeros(size(t_total));
+        next_pulse = 0; 
+        while next_pulse < max(t_total)
+            next_pulse = next_pulse + 0.1+randn*.020;
+            [~, idx] = min(abs(next_pulse-t_total));
+            alpha_pulses(idx) = .1*rand+1;
+        end
+        alpha_pulses = alpha_pulses*coherence_rate_a(ii);
+        t_h = dt:dt:.300;
+        h = -exp(-(t_h-.075).^2/(2*.020^2));
+        alpha_signal = conv(alpha_pulses, h, 'same');
+        alpha_signal_epoched = reshape(alpha_signal, length(t), num_neurons);
+        alpha_inputs = alpha_signal_epoched;
         
+%         mu              = zeros(1,num_neurons); % if you add offset here it would get filtered out
+%         sigma           = eye(num_neurons) + (1-eye(num_neurons))* coherence_rate_a(ii);
+%         alpha_inputs    = mvnrnd(mu,sigma,length(t));
+%         alpha_inputs    = padarray(alpha_inputs, [length_zero_pad 0], 0, 'both'); % zero pad 
+%         alpha_inputs    = poisson_rate_a(ii)*filtfilt(alpha_filter, alpha_inputs);       
+%         alpha_envelope  = abs(hilbert(alpha_inputs)); % computed here on every neuron
+%         alpha_envelope  = alpha_envelope(length(t)+1:2*length(t),:); % remove zero pad 
+%         alpha_inputs    = alpha_inputs(length(t)+1:2*length(t),:); % remove zero pad 
+%         alpha_inputs    = alpha_inputs + (2/(1+coherence_rate_a(ii)))*alpha_envelope;
+                
         % combine broadband and alpha
         bb_inputs = bb_inputs + alpha_inputs + gamma_inputs;
                 

@@ -15,8 +15,8 @@ coherence_a_rg = ns_get(NS, 'alpha_coh_rg');
 poisson_bb     = [0 linspace(poisson_bb_rg(1),poisson_bb_rg(2), num_conditions-1)];
 poisson_g      = poisson_g_val*ones(size(poisson_bb));
 poisson_a      = poisson_a_val*ones(size(poisson_bb));
-coherence_g    = linspace(coherence_g_rg(1), coherence_g_rg(2),  num_conditions-1);
-coherence_a    = linspace(coherence_a_rg(1), coherence_a_rg(2),  num_conditions-1);
+coherence_g    = (linspace(coherence_g_rg(1), coherence_g_rg(2),  num_conditions-1)).^2;
+coherence_a    = (linspace(coherence_a_rg(1), coherence_a_rg(2),  num_conditions-1)).^2;
 
 % Decorrelate expected broadband and gamma levels across conditions /
 % stimuli. We would like the measures to be decorrelated across trials 

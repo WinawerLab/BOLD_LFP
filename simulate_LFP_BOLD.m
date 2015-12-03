@@ -8,17 +8,22 @@
 NS = neural_sim_defaults; disp(NS.params)
 % Change these to change the simulation. 
 
-NS = ns_set(NS, 'poisson_baseline', .1); 
-NS = ns_set(NS, 'poisson_bb_rg', [0 .1]);
-NS = ns_set(NS, 'poisson_g_val', [1]);
-NS = ns_set(NS, 'poisson_a_val', [1]); 
-NS = ns_set(NS, 'alpha_coh_rg', [0 .5]); % this should be a range, transformed into a vector, or 1 value for all conditions
-NS = ns_set(NS, 'gamma_coh_rg', [0 .5]); 
+% low broadband condition bb = [0 .1] alpha = [0 .5]
+% high broadband condition bb = [0 .3] alpha = [0 .5]
+
+NS = ns_set(NS, 'num_neurons', 100); 
+NS = ns_set(NS, 'poisson_baseline', .3); 
+NS = ns_set(NS, 'poisson_bb_rg', [0 .3]); 
+NS = ns_set(NS, 'poisson_g_val', [.3]);
+NS = ns_set(NS, 'poisson_a_val', [.3]); 
+NS = ns_set(NS, 'alpha_coh_rg', [0 .5]); 
+NS = ns_set(NS, 'gamma_coh_rg', [0 1]); 
 
 NS = ns_set(NS,'num_conditions',8);
 
 % Assign expected values of broadband and gamma levels for each stimulus class and each trial
 NS = ns_make_trial_struct(NS); disp(NS.trial)
+
 %%
 % Simulate. This will produce a time series for each neuron in each trial
 NS = ns_simulate_data(NS); 
@@ -28,6 +33,10 @@ NS = ns_neural2instruments(NS); disp(NS.data)
 
 % Compute the correlations between different instrument measures 
 NS = ns_summary_statistics(NS); disp(NS.stats)
+
+%%%% comment here: ns_summary statistics is different from
+%%%% ns_mean_by_stimulus for alpha and gamma because the broadband is not
+%%%% subtracted in ns_mean_by_stimulus
 
 %% PLOT
 bb_avg    = ns_mean_by_stimulus(NS, ns_get(NS, 'bb'));
@@ -67,11 +76,10 @@ for ii = 1:num_subplots
     title(sprintf('r = %4.2f', corr(x_data{ii}, bold_avg)));
 end
 
-
 % ---- Plot BOLD and ECoG measures as function of simulation inputs -----
 num_subplots = 3; % broadband; total LFP; gamma; alpha
-x_data_name = {'poisson_bb', 'poisson_g', 'poisson_a'};
-xl     = {'broadband', 'Gamma', 'Alpha'};
+x_data_name = {'poisson_bb', 'coherence_g', 'coherence_a'};
+xl     = {'Broadband', 'Gamma', 'Alpha'};
 
 for ii = 1:num_subplots
     this_subplot = 3 * (ii-1)+3;

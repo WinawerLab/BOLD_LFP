@@ -180,8 +180,8 @@ for ii = 1:num_trials
     end
     
     set(gcf,'PaperPositionMode','auto')
-    print('-dpng','-r300',['../neural_sim_output/figures/simTS2_tstable_trial' int2str(ii)])
-    print('-depsc','-r300',['../neural_sim_output/figures/simTS2_tstable_trial' int2str(ii)])
+%     print('-dpng','-r300',['../neural_sim_output/figures/simTS2_tstable_trial' int2str(ii)])
+%     print('-depsc','-r300',['../neural_sim_output/figures/simTS2_tstable_trial' int2str(ii)])
 end
 
 ts = ts_bb;
@@ -215,8 +215,8 @@ for k=1:2
 end
     
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['../neural_sim_output/figures/simTS2_tstable_trialSum'])
-print('-depsc','-r300',['../neural_sim_output/figures/simTS2_tstable_trialSum'])
+% print('-dpng','-r300',['../neural_sim_output/figures/simTS2_tstable_trialSum'])
+% print('-depsc','-r300',['../neural_sim_output/figures/simTS2_tstable_trialSum'])
 
 
 
