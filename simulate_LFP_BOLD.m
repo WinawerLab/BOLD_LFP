@@ -12,12 +12,12 @@ NS = neural_sim_defaults; disp(NS.params)
 % high broadband condition bb = [0 .3] alpha = [0 .5]
 
 NS = ns_set(NS, 'num_neurons', 100); 
-NS = ns_set(NS, 'poisson_baseline', .3); 
-NS = ns_set(NS, 'poisson_bb_rg', [0 .3]); 
+NS = ns_set(NS, 'poisson_baseline', .5); 
+NS = ns_set(NS, 'poisson_bb_rg', [0 .1]); 
 NS = ns_set(NS, 'poisson_g_val', [.3]);
-NS = ns_set(NS, 'poisson_a_val', [.3]); 
-NS = ns_set(NS, 'alpha_coh_rg', [0 .5]); 
-NS = ns_set(NS, 'gamma_coh_rg', [0 1]); 
+NS = ns_set(NS, 'poisson_a_val', [1]); 
+NS = ns_set(NS, 'alpha_coh_rg', [0 1]); 
+NS = ns_set(NS, 'gamma_coh_rg', [0 .3]); 
 
 NS = ns_set(NS,'num_conditions',8);
 

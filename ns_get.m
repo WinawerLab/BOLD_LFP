@@ -174,11 +174,11 @@ switch lower(param)
         val = mean(delays(f>= alpha_range(1) & f < alpha_range(2)));
         val = round(val);
         
-    case 'envelope_filter'
+    case 'lowpass_filter'
         % LOW-pass Butterworth filter for alpha envelope
         dt = ns_get(NS, 'dt');  
-        val = designfilt('lowpassiir','FilterOrder',30, ...
-            'HalfPowerFrequency',5,...
+        val = designfilt('lowpassiir','FilterOrder',10, ...
+            'HalfPowerFrequency',15,...
             'SampleRate',1/dt,'DesignMethod','butter');
 
     % ---------------------------

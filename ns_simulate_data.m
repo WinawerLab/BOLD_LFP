@@ -12,7 +12,7 @@ coherence_rate_g = ns_get(NS, 'coherence_rate_g'); % call just coherence
 coherence_rate_a = ns_get(NS, 'coherence_rate_a');
 gamma_filter     = ns_get(NS, 'gamma_filter');
 alpha_filter     = ns_get(NS, 'alpha_filter');
-% envelope_filter  = ns_get(NS, 'envelope_filter');
+lowpass_filter   = ns_get(NS, 'lowpass_filter');
 length_zero_pad  = length(t);
 
 % Initialize the time series array, which will hold data for all neurons at
@@ -57,7 +57,7 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
 %         baseline        = randn(length(t), num_neurons)*poisson_baseline;
 %         gamma_inputs    = bsxfun(@plus, gamma_inputs, baseline);
         
-        %%%%% Alpha inputs
+        %%%%% Alpha inputs with pulses
         t_total = dt:dt:num_neurons;
         f = (0:length(t_total)-1)/max(t_total);
         alpha_pulses = zeros(size(t_total));
@@ -69,20 +69,26 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
         end
         alpha_pulses = alpha_pulses*coherence_rate_a(ii);
         t_h = dt:dt:.300;
-        h = -exp(-(t_h-.075).^2/(2*.020^2));
-        alpha_signal = conv(alpha_pulses, h, 'same');
+%         h = exp(-(t_h-.075).^2/(2*.015^2));
+        h = exp(-(t_h-.075).^2/(2*.02^2));
+        alpha_signal = -conv(alpha_pulses, h, 'same');
+%         alpha_signal = alpha_signal(1:length(t_total));
+        alpha_signal = filtfilt(lowpass_filter, alpha_signal); % lowpass to reduce harmonics
         alpha_signal_epoched = reshape(alpha_signal, length(t), num_neurons);
         alpha_inputs = alpha_signal_epoched;
         
 %         mu              = zeros(1,num_neurons); % if you add offset here it would get filtered out
-%         sigma           = eye(num_neurons) + (1-eye(num_neurons))* coherence_rate_a(ii);
+%         sigma           = eye(num_neurons) + (1-eye(num_neurons))*0;%* coherence_rate_a(ii);
 %         alpha_inputs    = mvnrnd(mu,sigma,length(t));
 %         alpha_inputs    = padarray(alpha_inputs, [length_zero_pad 0], 0, 'both'); % zero pad 
-%         alpha_inputs    = poisson_rate_a(ii)*filtfilt(alpha_filter, alpha_inputs);       
+% %         alpha_inputs    = poisson_rate_a(ii)*filtfilt(alpha_filter, alpha_inputs);       
+%         alpha_inputs    = coherence_rate_a(ii)*filtfilt(alpha_filter, alpha_inputs);       
 %         alpha_envelope  = abs(hilbert(alpha_inputs)); % computed here on every neuron
 %         alpha_envelope  = alpha_envelope(length(t)+1:2*length(t),:); % remove zero pad 
 %         alpha_inputs    = alpha_inputs(length(t)+1:2*length(t),:); % remove zero pad 
-%         alpha_inputs    = alpha_inputs + (2/(1+coherence_rate_a(ii)))*alpha_envelope;
+% %         alpha_inputs    = alpha_inputs + (2/(1+coherence_rate_a(ii)))*alpha_envelope;
+%         % make alpha into negative pulses
+%         alpha_inputs    = -(alpha_envelope+alpha_inputs);
                 
         % combine broadband and alpha
         bb_inputs = bb_inputs + alpha_inputs + gamma_inputs;
@@ -117,9 +123,9 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
 %     ts(:,:,:,sim_number) = cat(2, ts_bb, ts_g);
     ts(:,:,:,sim_number) = ts_bb;
     
-        % subtract baseline mean
-        baseline_ts = ts(:,:,ns_get(NS,'baseline_trials'),sim_number);
-        ts = ts - mean(baseline_ts(:));
+    % subtract baseline mean
+    baseline_ts = ts(:,:,ns_get(NS,'baseline_trials'),sim_number);
+    ts = ts - mean(baseline_ts(:));
     
     % Store the time series in the NS struct
     NS = ns_set(NS, 'ts', ts);
