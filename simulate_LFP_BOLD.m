@@ -8,16 +8,16 @@
 NS = neural_sim_defaults; disp(NS.params)
 % Change these to change the simulation. 
 
-% low broadband condition bb = [0 .1] alpha = [0 .5]
+% low broadband condition bb = [0 .1] alpha = [0 .5], X
 % high broadband condition bb = [0 .3] alpha = [0 .5]
 
 NS = ns_set(NS, 'num_neurons', 100); 
 NS = ns_set(NS, 'poisson_baseline', .5); 
 NS = ns_set(NS, 'poisson_bb_rg', [0 .1]); 
-NS = ns_set(NS, 'poisson_g_val', [.3]);
-NS = ns_set(NS, 'poisson_a_val', [1]); 
-NS = ns_set(NS, 'alpha_coh_rg', [0 1]); 
-NS = ns_set(NS, 'gamma_coh_rg', [0 .3]); 
+NS = ns_set(NS, 'poisson_g_val', [.5]);
+NS = ns_set(NS, 'poisson_a_val', [.5]); 
+NS = ns_set(NS, 'alpha_coh_rg', [0 .5]); 
+NS = ns_set(NS, 'gamma_coh_rg', [0 .5]); 
 
 NS = ns_set(NS,'num_conditions',8);
 
@@ -245,7 +245,7 @@ srate = 1/ns_get(NS,'dt');
 pxx_all = zeros(size(ts_for_fft,2),length(f));
 % loop over trials
 for m = 1:size(ts_for_fft,2)
-    pxx_all(m,:) = pwelch(ts_for_fft(:,m),fft_w,fft_ov,srate,srate);
+    pxx_all(m,:) = pwelch(ts_for_fft(:,m),window(@hann,fft_w),fft_ov,srate,srate);
 end
 
 % mean power by stimulus

@@ -40,7 +40,7 @@ for sim_number = 1:num_experiments
         lfp(ii,sim_number)   = lfp_fun(ts(:,:,ii));
         bold(ii,sim_number)  = bold_fun(ts(:,:,ii));
         bb(ii,sim_number)    = bb_fun(data_power(freq_bb,ii), power_law(:,sim_number));
-        gamma(ii,sim_number) = gamma_fun(data_power(freq_gamma,ii));
+        gamma(ii,sim_number) = gamma_fun(data_power(freq_gamma,ii)) - bb(ii,sim_number);
         alpha(ii,sim_number) = alpha_fun(data_power(freq_alpha,ii));
     end
         

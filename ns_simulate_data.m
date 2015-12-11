@@ -73,7 +73,7 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
         h = exp(-(t_h-.075).^2/(2*.02^2));
         alpha_signal = -conv(alpha_pulses, h, 'same');
 %         alpha_signal = alpha_signal(1:length(t_total));
-        alpha_signal = filtfilt(lowpass_filter, alpha_signal); % lowpass to reduce harmonics
+%         alpha_signal = filtfilt(lowpass_filter, alpha_signal); % lowpass to reduce harmonics
         alpha_signal_epoched = reshape(alpha_signal, length(t), num_neurons);
         alpha_inputs = alpha_signal_epoched;
         

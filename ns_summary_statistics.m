@@ -13,8 +13,8 @@ for ii = 1:ns_get(NS, 'num_conditions')
     lfp_avg(ii, :)   = mean(lfp(inds,:));
     bold_avg(ii, :)  = mean(bold(inds,:));
     bb_avg(ii, :)    = mean(bb(inds,:));
-    gamma_avg(ii, :) = mean(gamma(inds,:)) - mean(bb(inds,:));
-    alpha_avg(ii, :) = mean(alpha(inds,:)) - mean(bb(inds,:));        
+    gamma_avg(ii, :) = mean(gamma(inds,:));
+    alpha_avg(ii, :) = mean(alpha(inds,:));        
 end
  
 
