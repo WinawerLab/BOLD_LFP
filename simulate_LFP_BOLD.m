@@ -13,7 +13,7 @@ NS = neural_sim_defaults; disp(NS.params)
 
 NS = ns_set(NS, 'num_neurons', 200); 
 NS = ns_set(NS, 'poisson_baseline', .5); 
-NS = ns_set(NS, 'poisson_bb_rg', [0 .2]); 
+NS = ns_set(NS, 'poisson_bb_rg', [0 .1]); 
 NS = ns_set(NS, 'poisson_g_val', .5);
 NS = ns_set(NS, 'poisson_a_val', .1); 
 NS = ns_set(NS, 'alpha_coh_rg', [0 .5]); 
@@ -102,8 +102,8 @@ for ii = 1:num_subplots
 end
 
 % set(gcf,'PaperPositionMode','auto')
-% print('-dpng','-r300',['../figures/results_with_alpha_windowOFF_withBB'])
-% print('-depsc','-r300',['../figures/results_with_alpha_windowOFF_withBB'])
+% print('-dpng','-r300',['../neural_sim_output/figures/NEW01_bb0_3'])
+% print('-depsc','-r300',['../neural_sim_output/figures/NEW01_bb0_3'])
 
 %% check alpha and mean signal and bb
 alpha_avg = ns_mean_by_stimulus(NS, ns_get(NS, 'alpha'));
@@ -275,3 +275,28 @@ plot(f,r,'k','LineWidth',2)
 xlabel('Frequency'),ylabel('correlation with BOLD (r)')
 xlim([0 200])
 ylim([-1 1])
+
+set(gcf,'PaperPositionMode','auto')
+print('-dpng','-r300',['../neural_sim_output/figures/NEW01_bb0_3_allfreq'])
+print('-depsc','-r300',['../neural_sim_output/figures/NEW01_bb0_3_allfreq'])
+
+
+%% show some signals
+
+figure
+subplot(2,1,1)
+plot(squeeze(sum(NS.data.ts(:,:,1),2)))
+title('sum of ts in trial with high alpha')
+a = find(NS.trial.coherence_rate_a==0,1);
+subplot(2,1,2)
+plot(squeeze(sum(NS.data.ts(:,:,a),2)))
+title('sum of ts in trial with 0 alpha')
+%%
+figure
+subplot(2,1,1)
+plot(squeeze(NS.data.ts(:,1,1)))
+title('sum of ts in trial with high alpha')
+a = find(NS.trial.coherence_rate_a==0,1);
+subplot(2,1,2)
+plot(squeeze(NS.data.ts(:,1,a)))
+title('sum of ts in trial with 0 alpha')

@@ -61,7 +61,7 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
         next_pulse = 0; 
         wait_time = sort(round(1./alpha_range /dt));
     
-       while next_pulse < length(t)
+        while next_pulse < length(t)
             this_pulse = next_pulse + randi(wait_time, [1 num_neurons]);
             this_pulse(this_pulse > length(t)) = NaN;
             inds = sub2ind(size(alpha_pulses), this_pulse, 1:num_neurons);
@@ -71,7 +71,9 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
         end
         h = exp(-(t-.075).^2/(2*.02^2));
         alpha_inputs = -conv2(alpha_pulses, h', 'full');
-        alpha_inputs = alpha_inputs(1:length(t),:);
+        [~,max_ind] = max(h);
+        % get the peak of the response at the time of the pulse: 
+        alpha_inputs = alpha_inputs(max_ind:max_ind+length(t)-1,:);
         % alpha_inputs = filtfilt(lowpass_filter, alpha_inputs); % lowpass to reduce harmonics
                 
         % combine broadband and alpha
