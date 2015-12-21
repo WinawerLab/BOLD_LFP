@@ -11,13 +11,13 @@ NS = neural_sim_defaults; disp(NS.params)
 % low broadband condition bb = [0 .1] alpha = [0 .5], X
 % high broadband condition bb = [0 .3] alpha = [0 .5]
 
-NS = ns_set(NS, 'num_neurons', 100); 
+NS = ns_set(NS, 'num_neurons', 200); 
 NS = ns_set(NS, 'poisson_baseline', .5); 
 NS = ns_set(NS, 'poisson_bb_rg', [0 .1]); 
-NS = ns_set(NS, 'poisson_g_val', [.5]);
-NS = ns_set(NS, 'poisson_a_val', [.5]); 
+NS = ns_set(NS, 'poisson_g_val', .5);
+NS = ns_set(NS, 'poisson_a_val', .1); 
 NS = ns_set(NS, 'alpha_coh_rg', [0 .5]); 
-NS = ns_set(NS, 'gamma_coh_rg', [0 .5]); 
+NS = ns_set(NS, 'gamma_coh_rg', [0 .3]); 
 
 NS = ns_set(NS,'num_conditions',8);
 
@@ -102,8 +102,8 @@ for ii = 1:num_subplots
 end
 
 % set(gcf,'PaperPositionMode','auto')
-% print('-dpng','-r300',['../figures/results_with_alpha_windowOFF_withBB'])
-% print('-depsc','-r300',['../figures/results_with_alpha_windowOFF_withBB'])
+% print('-dpng','-r300',['../neural_sim_output/figures/NEW01_bb0_3'])
+% print('-depsc','-r300',['../neural_sim_output/figures/NEW01_bb0_3'])
 
 %% check alpha and mean signal and bb
 alpha_avg = ns_mean_by_stimulus(NS, ns_get(NS, 'alpha'));
@@ -168,13 +168,14 @@ xlabel('alpha inputs'),ylabel('bb inputs')
 % print('-depsc','-r300',['../figures/alpha_mean_bb_corr4'])
 
 
-%%
+
 %% make initial figures SfN poster
 
 [~,high_bb_trial] = max(NS.trial.poisson_rate_bb);
-[~,high_gamma_trial] = max(NS.trial.poisson_rate_g);
-[~,high_alpha_trial] = max(NS.trial.poisson_rate_a);
+[~,high_gamma_trial] = max(ns_get(NS, 'coherence_rate_g'));
+[~,high_alpha_trial] = max(ns_get(NS, 'coherence_rate_a'));
 neuron_nr = 1;
+
 figure
 
 subplot(4,1,1),hold on
@@ -209,26 +210,26 @@ stats = regstats(bold_avg,[bb_avg]);
 stats = regstats(bold_avg,[bb_avg alpha_avg]);
 [stats.rsquare stats.adjrsquare]
 
-%%
-% Summarize R2 values acorss experiments and measurement types (BOLD v
-% broadband, total LFP, or gamma)
-if num_experiments > 1
-    figure(101);clf
-    subplot(3,1,1)
-    hist(R2_bb_bold, -.05:.1:1.05); hold on
-    plot([1 1]*median(R2_bb_bold), get(gca, 'YLim'), 'k-')
-    title(sprintf('Broadband v BOLD R^2, %4.2f',median(R2_bb_bold))), xlim([0 1])
-    
-    subplot(3,1,2)
-    hist(R2_lfp_bold, -.05:.1:1.05); hold on
-    plot([1 1]*median(R2_lfp_bold), get(gca, 'YLim'), 'k-')
-    title(sprintf('LFP v BOLD R^2, %4.2f',median(R2_lfp_bold))), xlim([0 1])
-    
-    subplot(3,1,3)
-    hist(R2_gamma_bold, -.05:.1:1.05); hold on
-    plot([1 1]*median(R2_gamma_bold), get(gca, 'YLim'), 'k-')
-    title(sprintf('gamma v BOLD R^2, %4.2f',median(R2_gamma_bold))), xlim([0 1])
-end
+% %%
+% % Summarize R2 values acorss experiments and measurement types (BOLD v
+% % broadband, total LFP, or gamma)
+% if num_experiments > 1
+%     figure(101);clf
+%     subplot(3,1,1)
+%     hist(R2_bb_bold, -.05:.1:1.05); hold on
+%     plot([1 1]*median(R2_bb_bold), get(gca, 'YLim'), 'k-')
+%     title(sprintf('Broadband v BOLD R^2, %4.2f',median(R2_bb_bold))), xlim([0 1])
+%     
+%     subplot(3,1,2)
+%     hist(R2_lfp_bold, -.05:.1:1.05); hold on
+%     plot([1 1]*median(R2_lfp_bold), get(gca, 'YLim'), 'k-')
+%     title(sprintf('LFP v BOLD R^2, %4.2f',median(R2_lfp_bold))), xlim([0 1])
+%     
+%     subplot(3,1,3)
+%     hist(R2_gamma_bold, -.05:.1:1.05); hold on
+%     plot([1 1]*median(R2_gamma_bold), get(gca, 'YLim'), 'k-')
+%     title(sprintf('gamma v BOLD R^2, %4.2f',median(R2_gamma_bold))), xlim([0 1])
+% end
 
 %% correlate over all frequencies 
 
@@ -237,16 +238,21 @@ bold_avg  = ns_mean_by_stimulus(NS, ns_get(NS, 'bold'));
 ts_for_fft = squeeze(mean(ns_get(NS, 'ts'),2));
 
 % fft settings just like in the other correlation
-fft_w = 250; % window width
-fft_ov = 0; % overlap
-srate = 1/ns_get(NS,'dt');
+fft_w  = hanning(250); % window width
+fft_ov = .5*length(fft_w); % overlap
+srate  = 1/ns_get(NS,'dt');
 % initialize 
 [~,f] = pwelch(ts_for_fft(:,1),fft_w,fft_ov,srate,srate);
+
 pxx_all = zeros(size(ts_for_fft,2),length(f));
 % loop over trials
 for m = 1:size(ts_for_fft,2)
-    pxx_all(m,:) = pwelch(ts_for_fft(:,m),window(@hann,fft_w),fft_ov,srate,srate);
+    pxx_all(m,:) = pwelch(ts_for_fft(:,m),fft_w,fft_ov,srate,srate);    
 end
+
+%
+% f = (0:length(t)-1)/max(t);
+% pxx_all = abs(fft(ts_for_fft))';
 
 % mean power by stimulus
 pxx_avg = zeros(NS.params.num_conditions,length(f));
@@ -255,11 +261,12 @@ for m=1:NS.params.num_conditions
 end
 
 % power change
-pxx_change = bsxfun(@minus, log10(pxx_avg), log10(pxx_avg(1,:)));
+pxx_change = bsxfun(@minus, log(pxx_avg), log(pxx_avg(1,:)));
 r = zeros(size(pxx_change,2),1);
 
-for m=1:size(pxx_change,2)
+for m=1:length(f)
     r(m) = corr(bold_avg,pxx_change(:,m));
+    %r(m) = corr(bold_avg,pxx_avg(:,m));
 end
 
 figure('Position',[0 0 200 150]),hold on
@@ -268,3 +275,28 @@ plot(f,r,'k','LineWidth',2)
 xlabel('Frequency'),ylabel('correlation with BOLD (r)')
 xlim([0 200])
 ylim([-1 1])
+
+set(gcf,'PaperPositionMode','auto')
+print('-dpng','-r300',['../neural_sim_output/figures/NEW01_bb0_3_allfreq'])
+print('-depsc','-r300',['../neural_sim_output/figures/NEW01_bb0_3_allfreq'])
+
+
+%% show some signals
+
+figure
+subplot(2,1,1)
+plot(squeeze(sum(NS.data.ts(:,:,1),2)))
+title('sum of ts in trial with high alpha')
+a = find(NS.trial.coherence_rate_a==0,1);
+subplot(2,1,2)
+plot(squeeze(sum(NS.data.ts(:,:,a),2)))
+title('sum of ts in trial with 0 alpha')
+%%
+figure
+subplot(2,1,1)
+plot(squeeze(NS.data.ts(:,1,1)))
+title('sum of ts in trial with high alpha')
+a = find(NS.trial.coherence_rate_a==0,1);
+subplot(2,1,2)
+plot(squeeze(NS.data.ts(:,1,a)))
+title('sum of ts in trial with 0 alpha')

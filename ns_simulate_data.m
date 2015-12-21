@@ -12,6 +12,7 @@ coherence_rate_g = ns_get(NS, 'coherence_rate_g'); % call just coherence
 coherence_rate_a = ns_get(NS, 'coherence_rate_a');
 gamma_filter     = ns_get(NS, 'gamma_filter');
 alpha_filter     = ns_get(NS, 'alpha_filter');
+alpha_range      = ns_get(NS, 'alpha_range');
 lowpass_filter   = ns_get(NS, 'lowpass_filter');
 length_zero_pad  = length(t);
 
@@ -54,41 +55,26 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
         gamma_inputs    = padarray(gamma_inputs, [length_zero_pad 0], 0, 'both'); % zero pad 
         gamma_inputs    = poisson_rate_g(ii)*filtfilt(gamma_filter, gamma_inputs);
         gamma_inputs    = gamma_inputs(length(t)+1:2*length(t),:); % remove zero pad 
-%         baseline        = randn(length(t), num_neurons)*poisson_baseline;
-%         gamma_inputs    = bsxfun(@plus, gamma_inputs, baseline);
         
         %%%%% Alpha inputs with pulses
-        t_total = dt:dt:num_neurons;
-        f = (0:length(t_total)-1)/max(t_total);
-        alpha_pulses = zeros(size(t_total));
+        alpha_pulses = zeros(length(t), num_neurons);
         next_pulse = 0; 
-        while next_pulse < max(t_total)
-            next_pulse = next_pulse + 0.1+randn*.020;
-            [~, idx] = min(abs(next_pulse-t_total));
-            alpha_pulses(idx) = .1*rand+1;
+        wait_time = sort(round(1./alpha_range /dt));
+    
+        while next_pulse < length(t)
+            this_pulse = next_pulse + randi(wait_time, [1 num_neurons]);
+            this_pulse(this_pulse > length(t)) = NaN;
+            inds = sub2ind(size(alpha_pulses), this_pulse, 1:num_neurons);
+            inds = inds(isfinite(inds));
+            alpha_pulses(inds) = coherence_rate_a(ii);
+            next_pulse = round(mean(this_pulse));
         end
-        alpha_pulses = alpha_pulses*coherence_rate_a(ii);
-        t_h = dt:dt:.300;
-%         h = exp(-(t_h-.075).^2/(2*.015^2));
-        h = exp(-(t_h-.075).^2/(2*.02^2));
-        alpha_signal = -conv(alpha_pulses, h, 'same');
-%         alpha_signal = alpha_signal(1:length(t_total));
-%         alpha_signal = filtfilt(lowpass_filter, alpha_signal); % lowpass to reduce harmonics
-        alpha_signal_epoched = reshape(alpha_signal, length(t), num_neurons);
-        alpha_inputs = alpha_signal_epoched;
-        
-%         mu              = zeros(1,num_neurons); % if you add offset here it would get filtered out
-%         sigma           = eye(num_neurons) + (1-eye(num_neurons))*0;%* coherence_rate_a(ii);
-%         alpha_inputs    = mvnrnd(mu,sigma,length(t));
-%         alpha_inputs    = padarray(alpha_inputs, [length_zero_pad 0], 0, 'both'); % zero pad 
-% %         alpha_inputs    = poisson_rate_a(ii)*filtfilt(alpha_filter, alpha_inputs);       
-%         alpha_inputs    = coherence_rate_a(ii)*filtfilt(alpha_filter, alpha_inputs);       
-%         alpha_envelope  = abs(hilbert(alpha_inputs)); % computed here on every neuron
-%         alpha_envelope  = alpha_envelope(length(t)+1:2*length(t),:); % remove zero pad 
-%         alpha_inputs    = alpha_inputs(length(t)+1:2*length(t),:); % remove zero pad 
-% %         alpha_inputs    = alpha_inputs + (2/(1+coherence_rate_a(ii)))*alpha_envelope;
-%         % make alpha into negative pulses
-%         alpha_inputs    = -(alpha_envelope+alpha_inputs);
+        h = exp(-(t-.075).^2/(2*.02^2));
+        alpha_inputs = -conv2(alpha_pulses, h', 'full');
+        [~,max_ind] = max(h);
+        % get the peak of the response at the time of the pulse: 
+        alpha_inputs = alpha_inputs(max_ind:max_ind+length(t)-1,:);
+        % alpha_inputs = filtfilt(lowpass_filter, alpha_inputs); % lowpass to reduce harmonics
                 
         % combine broadband and alpha
         bb_inputs = bb_inputs + alpha_inputs + gamma_inputs;
