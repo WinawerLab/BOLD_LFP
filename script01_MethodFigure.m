@@ -4,6 +4,7 @@
 
 % Set default parameters.
 NS = neural_sim_defaults; disp(NS.params)
+
 % Change these to change the simulation. 
 NS = ns_set(NS, 'num_neurons', 200); 
 NS = ns_set(NS, 'poisson_baseline', .5); 
@@ -19,15 +20,16 @@ NS = ns_set(NS,'num_averages',1);
 % Assign expected values of broadband and gamma levels for each stimulus class and each trial
 NS = ns_make_trial_struct(NS); disp(NS.trial)
 
-
-not yet fixed alpha coherence not clear???
-
-
-% settings simulation for one set
+% overwrite settings simulation for one set
 NS.params.poisson_bb_rg = [0 .3]; 
 NS.params.alpha_coh = [.5 0];
+NS.params.coherence_a = [.5 0];
+NS.params.coherence_g = [0 .3];
+NS.trial.coherence_rate_a = NS.params.coherence_a.^2;
+NS.trial.coherence_rate_g = NS.params.coherence_g.^2;
 
-cond_color={[0 0 0],[0 1 0]};
+%%
+cond_color={[0 0 0],[0 .6 0]};
 
 % Get variables from NS struct before simulating
 t                = ns_get(NS, 't');
@@ -123,6 +125,7 @@ for ii = 1:num_trials
     h = exp(-(t-.075).^2/(2*.02^2));
     alpha_inputs = -conv2(alpha_pulses, h', 'full');
     [~,max_ind] = max(h);
+    
     % get the peak of the response at the time of the pulse: 
     alpha_inputs = alpha_inputs(max_ind:max_ind+length(t)-1,:);
     % alpha_inputs = filtfilt(lowpass_filter, alpha_inputs); % lowpass to reduce harmonics
@@ -130,13 +133,13 @@ for ii = 1:num_trials
         subplot(4,6,3),
         plot(t(t_idx_plot),alpha_inputs(t_idx_plot,1),'Color',cond_color{ii});
         title('alpha inputs')
-        ylim([-.3 .3]),xlim([t(t_idx_plot(1)) t(t_idx_plot(end))])
+        ylim([-.6 .1]),xlim([t(t_idx_plot(1)) t(t_idx_plot(end))])
         subplot(4,6,9),
         plot(t(t_idx_plot),alpha_inputs(t_idx_plot,2),'Color',cond_color{ii});
-        ylim([-.3 .3]),xlim([t(t_idx_plot(1)) t(t_idx_plot(end))])
+        ylim([-.6 .1]),xlim([t(t_idx_plot(1)) t(t_idx_plot(end))])
         subplot(4,6,15),
         plot(t(t_idx_plot),alpha_inputs(t_idx_plot,3),'Color',cond_color{ii});
-        ylim([-.3 .3]),xlim([t(t_idx_plot(1)) t(t_idx_plot(end))])
+        ylim([-.6 .1]),xlim([t(t_idx_plot(1)) t(t_idx_plot(end))])
     
     
     % combine broadband, gamma and alpha
@@ -183,13 +186,13 @@ for ii = 1:num_trials
         subplot(4,6,6)
         title('sum(x^2)')
         barh(1,mean(ts_bb(:,1,ii).^2),.3,'FaceColor',[.5 .5 .5])
-        xlim([0 .1])
+        xlim([0 .2])
         subplot(4,6,12)
         barh(1,mean(ts_bb(:,2,ii).^2),.3,'FaceColor',[.5 .5 .5])
-        xlim([0 .1])
+        xlim([0 .2])
         subplot(4,6,18)
         barh(1,mean(ts_bb(:,3,ii).^2),.3,'FaceColor',[.5 .5 .5])
-        xlim([0 .1])
+        xlim([0 .2])
         
     for k=1:24
         subplot(4,6,k)
@@ -202,7 +205,7 @@ for ii = 1:num_trials
         end
     end
     
-    set(gcf,'PaperPositionMode','auto')
+%     set(gcf,'PaperPositionMode','auto')
 %     print('-dpng','-r300',['../neural_sim_output/figures/simTS2_tstable_trial' int2str(ii)])
 %     print('-depsc','-r300',['../neural_sim_output/figures/simTS2_tstable_trial' int2str(ii)])
 end
@@ -229,7 +232,6 @@ subplot(2,2,2),hold on
 barh(1,sum(mean(ts_bb(:,:,1).^2),2),.3,'FaceColor',cond_color{1})
 barh(2,sum(mean(ts_bb(:,:,2).^2),2),.3,'FaceColor',cond_color{2})
 title('sum across neurons of the sum(x^2)')
-axis tight 
 
 subplot(2,2,3),hold on
 
@@ -237,11 +239,11 @@ for k=1:2
     [pxx,f]=pwelch(sum(ts(:,:,k),2),250,0,1000,1000);
     plot(f,pxx,'Color',cond_color{k})
     axis tight
-    set(gca, 'XScale', 'log', 'YScale', 'log')
+    set(gca, 'XScale', 'log', 'YScale', 'log','XTick',[10 100])
     xlim([5 200])
 end
     
-set(gcf,'PaperPositionMode','auto')
+% set(gcf,'PaperPositionMode','auto')
 % print('-dpng','-r300',['../neural_sim_output/figures/simTS2_tstable_trialSum'])
 % print('-depsc','-r300',['../neural_sim_output/figures/simTS2_tstable_trialSum'])
 
