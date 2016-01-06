@@ -9,11 +9,8 @@ poisson_rate_bb  = ns_get(NS, 'poisson_rate_bb');
 poisson_rate_g   = ns_get(NS, 'poisson_rate_g');
 poisson_rate_a   = ns_get(NS, 'poisson_rate_a');
 coherence_rate_g = ns_get(NS, 'coherence_rate_g'); % call just coherence
-coherence_rate_a = ns_get(NS, 'coherence_rate_a');
 gamma_filter     = ns_get(NS, 'gamma_filter');
-alpha_filter     = ns_get(NS, 'alpha_filter');
 alpha_range      = ns_get(NS, 'alpha_range');
-lowpass_filter   = ns_get(NS, 'lowpass_filter');
 length_zero_pad  = length(t);
 
 % Initialize the time series array, which will hold data for all neurons at
@@ -21,32 +18,38 @@ length_zero_pad  = length(t);
 ts  = zeros(length(t), ns_get(NS, 'num_neurons'), num_trials, ...
     ns_get(NS, 'num_experiments'));
 
+% check whether some inputs need to be saved, and which trials
+save_inputs = ns_get(NS, 'save_inputs');
+save_inputs_trials = ns_get(NS, 'trials_save_inputs');
+% initialte variables to save
+save_bb_inputs = zeros(length(t), ns_get(NS, 'num_neurons'),length(save_inputs_trials),ns_get(NS, 'num_experiments'));
+save_g_inputs = zeros(length(t), ns_get(NS, 'num_neurons'),length(save_inputs_trials),ns_get(NS, 'num_experiments'));
+save_a_inputs = zeros(length(t), ns_get(NS, 'num_neurons'),length(save_inputs_trials),ns_get(NS, 'num_experiments'));
+
 % Loop over experiments
 for sim_number = 1:ns_get(NS, 'num_experiments')
-    
+    counter_save_trials = 0;
     fprintf('\n'); drawnow();
     
     % Initialize variables. These variables will store one time
-    % series per tiral per neuron in the broadband pool (ts_bb) and
-    % one time series per trial per neuron in the gamma pool (ts_g)
-    ts_bb = zeros(length(t), num_neurons, num_trials);
-%     ts_g  = zeros(length(t), num_neurons, num_trials);
+    % series per trial per neuron  
+    ts_integrated = zeros(length(t), num_neurons, num_trials);
     
     fprintf('[%s]: Simulating time series ', mfilename);
     drawdots = round((1:10)/10*num_trials);
     
-    % generate the simulated data: time x neuron x trial
+    % parameters
+    tau         = 0.010;            % time constant of leaky integrator (seconds)
+    dt          = ns_get(NS, 'dt'); % step size for simulation, in seconds
+    input_dc    = .25;              % DC added
     
-    tau = 0.010;              % time constant of leaky integrator (seconds)
-    dt    = ns_get(NS, 'dt'); % step size for simulation, in seconds
-    
-    % generate data for one trial at a time
+    % generate the simulated data: time x neuron x trial one trial at a time
     for ii = 1:num_trials
         if ismember(ii,drawdots), fprintf('.'); drawnow(); end
         
         %%%%% Broadband inputs
         this_rate       = poisson_rate_bb(ii) + poisson_baseline;
-        bb_inputs       = randn(length(t), num_neurons)*this_rate;
+        bb_inputs       = randn(length(t), num_neurons)*this_rate + input_dc;
         
         %%%%% Gamma inputs
         mu              = zeros(1,num_neurons);
@@ -66,7 +69,7 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
             this_pulse(this_pulse > length(t)) = NaN;
             inds = sub2ind(size(alpha_pulses), this_pulse, 1:num_neurons);
             inds = inds(isfinite(inds));
-            alpha_pulses(inds) = coherence_rate_a(ii);
+            alpha_pulses(inds) = poisson_rate_a(ii);
             next_pulse = round(mean(this_pulse));
         end
         h = exp(-(t-.075).^2/(2*.02^2));
@@ -74,50 +77,46 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
         [~,max_ind] = max(h);
         % get the peak of the response at the time of the pulse: 
         alpha_inputs = alpha_inputs(max_ind:max_ind+length(t)-1,:);
-        % alpha_inputs = filtfilt(lowpass_filter, alpha_inputs); % lowpass to reduce harmonics
                 
-        % combine broadband and alpha
-        bb_inputs = bb_inputs + alpha_inputs + gamma_inputs;
-                
+        % combine broadband, gamma and alpha
+        summed_inputs = bb_inputs + gamma_inputs + alpha_inputs;
+          
+        % write out some of the raw inputs if saving
+        if save_inputs == 1
+            if ismember(ii,save_inputs_trials)
+                counter_save_trials = counter_save_trials+1;
+                save_bb_inputs(:,:,counter_save_trials,sim_number) = bb_inputs;
+                save_g_inputs(:,:,counter_save_trials,sim_number) = gamma_inputs;
+                save_a_inputs(:,:,counter_save_trials,sim_number) = alpha_inputs;
+            end
+        end
+        
         % Leaky integrator loop 
+        ts_integrated(1,:,ii) = summed_inputs(1,:);
         for jj = 1:length(t)-1
-            
             % rate of change in current
-            dIdt = (bb_inputs(jj,:) - ts_bb(jj,:,ii)) / tau;
-             
+            dIdt = (summed_inputs(jj,:) - ts_integrated(jj,:,ii)) / tau;
             % stepwise change in current
             dI = dIdt * dt;
-            
             % current at next time point
-            ts_bb(jj+1,:,ii) = ts_bb(jj,:,ii) + dI;
-            
-%             % rate of change in current
-%             dIdt = (gamma_inputs(jj,:) - ts_g(jj,:,ii)) / tau;
-%             
-%             % stepwise change in current
-%             dI = dIdt * dt;
-%             
-%             % current at next time point
-%             ts_g(jj+1,:,ii) = ts_g(jj,:,ii) + dI;
+            ts_integrated(jj+1,:,ii) = ts_integrated(jj,:,ii) + dI;
         end
-                
+        
     end
     fprintf('Done\n');        
     
-    
     % Combine all populations into a single neural pool.
-%     ts(:,:,:,sim_number) = cat(2, ts_bb, ts_g);
-    ts(:,:,:,sim_number) = ts_bb;
-    
-    % subtract baseline mean
-    baseline_ts = ts(:,:,ns_get(NS,'baseline_trials'),sim_number);
-    ts = ts - mean(baseline_ts(:));
+    ts(:,:,:,sim_number) = ts_integrated;
     
     % Store the time series in the NS struct
     NS = ns_set(NS, 'ts', ts);
-    
-    
-    
+
+    % Store the inputs to the structure if required
+    if save_inputs == 1
+        NS = ns_set(NS, 'bb_input', save_bb_inputs);
+        NS = ns_set(NS, 'g_input', save_g_inputs);
+        NS = ns_set(NS, 'a_input', save_a_inputs);
+    end
 end
 
 return

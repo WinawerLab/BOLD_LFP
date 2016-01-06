@@ -5,24 +5,26 @@
 % simulated field potentials are correlated.
 
 % Set default parameters.
-NS = neural_sim_defaults; disp(NS.params)
+NS = neural_sim_defaults; 
 % Change these to change the simulation. 
 
-% low broadband condition bb = [0 .1] alpha = [0 .5], X
-% high broadband condition bb = [0 .3] alpha = [0 .5]
-
+NS = ns_set(NS, 'save_inputs', 1);
 NS = ns_set(NS, 'num_neurons', 200); 
 NS = ns_set(NS, 'poisson_baseline', .5); 
-NS = ns_set(NS, 'poisson_bb_rg', [0 .1]); 
+NS = ns_set(NS, 'poisson_bb_rg', [0 .8]); % .5 for low bb correlation, .8/1 for high
 NS = ns_set(NS, 'poisson_g_val', .5);
-NS = ns_set(NS, 'poisson_a_val', .1); 
-NS = ns_set(NS, 'alpha_coh_rg', [0 .5]); 
+NS = ns_set(NS, 'poisson_a_rg', [0 .5]); 
 NS = ns_set(NS, 'gamma_coh_rg', [0 .3]); 
+NS = ns_set(NS, 'num_conditions',8);
 
-NS = ns_set(NS,'num_conditions',8);
+disp(NS.params);
 
 % Assign expected values of broadband and gamma levels for each stimulus class and each trial
 NS = ns_make_trial_struct(NS); disp(NS.trial)
+
+% if save_inputs choose trials to save, data can get big if saving a lot
+NS = ns_set(NS, 'trials_save_inputs',[1 length(NS.trial.poisson_rate_bb)]);
+
 
 %%
 % Simulate. This will produce a time series for each neuron in each trial
@@ -78,7 +80,7 @@ end
 
 % ---- Plot BOLD and ECoG measures as function of simulation inputs -----
 num_subplots = 3; % broadband; total LFP; gamma; alpha
-x_data_name = {'poisson_bb', 'coherence_g', 'coherence_a'};
+x_data_name = {'poisson_bb', 'coherence_g', 'poisson_a'};
 xl     = {'Broadband', 'Gamma', 'Alpha'};
 
 for ii = 1:num_subplots
@@ -167,70 +169,6 @@ xlabel('alpha inputs'),ylabel('bb inputs')
 % print('-dpng','-r300',['../figures/alpha_mean_bb_corr4'])
 % print('-depsc','-r300',['../figures/alpha_mean_bb_corr4'])
 
-
-
-%% make initial figures SfN poster
-
-[~,high_bb_trial] = max(NS.trial.poisson_rate_bb);
-[~,high_gamma_trial] = max(ns_get(NS, 'coherence_rate_g'));
-[~,high_alpha_trial] = max(ns_get(NS, 'coherence_rate_a'));
-neuron_nr = 1;
-
-figure
-
-subplot(4,1,1),hold on
-% plot(NS.data.ts(:,neuron_nr,high_bb_trial))
-plot(mean(NS.data.ts(:,:,1),2),'k')
-title('baseline - sum of 600 neurons')
-xlabel('time (ms)')
-
-subplot(4,1,2),hold on
-% plot(NS.data.ts(:,neuron_nr,high_bb_trial))
-plot(mean(NS.data.ts(:,:,high_bb_trial),2),'k')
-title('high broadband trial - sum of 600 neurons')
-xlabel('time (ms)')
-
-subplot(4,1,3),hold on
-% plot(NS.data.ts(:,trial_nr,high_gamma_trial))
-plot(mean(NS.data.ts(:,:,high_gamma_trial),2),'k')
-title('high gamma trial - sum of 600 neurons')
-xlabel('time (ms)')
-
-subplot(4,1,4),hold on
-plot(mean(NS.data.ts(:,:,high_alpha_trial),2),'k')
-title('high alpha trial - sum of 600 neurons')
-xlabel('time (ms)')
-
-set(gcf,'PaperPositionMode','auto')
-% print('-dpng','-r300',['../figures/simulated_timeseries'])
-% print('-depsc','-r300',['../figures/simulated_timeseries'])
-
-stats = regstats(bold_avg,[bb_avg]);
-[stats.rsquare stats.adjrsquare]
-stats = regstats(bold_avg,[bb_avg alpha_avg]);
-[stats.rsquare stats.adjrsquare]
-
-% %%
-% % Summarize R2 values acorss experiments and measurement types (BOLD v
-% % broadband, total LFP, or gamma)
-% if num_experiments > 1
-%     figure(101);clf
-%     subplot(3,1,1)
-%     hist(R2_bb_bold, -.05:.1:1.05); hold on
-%     plot([1 1]*median(R2_bb_bold), get(gca, 'YLim'), 'k-')
-%     title(sprintf('Broadband v BOLD R^2, %4.2f',median(R2_bb_bold))), xlim([0 1])
-%     
-%     subplot(3,1,2)
-%     hist(R2_lfp_bold, -.05:.1:1.05); hold on
-%     plot([1 1]*median(R2_lfp_bold), get(gca, 'YLim'), 'k-')
-%     title(sprintf('LFP v BOLD R^2, %4.2f',median(R2_lfp_bold))), xlim([0 1])
-%     
-%     subplot(3,1,3)
-%     hist(R2_gamma_bold, -.05:.1:1.05); hold on
-%     plot([1 1]*median(R2_gamma_bold), get(gca, 'YLim'), 'k-')
-%     title(sprintf('gamma v BOLD R^2, %4.2f',median(R2_gamma_bold))), xlim([0 1])
-% end
-
 %% correlate over all frequencies 
 
 bold_avg  = ns_mean_by_stimulus(NS, ns_get(NS, 'bold'));
@@ -276,10 +214,9 @@ xlabel('Frequency'),ylabel('correlation with BOLD (r)')
 xlim([0 200])
 ylim([-1 1])
 
-set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['../neural_sim_output/figures/NEW01_bb0_3_allfreq'])
-print('-depsc','-r300',['../neural_sim_output/figures/NEW01_bb0_3_allfreq'])
-
+% set(gcf,'PaperPositionMode','auto')
+% print('-dpng','-r300',['../neural_sim_output/figures/NEW01_bb0_3_allfreq'])
+% print('-depsc','-r300',['../neural_sim_output/figures/NEW01_bb0_3_allfreq'])
 
 %% show some signals
 
@@ -291,12 +228,13 @@ a = find(NS.trial.coherence_rate_a==0,1);
 subplot(2,1,2)
 plot(squeeze(sum(NS.data.ts(:,:,a),2)))
 title('sum of ts in trial with 0 alpha')
+
 %%
 figure
 subplot(2,1,1)
 plot(squeeze(NS.data.ts(:,1,1)))
 title('sum of ts in trial with high alpha')
-a = find(NS.trial.coherence_rate_a==0,1);
+a = find(NS.trial.poisson_rate_a==0,1);
 subplot(2,1,2)
 plot(squeeze(NS.data.ts(:,1,a)))
 title('sum of ts in trial with 0 alpha')

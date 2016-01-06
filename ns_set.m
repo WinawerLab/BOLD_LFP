@@ -10,6 +10,14 @@ switch lower(param)
         %   'FAST': random walk
         NS.params.simulate_method = val;
         
+    case 'save_inputs'
+        % save alpha, gamma and broadband inputs before leaky integrator
+        NS.params.save_inputs = val;
+
+    case 'trials_save_inputs'
+        % save alpha, gamma and broadband inputs before leaky integrator
+        NS.params.trials_save_inputs = val;
+        
     case 'num_neurons'
         % The number of neurons influences how much the LFP power can deviate from
         % BOLD. This is because the sum of random signals grows with sqrt(n), and
@@ -60,18 +68,14 @@ switch lower(param)
         % Gamma poisson rate range (arbitrary units)
         NS.params.poisson_g_val =  val;
         
-    case 'poisson_a_val'
+    case 'poisson_a_rg'
         % Alpha poisson rate range (arbitrary units)
-        NS.params.poisson_a_val =  val;
+        NS.params.poisson_a_rg =  val;
     
     % coherence ranges
     case 'gamma_coh_rg'
         % Coherence of gamma neurons within gamma band
         NS.params.gamma_coh =  val;
-        
-    case 'alpha_coh_rg'
-        % Coherence of response across neurons within alpha band
-        NS.params.alpha_coh =  val;
 
     % values for each stimulus
     case 'poisson_bb'
@@ -93,11 +97,6 @@ switch lower(param)
         % Poisson rates for gamma signal for each unique condition/stimulus
         % type (1 x num conditions)
         NS.params.coherence_g = val;
-    
-    case 'coherence_a'
-        % Poisson rates for alpha signal for each unique condition/stimulus
-        % type (1 x num conditions)
-        NS.params.coherence_a = val;
 
     % ---------------------------
     % -- trial variables --------
@@ -118,9 +117,7 @@ switch lower(param)
     case 'coherence_rate_g'
         % Set the Poisson rate for the alpha inputs for each trial
         NS.trial.coherence_rate_g =  val;
-    case 'coherence_rate_a'
-        % Set the Poisson rate for the alpha inputs for each trial
-        NS.trial.coherence_rate_a =  val;
+
     % ---------------------------
     % -- data -------------------
     % ---------------------------
@@ -128,6 +125,15 @@ switch lower(param)
         % Set the time series data field, 3D or 4D: 
         %   time x neurons x trials x experiments
         NS.data.ts = val;
+    
+    case 'bb_input'
+        NS.data.bb_inputs = val;
+        
+    case 'g_input'
+        NS.data.g_inputs = val;
+        
+    case 'a_input'
+        NS.data.a_inputs = val;
         
     case 'bb'
         % Set the ecog broadband measures (num_trials x num_experiments)
