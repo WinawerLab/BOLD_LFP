@@ -236,10 +236,28 @@ switch lower(param)
         % apply a window
         w = window(@hann,1/NS.params.dt);
         ts_for_fft = bsxfun(@times, ts_for_fft, w);
-%         for k=1:size(ts_for_fft,2)
-%             ts_for_fft(:,k) = ts_for_fft(:,k).*w;
-%         end
+        
+        % fft power
         val = abs(fft(ts_for_fft)).^2;
+
+    case 'fitbroadbandgamma'
+        % compute broadband and gamma estimes
+        data_power      = ns_get(NS, 'power'); 
+        f               = ns_get(NS,'f');
+        conditions      = ns_get(NS, 'condition_num');
+        baseline_trials = find(conditions==0);
+
+        f_use4fit       = 30:200;
+
+        data_base       = mean(data_power(:,baseline_trials),2);
+        out_weights     = zeros(size(data_power,2),2);
+        for k=1:size(data_power,2)
+            data_fit        = data_power(:,k);
+            [out_exp,w_pwr,w_gauss,gauss_f,fit_f2] = ...
+                fit_gammadata(f,f_use4fit,data_base,data_fit);
+            out_weights(k,:) = [w_pwr w_gauss];
+        end
+        val = out_weights;
         
     case 'power_law'
         % derive power law parameters for baseline

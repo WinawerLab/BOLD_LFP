@@ -85,9 +85,9 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
         if save_inputs == 1
             if ismember(ii,save_inputs_trials)
                 counter_save_trials = counter_save_trials+1;
-                save_bb_inputs(:,:,counter_save_trials,sim_number) = bb_inputs;
-                save_g_inputs(:,:,counter_save_trials,sim_number) = gamma_inputs;
-                save_a_inputs(:,:,counter_save_trials,sim_number) = alpha_inputs;
+                save_bb_inputs(:,:,counter_save_trials,sim_number) = single(bb_inputs);
+                save_g_inputs(:,:,counter_save_trials,sim_number) = single(gamma_inputs);
+                save_a_inputs(:,:,counter_save_trials,sim_number) = single(alpha_inputs);
             end
         end
         
