@@ -3,7 +3,7 @@
 clear all
 sim_nr = 1;
 poisson_bb_rg_in = [0 .5;0 1];
-load(['../neural_sim_output/data/NS_simnr' int2str(sim_nr) '_set1'],'NS')
+load(['./data/NS_simnr' int2str(sim_nr) '_set1'],'NS')
 
 %% 
 numNeurons2plot = 5;
@@ -70,5 +70,5 @@ set(gca,'XScale','log','YScale','log')
 axis tight
 
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['../neural_sim_output/figures/ns_MethodsFig01'])
-print('-depsc','-r300',['../neural_sim_output/figures/ns_MethodsFig01'])
+print('-dpng','-r300',['./figures/ns_MethodsFig01'])
+print('-depsc','-r300',['./figures/ns_MethodsFig01'])

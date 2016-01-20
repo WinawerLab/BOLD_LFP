@@ -42,7 +42,7 @@ for k=1:size(poisson_bb_rg_in,1)
     
     NS.data.ts = single(NS.data.ts); % to reduce size
     
-    save(['../neural_sim_output/data/NS_simnr' int2str(sim_nr) '_set' int2str(k) ],'NS')
+    save(['./data/NS_simnr' int2str(sim_nr) '_set' int2str(k) ],'NS')
 %     save(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_nr' int2str(sim_nr) '_' int2str(k) ],'NS')
     disp(['done simulation ' int2str(k) ' of ' int2str(size(poisson_bb_rg_in,1))])
     toc
@@ -66,7 +66,7 @@ out.alpha_vals = zeros(size(poisson_bb_rg_in,1),8);
 out.mean_vals = zeros(size(poisson_bb_rg_in,1),8);
 
 for k=1:size(poisson_bb_rg_in,1)
-    load(['../neural_sim_output/data/NS_simnr' int2str(sim_nr) '_set' int2str(k) ],'NS')
+    load(['./data/NS_simnr' int2str(sim_nr) '_set' int2str(k) ],'NS')
 %     load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_nr' int2str(sim_nr) '_' int2str(k) ],'NS')
     
     %- to correlate bold and neurophys

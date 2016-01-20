@@ -17,7 +17,7 @@ out.mean_vals = zeros(size(poisson_bb_rg_in,1),8);
 NSall=[];
 
 for k=1:size(poisson_bb_rg_in,1)
-    load(['../neural_sim_output/data/NS_simnr' int2str(sim_nr) '_set' int2str(k) ],'NS')
+    load(['./data/NS_simnr' int2str(sim_nr) '_set' int2str(k) ],'NS')
 %     load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_nr' int2str(sim_nr) '_' int2str(k) ],'NS')
     NSall{k} = NS;
     
@@ -113,8 +113,8 @@ for s = 1:size(poisson_bb_rg_in,1)
     title(['Model ' int2str(s) ' R^2'])
 end
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['../neural_sim_output/figures/r_varyBB_sim' int2str(sim_nr)])
-print('-depsc','-r300',['../neural_sim_output/figures/r_varyBB_sim' int2str(sim_nr)])
+print('-dpng','-r300',['./figures/r_varyBB_sim' int2str(sim_nr)])
+print('-depsc','-r300',['./figures/r_varyBB_sim' int2str(sim_nr)])
 
 figure('Position',[0 0 220 200])
 labels_beta={{'bb','',''},{'','g',''},{'bb','g',''},{'','','a'},...
@@ -137,8 +137,8 @@ for s = 1:size(poisson_bb_rg_in,1)
     end
 end
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['../neural_sim_output/figures/beta_varyBB_sim' int2str(sim_nr)])
-print('-depsc','-r300',['../neural_sim_output/figures/beta_varyBB_sim' int2str(sim_nr)])
+print('-dpng','-r300',['./figures/beta_varyBB_sim' int2str(sim_nr)])
+print('-depsc','-r300',['./figures/beta_varyBB_sim' int2str(sim_nr)])
 
 %% correlation across all frequencies
 
@@ -153,8 +153,8 @@ for s = 1:size(poisson_bb_rg_in,1)
 end
 
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['../neural_sim_output/figures/allfreq_corr_nr' int2str(sim_nr)])
-print('-depsc','-r300',['../neural_sim_output/figures/allfreq_corr_nr' int2str(sim_nr)])
+print('-dpng','-r300',['./figures/allfreq_corr_nr' int2str(sim_nr)])
+print('-depsc','-r300',['./figures/allfreq_corr_nr' int2str(sim_nr)])
 % print('-dpng','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/allfreq_corr_nr' int2str(sim_nr)])
 % print('-depsc','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/allfreq_corr_nr' int2str(sim_nr)])
 
@@ -213,8 +213,8 @@ for sim_nr=1:length(NSall)
         set(gca,'XTick',[])
     end
     set(gcf,'PaperPositionMode','auto')
-    print('-dpng','-r300',['../neural_sim_output/figures/inputsSim' int2str(sim_nr)])
-    print('-depsc','-r300',['../neural_sim_output/figures/inputsSim' int2str(sim_nr)])
+    print('-dpng','-r300',['./figures/inputsSim' int2str(sim_nr)])
+    print('-depsc','-r300',['./figures/inputsSim' int2str(sim_nr)])
 
 end
 
@@ -305,7 +305,7 @@ for sim_nr=1:length(NSall)
     ylabel('BOLD')
 
     set(gcf,'PaperPositionMode','auto')
-    print('-dpng','-r300',['../neural_sim_output/figures/powerspectra_Sim' int2str(sim_nr)])
-    print('-depsc','-r300',['../neural_sim_output/figures/powerspectra_Sim' int2str(sim_nr)])
+    print('-dpng','-r300',['./figures/powerspectra_Sim' int2str(sim_nr)])
+    print('-depsc','-r300',['./figures/powerspectra_Sim' int2str(sim_nr)])
 
 end
