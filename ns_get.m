@@ -233,12 +233,8 @@ switch lower(param)
         ts = ns_get(NS, 'ts');
         ts_for_fft = squeeze(mean(ts,2));
         
-        % apply a window
-        w = window(@hann,1/NS.params.dt);
-        ts_for_fft = bsxfun(@times, ts_for_fft, w);
-        
         % fft power
-        val = abs(fft(ts_for_fft)).^2;
+        val = ns_fftpower(ts_for_fft);
 
     case 'fitbroadbandgamma'
         % compute broadband and gamma estimes

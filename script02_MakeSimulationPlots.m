@@ -1,23 +1,24 @@
 
 %% get all the correlation values 
 clear all
-sim_nr = 1;
-poisson_bb_rg_in = [0 .5;0 1];
+sim_nr      = 1;
+ns_files    = dir(['./data/NS_simnr' int2str(sim_nr) '_set*']);
 
-bold_corr=zeros(size(poisson_bb_rg_in,1),7);
-bold_beta=zeros(size(poisson_bb_rg_in,1),12);
+bold_corr=zeros(length(ns_files),7);
+bold_beta=zeros(length(ns_files),12);
 beta_ind = [1 2 3 3 4 5 5 6 6 7 7 7];% which beta belongs to which model
 
-r_all = zeros(size(poisson_bb_rg_in,1),501);
-out.bold_vals = zeros(size(poisson_bb_rg_in,1),8);
-out.bb_vals = zeros(size(poisson_bb_rg_in,1),8);
-out.gamma_vals = zeros(size(poisson_bb_rg_in,1),8);
-out.alpha_vals = zeros(size(poisson_bb_rg_in,1),8);
-out.mean_vals = zeros(size(poisson_bb_rg_in,1),8);
+r_all = zeros(length(ns_files),501);
+out.bold_vals = zeros(length(ns_files),8);
+out.bb_vals = zeros(length(ns_files),8);
+out.gamma_vals = zeros(length(ns_files),8);
+out.alpha_vals = zeros(length(ns_files),8);
+out.mean_vals = zeros(length(ns_files),8);
 NSall=[];
 
-for k=1:size(poisson_bb_rg_in,1)
-    load(['./data/NS_simnr' int2str(sim_nr) '_set' int2str(k) ],'NS')
+for k=1:length(ns_files)
+    load(['./data/' ns_files(k).name],'NS')
+    
 %     load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_nr' int2str(sim_nr) '_' int2str(k) ],'NS')
     NSall{k} = NS;
     
@@ -103,7 +104,7 @@ end
 bar_colors={[1 0 0],[1 1 0],[1 .5 0],[0 .2 1],[.5 0 1],[0 .5 0],[.4 .2 .1]};
 figure('Position',[0 0 580 200])
 
-for s = 1:size(poisson_bb_rg_in,1)
+for s = 1:length(ns_files)
     subplot(1,2,s),hold on
     for k=1:7
         bar(k,bold_corr(s,k),.9,'FaceColor',bar_colors{k})
@@ -113,8 +114,8 @@ for s = 1:size(poisson_bb_rg_in,1)
     title(['Model ' int2str(s) ' R^2'])
 end
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['./figures/r_varyBB_sim' int2str(sim_nr)])
-print('-depsc','-r300',['./figures/r_varyBB_sim' int2str(sim_nr)])
+% print('-dpng','-r300',['./figures/r_varyBB_sim' int2str(sim_nr)])
+% print('-depsc','-r300',['./figures/r_varyBB_sim' int2str(sim_nr)])
 
 figure('Position',[0 0 220 200])
 labels_beta={{'bb','',''},{'','g',''},{'bb','g',''},{'','','a'},...
@@ -122,10 +123,10 @@ labels_beta={{'bb','',''},{'','g',''},{'bb','g',''},{'','','a'},...
 labels_index={[1],[2],[1 2],[3],[1 3],[2 3],[1 2 3]};
 bb_g_a_color={[.9 .9 .9],[.6 .6 .6],[.3 .3 .3]};
 
-for s = 1:size(poisson_bb_rg_in,1)
+for s = 1:length(ns_files)
     for k=1:7
         xl_ind=labels_index{k};
-        subplot(size(poisson_bb_rg_in,1),7,(s-1)*7+k),hold on 
+        subplot(length(ns_files),7,(s-1)*7+k),hold on 
 
         temp_beta=bold_beta(s,beta_ind==k);      
         for m=1:length(xl_ind)
@@ -137,13 +138,13 @@ for s = 1:size(poisson_bb_rg_in,1)
     end
 end
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['./figures/beta_varyBB_sim' int2str(sim_nr)])
-print('-depsc','-r300',['./figures/beta_varyBB_sim' int2str(sim_nr)])
+% print('-dpng','-r300',['./figures/beta_varyBB_sim' int2str(sim_nr)])
+% print('-depsc','-r300',['./figures/beta_varyBB_sim' int2str(sim_nr)])
 
 %% correlation across all frequencies
 
 figure('Position',[0 0 400 120])
-for s = 1:size(poisson_bb_rg_in,1)
+for s = 1:length(ns_files)
     subplot(1,2,s),hold on
     plot(f,zeros(size(f)),'Color',[.5 .5 .5])
     plot(f,r_all(s,:),'k','LineWidth',2)
@@ -155,8 +156,6 @@ end
 set(gcf,'PaperPositionMode','auto')
 print('-dpng','-r300',['./figures/allfreq_corr_nr' int2str(sim_nr)])
 print('-depsc','-r300',['./figures/allfreq_corr_nr' int2str(sim_nr)])
-% print('-dpng','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/allfreq_corr_nr' int2str(sim_nr)])
-% print('-depsc','-r300',['/Volumes/DoraBigDrive/github/neural_sim_output/figures/allfreq_corr_nr' int2str(sim_nr)])
 
 
 %% plot inputs table
@@ -169,7 +168,7 @@ for sim_nr=1:length(NSall)
     for k=1:length(NS.params.poisson_bb)
         bar(k,NS.params.poisson_baseline+NS.params.poisson_bb(k),'FaceColor',plot_colors(k,:))
     end
-    ylim([.4 .9])
+    ylim([.4 1])
     set(gca,'YTick',[0:.2:2])
     ylabel('bb level')
     subplot(6,1,2),hold on
@@ -266,7 +265,7 @@ for sim_nr=1:length(NSall)
         scatter(x_data{ii}, bold_avg,40,plot_colors(2:end,:)), axis tight square
 
         hold on; plot(x_data{ii}, polyval(p, x_data{ii}), 'k-', 'LineWidth', 1)
-        xlabel(xl{ii}), ylabel('BOLD')
+        xlabel(xl{ii},'FontSize',10), ylabel('BOLD','FontSize',10)
         title(sprintf('r = %4.2f', corr(x_data{ii}, bold_avg)));
     end
 
@@ -300,7 +299,7 @@ for sim_nr=1:length(NSall)
     for k=1:8
         bar(k,bold_avg(k),'FaceColor',plot_colors(k,:))
     end
-    xlim([0 9])
+    xlim([0 9]),ylim([0 25])
     set(gca,'XTick',[1:8])
     ylabel('BOLD')
 
