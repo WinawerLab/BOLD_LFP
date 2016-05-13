@@ -153,9 +153,9 @@ for s = 1:length(ns_files)
     ylim([-1 1])
 end
 
-set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['./figures/allfreq_corr_nr' int2str(sim_nr)])
-print('-depsc','-r300',['./figures/allfreq_corr_nr' int2str(sim_nr)])
+% set(gcf,'PaperPositionMode','auto')
+% print('-dpng','-r300',['./figures/allfreq_corr_nr' int2str(sim_nr)])
+% print('-depsc','-r300',['./figures/allfreq_corr_nr' int2str(sim_nr)])
 
 
 %% plot inputs table
@@ -269,7 +269,6 @@ for sim_nr=1:length(NSall)
         title(sprintf('r = %4.2f', corr(x_data{ii}, bold_avg)));
     end
 
-
     % ---- Plot BOLD and ECoG measures as function of simulation inputs -----
     num_subplots = 3; % broadband; total LFP; gamma; alpha
     x_data_name = {'poisson_bb', 'coherence_g', 'poisson_a'};
@@ -303,8 +302,8 @@ for sim_nr=1:length(NSall)
     set(gca,'XTick',[1:8])
     ylabel('BOLD')
 
-    set(gcf,'PaperPositionMode','auto')
-    print('-dpng','-r300',['./figures/powerspectra_Sim' int2str(sim_nr)])
-    print('-depsc','-r300',['./figures/powerspectra_Sim' int2str(sim_nr)])
+%     set(gcf,'PaperPositionMode','auto')
+%     print('-dpng','-r300',['./figures/powerspectra_Sim' int2str(sim_nr)])
+%     print('-depsc','-r300',['./figures/powerspectra_Sim' int2str(sim_nr)])
 
 end

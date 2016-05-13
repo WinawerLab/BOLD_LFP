@@ -9,7 +9,7 @@
 sim_nr = 1;
 poisson_bb_rg_in = [0 .5;0 .2];
 tic
-
+clear ns_params
 for k=1:size(poisson_bb_rg_in,1)
 
     % Set default parameters.
@@ -26,8 +26,12 @@ for k=1:size(poisson_bb_rg_in,1)
     NS = ns_set(NS, 'num_conditions',8);
 
     % Assign expected values of broadband and gamma levels for each stimulus class and each trial
-    NS = ns_make_trial_struct(NS); 
-
+    if k==1 % the first simulation, everything is random
+        NS = ns_make_trial_struct(NS,[],[],[],[]); 
+    elseif k==2 % the second simulation is like the first, but with different broadband range
+        NS = ns_make_trial_struct(NS,[],ns_params{1}.poisson_g,ns_params{1}.poisson_a,ns_params{1}.coherence_g); 
+    end
+    
     % if save_inputs choose trials to save, data can get big if saving a lot
     NS = ns_set(NS, 'trials_save_inputs',[1 length(NS.trial.poisson_rate_bb)]);
 
@@ -43,6 +47,7 @@ for k=1:size(poisson_bb_rg_in,1)
     NS.data.ts = single(NS.data.ts); % to reduce size
     
     save(['./data/NS_simnr' int2str(sim_nr) '_set' int2str(k) ],'NS')
+    ns_params{k} = NS.params;
 %     save(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_nr' int2str(sim_nr) '_' int2str(k) ],'NS')
     disp(['done simulation ' int2str(k) ' of ' int2str(size(poisson_bb_rg_in,1))])
     toc

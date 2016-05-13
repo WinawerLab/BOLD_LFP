@@ -2,7 +2,7 @@
 
 %% 
 srate = 1000;
-t = 1/srate:1/srate:1;
+t = 1/srate:1/srate:.5;
 sin_freq = 10;
 
 % signal  = sinus + noise
@@ -14,7 +14,7 @@ signal2 = sin(sin_freq*2*pi*t)+1/10*randn(size(t));
 % signal 3 is 180 out of phase
 signal3 = sin(pi+sin_freq*2*pi*t)+1/10*randn(size(t));
 
-figure('Position',[0 0 800 300],'Color',[1 1 1])
+figure('Position',[0 0 500 300],'Color',[1 1 1])
 
 bar_width = .3;
 
@@ -44,7 +44,6 @@ subplot(4,8,20)
 bar(1,mean(signal1.^2) + mean(signal2.^2),bar_width,'w')
 title('mn(V_1^2) + mn(V_2^2)')
 
-
 % signal 1 and 3
 subplot(4,4,3), hold on
 plot(t,signal1,'k')
@@ -73,6 +72,9 @@ title('mn(V_1^2) + mn(V_3^2)')
 
 for k = [1:2:16]
     subplot(4,4,k)
+    for m = 0:.1:.5
+        plot([m m],[-3 3],'k:')
+    end
     ylim([-3 3])
 end
 
@@ -87,4 +89,12 @@ end
 set(gcf,'PaperPositionMode','auto')
 % print('-dpng','-r300',['./figures/ns_ConceptMethodsFig01'])
 % print('-depsc','-r300',['./figures/ns_ConceptMethodsFig01'])
+disp(['power(X1)= ' num2str(mean(signal1.^2))])
+disp(['power(X2)= ' num2str(mean(signal2.^2))])
+disp(['power(X3)= ' num2str(mean(signal3.^2))])
+
+disp(['power(X1)+power(X2))= ' num2str(mean(signal1.^2) + mean(signal2.^2))])
+disp(['power(X1)+power(X3))= ' num2str(mean(signal1.^2) + mean(signal3.^2))])
+disp(['power(X1+X2)= ' num2str(mean((signal1 + signal2).^2))])
+disp(['power(X1+X3)= ' num2str(mean((signal1 + signal3).^2))])
 
