@@ -13,22 +13,22 @@ poisson_a_rg  = ns_get(NS, 'poisson_a_rg');
 coherence_g_rg = ns_get(NS, 'gamma_coh_rg');
 
 % get values random or pre-specified:
-if isempty(fixed_bb) % broadband
+if ~exist('fixed_bb', 'var') || isempty(fixed_bb) % broadband
     poisson_bb      = [0 linspace(poisson_bb_rg(1),poisson_bb_rg(2), num_conditions-1)];
 else
     poisson_bb      = fixed_bb;     
 end
-if isempty(fixed_g) % gamma amplitude
+if ~exist('fixed_g', 'var') || isempty(fixed_g) % gamma amplitude
     poisson_g      = poisson_g_val*ones(size(poisson_bb));
 else
     poisson_g      = fixed_g;     
 end
-if isempty(fixed_g_coh) % gamma coherence
+if ~exist('fixed_g_coh', 'var') || isempty(fixed_g_coh) % gamma coherence
     coherence_g    = (linspace(coherence_g_rg(1), coherence_g_rg(2),  num_conditions-1)).^2;
 else
     coherence_g    = fixed_g_coh;
 end
-if isempty(fixed_a) % alpha amplitude
+if ~exist('fixed_a', 'var') || isempty(fixed_a) % alpha amplitude
     poisson_a      = (linspace(poisson_a_rg(1), poisson_a_rg(2),  num_conditions-1)).^2;
 else
     poisson_a      = fixed_a;
