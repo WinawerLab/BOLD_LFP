@@ -22,7 +22,7 @@ for k=1:length(ns_files)
 %     load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_nr' int2str(sim_nr) '_' int2str(k) ],'NS')
     NSall{k} = NS;
     
-    %- to correlate bold and neurophys
+    % to correlate bold and neurophys
     alpha_avg = zscore(ns_mean_by_stimulus(NS, ns_get(NS, 'alpha')));
     bb_avg  = zscore(ns_mean_by_stimulus(NS, ns_get(NS, 'bb')));
     gamma_avg  = zscore(ns_mean_by_stimulus(NS, ns_get(NS, 'gamma')));
@@ -33,6 +33,28 @@ for k=1:length(ns_files)
         mean_avg(m) = mean(all_mean_data(NS.trial.condition_num==m-1));
     end
     mean_avg = zscore(mean_avg);
+    % even values
+    alpha_even = zscore(ns_mean_by_stimulus(NS, ns_get(NS, 'alpha'),'even'));
+    bb_even  = zscore(ns_mean_by_stimulus(NS, ns_get(NS, 'bb'),'even'));
+    gamma_even  = zscore(ns_mean_by_stimulus(NS, ns_get(NS, 'gamma'),'even'));
+    bold_even  = zscore(ns_mean_by_stimulus(NS, ns_get(NS, 'bold'),'even'));
+    all_mean_data = squeeze(mean(sum(NS.data.ts(:,:,:),2),1));
+    mean_even = zeros(max(NS.trial.condition_num),1);
+    for m=1:max(NS.trial.condition_num)+1
+        mean_even(m) = mean(all_mean_data(NS.trial.condition_num==m-1));
+    end
+    mean_even = zscore(mean_even);
+    % odd values
+    alpha_odd = zscore(ns_mean_by_stimulus(NS, ns_get(NS, 'alpha'),'odd'));
+    bb_odd  = zscore(ns_mean_by_stimulus(NS, ns_get(NS, 'bb'),'odd'));
+    gamma_odd  = zscore(ns_mean_by_stimulus(NS, ns_get(NS, 'gamma'),'odd'));
+    bold_odd  = zscore(ns_mean_by_stimulus(NS, ns_get(NS, 'bold'),'odd'));
+    all_mean_data = squeeze(mean(sum(NS.data.ts(:,:,:),2),1));
+    mean_odd = zeros(max(NS.trial.condition_num),1);
+    for m=1:max(NS.trial.condition_num)+1
+        mean_odd(m) = mean(all_mean_data(NS.trial.condition_num==m-1));
+    end
+    mean_odd = zscore(mean_odd);    
     
     % put in output
     out.bold_vals(k,:) = bold_avg;
@@ -41,33 +63,40 @@ for k=1:length(ns_files)
     out.alpha_vals(k,:) = alpha_avg;
     out.mean_vals(k,:) = mean_avg;
     
-    % do stats for different models
-    stats = regstats(bold_avg,bb_avg);
-    bold_corr(k,1) = stats.rsquare;
+    % STATS for different models:
+    stats = regstats(bold_even,bb_even); % train 
+    bold_pred = stats.beta(1)*ones(size(bold_odd))+stats.beta(2)*bb_odd; % test
+    bold_corr(k,1) = corr(bold_pred,bold_odd).^2;
     bold_beta(k,1) = stats.beta(2);
 
-    stats = regstats(bold_avg,gamma_avg);
-    bold_corr(k,2) = stats.rsquare;
+    stats = regstats(bold_even,gamma_even); % train
+    bold_pred = stats.beta(1)*ones(size(bold_odd))+stats.beta(2)*gamma_odd; % test
+    bold_corr(k,2) = corr(bold_pred,bold_odd).^2;
     bold_beta(k,2) = stats.beta(2);
     
-    stats = regstats(bold_avg,[bb_avg gamma_avg]);
-    bold_corr(k,3) = stats.rsquare;
+    stats = regstats(bold_even,[bb_even gamma_even]); % train
+    bold_pred = stats.beta(1)*ones(size(bold_odd)) + stats.beta(2)*bb_odd  + stats.beta(3)*gamma_odd; % test
+    bold_corr(k,3) = corr(bold_pred,bold_odd).^2;
     bold_beta(k,3:4) = stats.beta(2:3);
 
-    stats = regstats(bold_avg,alpha_avg);
-    bold_corr(k,4) = stats.rsquare;
+    stats = regstats(bold_even,alpha_even);% train
+    bold_pred = stats.beta(1)*ones(size(bold_odd))+stats.beta(2)*alpha_odd; % test
+    bold_corr(k,4) = corr(bold_pred,bold_odd).^2;
     bold_beta(k,5) = stats.beta(2);
     
-    stats = regstats(bold_avg,[bb_avg alpha_avg]);
-    bold_corr(k,5) = stats.rsquare;
+    stats = regstats(bold_even,[bb_even alpha_even]); % train
+    bold_pred = stats.beta(1)*ones(size(bold_odd)) + stats.beta(2)*bb_odd  + stats.beta(3)*alpha_odd; % test
+    bold_corr(k,5) = corr(bold_pred,bold_odd).^2;
     bold_beta(k,[6:7]) = stats.beta(2:3);
     
-    stats = regstats(bold_avg,[gamma_avg alpha_avg]);
-    bold_corr(k,6) = stats.rsquare;
+    stats = regstats(bold_even,[gamma_even alpha_even]); %train
+    bold_pred = stats.beta(1)*ones(size(bold_odd)) + stats.beta(2)*gamma_odd  + stats.beta(3)*alpha_odd; % test
+    bold_corr(k,6) = corr(bold_pred,bold_odd).^2;
     bold_beta(k,[8:9]) = stats.beta(2:3);
 
-    stats = regstats(bold_avg,[bb_avg gamma_avg alpha_avg]);
-    bold_corr(k,7) = stats.rsquare;
+    stats = regstats(bold_even,[bb_even gamma_even alpha_even]);% train
+    bold_pred = stats.beta(1)*ones(size(bold_odd)) + stats.beta(2)*bb_odd + stats.beta(3)*gamma_odd  + stats.beta(4)*alpha_odd; % test
+    bold_corr(k,7) = corr(bold_pred,bold_odd).^2;
     bold_beta(k,[10:12]) = stats.beta(2:4);
 
     %- correlate across all frequencies
@@ -97,7 +126,6 @@ for k=1:length(ns_files)
         r(m) = corr(bold_avg,pxx_change(:,m));
     end
     r_all(k,:) = r;
-    
 end
 
 %% Plot beta and r2 for each model separately
@@ -153,9 +181,9 @@ for s = 1:length(ns_files)
     ylim([-1 1])
 end
 
-% set(gcf,'PaperPositionMode','auto')
-% print('-dpng','-r300',['./figures/allfreq_corr_nr' int2str(sim_nr)])
-% print('-depsc','-r300',['./figures/allfreq_corr_nr' int2str(sim_nr)])
+set(gcf,'PaperPositionMode','auto')
+print('-dpng','-r300',['./figures/allfreq_corr_nr' int2str(sim_nr)])
+print('-depsc','-r300',['./figures/allfreq_corr_nr' int2str(sim_nr)])
 
 
 %% plot inputs table
@@ -189,18 +217,18 @@ for sim_nr=1:length(NSall)
         bar(k,0,'FaceColor',plot_colors(k,:))
     end
     ylabel('bb coh')
-    ylim([0 1])
+    ylim([-0.1 1])
     subplot(6,1,5),hold on
     for k=1:length(NS.params.coherence_g)
         bar(k,NS.params.coherence_g(k),'FaceColor',plot_colors(k,:))
     end
     ylabel('gamma coh')
-    ylim([0 1.1])
+    ylim([-0.1 1.1])
     subplot(6,1,6),hold on
     for k=1:length(NS.params.poisson_a)
         bar(k,.5,'FaceColor',plot_colors(k,:))
     end
-    ylim([0 1])
+    ylim([-0.1 1])
     ylabel('alpha amp')
 
 
@@ -229,21 +257,24 @@ for sim_nr=1:length(NSall)
     [alpha_avg,alpha_std]   = ns_mean_by_stimulus(NS, ns_get(NS, 'alpha'));
     num_conditions          = ns_get(NS, 'num_conditions');
     freq_bb                 = ns_get(NS, 'freq_bb');
-
+    f                       = ns_get(NS, 'f');
+    pxx                     = ns_mean_by_stimulus(NS, ns_get(NS, 'power'));
+    
     fH=figure('Position',[0 0 900 700]); clf; set(fH, 'Color', 'w')
     fs = [18 12]; % fontsize
 
     % ---- Plot Spectra for different stimuli -----
-    subplot(3,3,[1 4]), set(gca, 'FontSize', fs(1));
+    subplot(5,7,[1]), set(gca, 'FontSize', 10);
     plot_colors = [0 0 0; jet(num_conditions)];
     set(gca, 'ColorOrder', plot_colors); hold all
-    plot(ns_get(NS, 'f'), ns_mean_by_stimulus(NS, ns_get(NS, 'power')), '-', ...
+    plot(f(f<max(freq_bb)),pxx(f<max(freq_bb),:), '-', ...
         freq_bb, exp(ns_get(NS, 'power_law')), 'k-', 'LineWidth', 2);
-    set(gca, 'XScale', 'log', 'YScale', 'log','XTick',[10 100])
+    set(gca, 'XScale', 'log', 'YScale', 'log','XTick',[10 100],'YTick',[10.^-2 10.^0 10.^2])
     xlabel ('Frequency')
     ylabel('Power')
     % xlim([min(freq_bb) max(freq_bb)]);
     xlim([5 max(freq_bb)]);
+    ylim([10.^-3 10.^2]);
 
     % ---- Plot BOLD v ECoG measures ----------------
     num_subplots = 4; % broadband; total LFP; gamma; alpha
@@ -294,7 +325,7 @@ for sim_nr=1:length(NSall)
         end
     end
 
-    subplot(3,6,13),hold on
+    subplot(5,14,3),hold on
     for k=1:8
         bar(k,bold_avg(k),'FaceColor',plot_colors(k,:))
     end
@@ -302,8 +333,8 @@ for sim_nr=1:length(NSall)
     set(gca,'XTick',[1:8])
     ylabel('BOLD')
 
-%     set(gcf,'PaperPositionMode','auto')
-%     print('-dpng','-r300',['./figures/powerspectra_Sim' int2str(sim_nr)])
-%     print('-depsc','-r300',['./figures/powerspectra_Sim' int2str(sim_nr)])
+    set(gcf,'PaperPositionMode','auto')
+    print('-dpng','-r300',['./figures/powerspectra_Sim' int2str(sim_nr)])
+    print('-depsc','-r300',['./figures/powerspectra_Sim' int2str(sim_nr)])
 
 end
