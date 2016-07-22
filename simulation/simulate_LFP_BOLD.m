@@ -17,6 +17,43 @@ NS = ns_set(NS, 'poisson_a_rg', [0 .5]);
 NS = ns_set(NS, 'gamma_coh_rg', [0 .3]); 
 NS = ns_set(NS, 'num_conditions',8);
 
+whichInput = 1;
+switch whichInput
+    case 1
+        % *** INPUT 1
+        NS = ns_set(NS, 'save_inputs', 0);
+        NS = ns_set(NS, 'num_neurons', 1);
+        NS = ns_set(NS, 'poisson_baseline', .5);
+        NS = ns_set(NS, 'poisson_bb_rg', [0 .8]); % .5 for low bb correlation, .8/1 for high
+        NS = ns_set(NS, 'poisson_g_val', 0);
+        NS = ns_set(NS, 'poisson_a_rg', [0 0]);
+        NS = ns_set(NS, 'gamma_coh_rg', [0 0]);
+        NS = ns_set(NS, 'num_conditions',2);
+        NS = ns_set(NS, 'num_averages', 10);
+    case 2
+        %% *** INPUT 2
+        NS = ns_set(NS, 'save_inputs', 0);
+        NS = ns_set(NS, 'num_neurons', 200);
+        NS = ns_set(NS, 'poisson_baseline', .5);
+        NS = ns_set(NS, 'poisson_bb_rg', [0 0]); % .5 for low bb correlation, .8/1 for high
+        NS = ns_set(NS, 'poisson_g_val', 0.5);
+        NS = ns_set(NS, 'poisson_a_rg', [0 0]);
+        NS = ns_set(NS, 'gamma_coh_rg', [0 0.3]);
+        NS = ns_set(NS, 'num_conditions',2);
+        NS = ns_set(NS, 'num_averages', 10);
+
+    case 3
+        % *** INPUT 3
+        NS = ns_set(NS, 'save_inputs', 0);
+        NS = ns_set(NS, 'poisson_bb_rg', [0 0]); % .5 for low bb correlation, .8/1 for high
+        NS = ns_set(NS, 'num_neurons', 1);
+        NS = ns_set(NS, 'poisson_a_rg', [0 .5]); % .5 for low bb correlation, .8/1 for high
+        NS = ns_set(NS, 'gamma_coh_rg', [0 0]);
+        NS = ns_set(NS, 'num_conditions',2);
+        NS = ns_set(NS, 'poisson_g_val', 0);
+        NS = ns_set(NS, 'num_averages', 10);
+end
+%%
 disp(NS.params);
 
 % Assign expected values of broadband and gamma levels for each stimulus class and each trial
@@ -56,8 +93,14 @@ fs = [18 12]; % fontsize
 subplot(1,3,1), set(gca, 'FontSize', fs(1));
 plot_colors = [0 0 0; jet(num_conditions)];
 set(gca, 'ColorOrder', plot_colors); hold all
-plot(ns_get(NS, 'f'), ns_mean_by_stimulus(NS, ns_get(NS, 'power')), '-', ...
-    freq_bb, exp(ns_get(NS, 'power_law')), 'k-', 'LineWidth', 2);
+% plot(ns_get(NS, 'f'), ns_mean_by_stimulus(NS, ns_get(NS, 'power')), '-', ...
+%     freq_bb, exp(ns_get(NS, 'power_law')), 'k-', 'LineWidth', 2);
+
+plot(ns_get(NS, 'f'), ns_mean_by_stimulus(NS, ns_get(NS, 'power')) * ...
+    ns_get(NS, 'num_neurons'), '-',  'LineWidth', 2);
+
+
+
 set(gca, 'XScale', 'log', 'YScale', 'log')
 xlabel ('Frequency')
 ylabel('Power')

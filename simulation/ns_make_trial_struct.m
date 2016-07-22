@@ -46,7 +46,7 @@ end
 % is probably a smarter way to do this with linear algebra. But anyway,
 % this method is fast, so who cares.
 
-if isempty(fixed_g_coh) % only decorrelate if no fixed input
+if ~exist('fixed_g_coh', 'var') || isempty(fixed_g_coh) % only decorrelate if no fixed input
     b = zeros(100, num_conditions);
     c = zeros(num_conditions,1);
     for ii = 1:100;
@@ -59,7 +59,7 @@ if isempty(fixed_g_coh) % only decorrelate if no fixed input
 end
 % Decorrelate alpha (in same way as bb/gamma)
 % Randomize alpha levels across trials
-if isempty(fixed_a) % only decorrelate if no fixed input
+if ~exist('fixed_a', 'var') || isempty(fixed_a) % only decorrelate if no fixed input
     b = zeros(1000, num_conditions);
     c = zeros(num_conditions,2); % correlation with bb and gamma
     for ii = 1:1000;
