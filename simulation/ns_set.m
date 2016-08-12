@@ -3,13 +3,7 @@ function NS = ns_set(NS, param, val, varargin)
 % NS = ns_set(NS, param, val, varargin)
 
 % Big switch
-switch lower(param)
-    case 'simulate_method'
-        % Two ways to simulate the neural time series:
-        %   'SLOW': leaky integrator simulation
-        %   'FAST': random walk
-        NS.params.simulate_method = val;
-        
+switch lower(param)        
     case 'save_inputs'
         % save alpha, gamma and broadband inputs before leaky integrator
         NS.params.save_inputs = val;
@@ -58,45 +52,22 @@ switch lower(param)
     case 'poisson_baseline'
         % Baseline Poisson rate (arbitrary units)
         NS.params.poisson_baseline =  val;
-    
-    % Poisson rate range/values    
-    case 'poisson_bb_rg'
-        % Broadband poisson rate range (arbitrary units).
-        NS.params.poisson_bb_rg =  val;
-        
-    case 'poisson_g_val'
-        % Gamma poisson rate range (arbitrary units)
-        NS.params.poisson_g_val =  val;
-        
-    case 'poisson_a_rg'
-        % Alpha poisson rate range (arbitrary units)
-        NS.params.poisson_a_rg =  val;
-    
-    % coherence ranges
-    case 'gamma_coh_rg'
-        % Coherence of gamma neurons within gamma band
-        NS.params.gamma_coh =  val;
 
-    % values for each stimulus
+    % Poisson rates for each unique condition/stimulus type (1 x num conditions)
     case 'poisson_bb'
-        % Poisson rates for broadband signal for each unique condition/stimulus
-        % type (1 x num conditions)
         NS.params.poisson_bb = val;
-    
     case 'poisson_g'
-        % Poisson rates for gamma signal for each unique condition/stimulus
-        % type (1 x num conditions)
         NS.params.poisson_g = val;
-    
     case 'poisson_a'
-        % Poisson rates for gamma signal for each unique condition/stimulus
-        % type (1 x num conditions)
         NS.params.poisson_a = val;
 
+    % Coherence for each unique condition/stimulus type (1 x num conditions)
+    case 'coherence_bb'
+        NS.params.coherence_bb = val;
     case 'coherence_g'
-        % Poisson rates for gamma signal for each unique condition/stimulus
-        % type (1 x num conditions)
         NS.params.coherence_g = val;
+    case 'coherence_a'
+        NS.params.coherence_a = val;
 
     % ---------------------------
     % -- trial variables --------
@@ -105,18 +76,22 @@ switch lower(param)
         % Set the condition number (equivalent to stimulus class) for each
         % trial
         NS.trial.condition_num =  val;
-    case 'poisson_rate_bb'
-        % Set the Poisson rate for the broadband inputs for each trial
-        NS.trial.poisson_rate_bb =  val;
-    case 'poisson_rate_g'
-        % Set the Poisson rate for the gamma inputs for each trial
-        NS.trial.poisson_rate_g =  val;
-    case 'poisson_rate_a'
-        % Set the Poisson rate for the alpha inputs for each trial
-        NS.trial.poisson_rate_a =  val;
-    case 'coherence_rate_g'
-        % Set the Poisson rate for the alpha inputs for each trial
-        NS.trial.coherence_rate_g =  val;
+        
+    % Set the Poisson rate for each trial
+    case 'trial_poisson_bb' % broadband
+        NS.trial.poisson_bb =  val;
+    case 'trial_poisson_g' % gamma
+        NS.trial.poisson_g =  val;
+    case 'trial_poisson_a' % alpha
+        NS.trial.poisson_a =  val;
+        
+    % Set the Coherence for each trial
+    case 'trial_coherence_bb' % broadband
+        NS.trial.coherence_bb =  val;
+    case 'trial_coherence_g' % gamma
+        NS.trial.coherence_g =  val;
+    case 'trial_coherence_a' % alpha
+        NS.trial.coherence_a =  val;
 
     % ---------------------------
     % -- data -------------------

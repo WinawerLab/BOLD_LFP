@@ -1,27 +1,33 @@
 function NS = ns_simulate_data(NS)
 
 % Get variables from NS struct before simulating
-t                = ns_get(NS, 't');
-num_trials       = ns_get(NS, 'num_trials');
-num_neurons      = ns_get(NS, 'num_neurons');
-poisson_baseline = ns_get(NS, 'poisson_baseline');
-poisson_rate_bb  = ns_get(NS, 'poisson_rate_bb');
-poisson_rate_g   = ns_get(NS, 'poisson_rate_g');
-poisson_rate_a   = ns_get(NS, 'poisson_rate_a');
-coherence_rate_g = ns_get(NS, 'coherence_rate_g'); % call just coherence
-gamma_filter     = ns_get(NS, 'gamma_filter');
-alpha_range      = ns_get(NS, 'alpha_range');
-length_zero_pad  = length(t);
+t                       = ns_get(NS, 't');
+num_trials              = ns_get(NS, 'num_trials');
+num_neurons             = ns_get(NS, 'num_neurons');
+poisson_baseline        = ns_get(NS, 'poisson_baseline');
+poisson_bb              = ns_get(NS, 'trial_poisson_bb');
+poisson_g               = ns_get(NS, 'trial_poisson_g');
+poisson_a               = ns_get(NS, 'trial_poisson_a');
+coherence_bb            = ns_get(NS, 'trial_coherence_bb'); 
+coherence_g             = ns_get(NS, 'trial_coherence_g'); 
+coherence_a             = ns_get(NS, 'trial_coherence_a');
+gamma_filter            = ns_get(NS, 'gamma_filter');
+alpha_range             = ns_get(NS, 'alpha_range');
+length_zero_pad         = length(t);
 
 % Initialize the time series array, which will hold data for all neurons at
 % all time points in all trials across all experiments
 ts  = zeros(length(t), ns_get(NS, 'num_neurons'), num_trials, ...
     ns_get(NS, 'num_experiments'));
 
+% Initialize the alpha covariance calculated from the alpha inputs:
+NS.trial.coherence_a_data = NaN(num_trials,1);
+
 % check whether some inputs need to be saved, and which trials
 save_inputs = ns_get(NS, 'save_inputs');
 save_inputs_trials = ns_get(NS, 'trials_save_inputs');
-% initialte variables to save
+
+% initiate variables to save
 save_bb_inputs = zeros(length(t), ns_get(NS, 'num_neurons'),length(save_inputs_trials),ns_get(NS, 'num_experiments'));
 save_g_inputs = zeros(length(t), ns_get(NS, 'num_neurons'),length(save_inputs_trials),ns_get(NS, 'num_experiments'));
 save_a_inputs = zeros(length(t), ns_get(NS, 'num_neurons'),length(save_inputs_trials),ns_get(NS, 'num_experiments'));
@@ -48,36 +54,56 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
         if ismember(ii,drawdots), fprintf('.'); drawnow(); end
         
         %%%%% Broadband inputs
-        this_rate       = poisson_rate_bb(ii) + poisson_baseline;
-        bb_inputs       = randn(length(t), num_neurons)*this_rate + input_dc;
+        this_rate       = poisson_bb(ii) + poisson_baseline;
+        mu              = input_dc + zeros(1,num_neurons);
+        sigma           = eye(num_neurons) + (1-eye(num_neurons)) * coherence_bb(ii);
+        bb_inputs       = this_rate * mvnrnd(mu,sigma,length(t));
         
         %%%%% Gamma inputs
         mu              = zeros(1,num_neurons);
-        sigma           = eye(num_neurons) + (1-eye(num_neurons))* coherence_rate_g(ii);
+        sigma           = eye(num_neurons) + (1-eye(num_neurons)) * coherence_g(ii);
         gamma_inputs    = mvnrnd(mu,sigma,length(t));
+        % filter gamma for the gamma frequencies
         gamma_inputs    = padarray(gamma_inputs, [length_zero_pad 0], 0, 'both'); % zero pad 
-        gamma_inputs    = poisson_rate_g(ii)*filtfilt(gamma_filter, gamma_inputs);
+        gamma_inputs    = poisson_g(ii)*filtfilt(gamma_filter, gamma_inputs);
         gamma_inputs    = gamma_inputs(length(t)+1:2*length(t),:); % remove zero pad 
         
         %%%%% Alpha inputs with pulses
-        alpha_pulses = zeros(length(t), num_neurons);
-        next_pulse = 0; 
+        % generate alpha pulses that are longer than the necessary data to
+        % pick the onsets with varying synchrony:
+        alpha_pulses = zeros(2*length(t), num_neurons);
+        next_pulse = 0;
         wait_time = sort(round(1./alpha_range /dt));
-    
-        while next_pulse < length(t)
+        while next_pulse < 2*length(t)
             this_pulse = next_pulse + randi(wait_time, [1 num_neurons]);
-            this_pulse(this_pulse > length(t)) = NaN;
+            this_pulse(this_pulse > 2*length(t)) = NaN;
             inds = sub2ind(size(alpha_pulses), this_pulse, 1:num_neurons);
             inds = inds(isfinite(inds));
-            alpha_pulses(inds) = poisson_rate_a(ii);
+            alpha_pulses(inds) = poisson_a(ii);
             next_pulse = round(mean(this_pulse));
         end
+        % set the synchrony for all neurons, no asynchrony if highly
+        % coherent, asynchrony varying across alpha-range if less coherence
+        onset_asynchrony = randi([0 round(mean(wait_time)*(1-coherence_a(ii)))],[1 num_neurons]);
+        alpha_pulses_short = zeros(length(t), num_neurons);
+        for k=1:num_neurons
+            alpha_pulses_short(:,k) = alpha_pulses(onset_asynchrony(k)+1:onset_asynchrony(k)+length(t),k);
+        end
         h = exp(-(t-.075).^2/(2*.02^2));
-        alpha_inputs = -conv2(alpha_pulses, h', 'full');
+        alpha_inputs = -conv2(alpha_pulses_short, h', 'full');
         [~,max_ind] = max(h);
         % get the peak of the response at the time of the pulse: 
         alpha_inputs = alpha_inputs(max_ind:max_ind+length(t)-1,:);
-                
+        
+        % save average covariance in the alpha inputs:
+        if poisson_a(ii)>0
+            alpha_cov = corrcoef(alpha_inputs); % covariance matrix normalized
+            alpha_cov(tril(ones(size(cov(alpha_inputs))))>0) = NaN;% set lower triangle to NaN
+            NS.trial.coherence_a_data(ii) = nanmean(alpha_cov(:));
+        else % zero if there is no alpha input
+            NS.trial.coherence_a_data(ii) = 0;
+        end
+        
         % combine broadband, gamma and alpha
         summed_inputs = bb_inputs + gamma_inputs + alpha_inputs;
           

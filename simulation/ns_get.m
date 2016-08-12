@@ -3,13 +3,7 @@ function val = ns_get(NS, param, varargin)
 % val = ns_get(NS, param, varargin)
 
 % Big switch
-switch lower(param)
-    case 'simulate_method'
-        % Two ways to simulate the neural time series:
-        %   'SLOW': leaky integrator simulation
-        %   'FAST': random walk
-        val = NS.params.simulate_method;
-    
+switch lower(param)    
     case 'save_inputs'
         % save alpha, gamma and broadband inputs before leaky integrator
         val = NS.params.save_inputs;
@@ -46,58 +40,32 @@ switch lower(param)
         
     case 'trial_length'
         val = NS.params.trial_length;
-                
-    case 'gamma_range'
-        % Band limits of spectrum that define gamma band response (Hz)
-        val = NS.params.gamma_range;
         
-    case 'alpha_range'
-        % Band limits of spectrum that define alpha band response (Hz)
+    %%%% Frequencies for band-limited responses (gamma and alpha)       
+    case 'gamma_range' % Frequency range that define gamma band response (Hz)
+        val = NS.params.gamma_range;
+    case 'alpha_range' % Frequency range that define alpha band response (Hz)
         val = NS.params.alpha_range;
         
-    case 'poisson_baseline'
-        % Baseline Poisson rate (arbitrary units)
+    % Baseline Poisson rate (arbitrary units)
+    case 'poisson_baseline' 
         val = NS.params.poisson_baseline;
         
-    % rates    
-    case 'poisson_bb_rg'
-        % Broadband poisson rate range (arbitrary units).
-        val = NS.params.poisson_bb_rg;
-                
-    case 'poisson_g_val'
-        % Broadband poisson rate range (arbitrary units).
-        val = NS.params.poisson_g_val;
-        
-    case 'poisson_a_rg'
-        % Broadband poisson rate range (arbitrary units).
-        val = NS.params.poisson_a_rg;
-
-    % coherences
-    case 'gamma_coh_rg'
-        % Coherence of gamma neurons within gamma band ([0 1])
-        val =  NS.params.gamma_coh;
-
-    % rates for each condition
+    % Poisson rates for each unique condition/stimulus type (1 x num conditions)
     case 'poisson_bb'
-        % Poisson rates for broadband signal for each unique condition/stimulus
-        % type (1 x num conditions)
-       val =  NS.params.poisson_bb;
-
+        val =  NS.params.poisson_bb;
     case 'poisson_g'
-        % Poisson rates for gamma signal for each unique condition/stimulus
-        % type (1 x num conditions)
         val = NS.params.poisson_g;
-    
     case 'poisson_a'
-        % Poisson rates for alpha signal for each unique condition/stimulus
-        % type (1 x num conditions)
         val = NS.params.poisson_a;
     
-    % coherences for each condition
+    % Coherence rates for each unique condition/stimulus type (1 x num conditions)
+    case 'coherence_bb'
+        val =  NS.params.coherence_bb;
     case 'coherence_g'
-        % Coherence rates for gamma signal for each unique condition/stimulus
-        % type (1 x num conditions)
         val =  NS.params.coherence_g;
+    case 'coherence_a'
+        val =  NS.params.coherence_a;
 
     % -------------------------------------------------------------------
     % Derived parameters. These can be returned by get but cannot be set
@@ -121,32 +89,18 @@ switch lower(param)
         t = ns_get(NS, 't');
         val = (0:length(t)-1)/max(t);
                  
-    case 'freq_gamma'
-        % Frequency ranges for computing broadband power and gamma power are
-        % complementary. Also we remove DC and frequencies above 200 Hz. For the
-        % broadband calculation, we exclude frequencies that are higher than 75% of
-        % the low frequency end of the gamma range, or greater than 125% of the
-        % high frequency range. The 75% and 125% provide a little padding, since
-        % the filter which produces the gamma signal is not hard edged, but gently
-        % rolls off into nearyby frequencies. We would like to exclude these nearby
-        % frequencies from the broadband calucation, because they will partially
-        % reflect the gamma amplitude.
-        f = ns_get(NS, 'f'); gamma_range = ns_get(NS, 'gamma_range');
-        val = f(f > gamma_range(1) & f < gamma_range(2));
-
+    % get frequencies for bb, gamma, alpha
     case 'freq_bb'
-        % see 'freq_gamma'
+        f = ns_get(NS, 'f'); 
+        val = f(f>90 & f<200);
+    case 'freq_gamma'
         f = ns_get(NS, 'f'); 
         gamma_range = ns_get(NS, 'gamma_range');
-        alpha_range = ns_get(NS, 'alpha_range');
-%         val = f(...
-%             ((f<gamma_range(1)*.75) | (f>gamma_range(2)*1.25)) & ... % exclude gamma
-%         ((f<alpha_range(1)*.5) | (f>alpha_range(2)*1.5))  ... % exclude alpha
-%          & f<200 & f>6);
-        val = f(f>90 & f<200);
+        val = f(f > gamma_range(1) & f < gamma_range(2));
     case 'freq_alpha'
         % see 'freq_gamma'
-        f = ns_get(NS, 'f'); alpha_range = ns_get(NS, 'alpha_range');
+        f = ns_get(NS, 'f'); 
+        alpha_range = ns_get(NS, 'alpha_range');
         val = f(f > alpha_range(1) & f < alpha_range(2));
 
     case 'gamma_filter'
@@ -156,30 +110,6 @@ switch lower(param)
             'HalfPowerFrequency1',gamma_range(1),'HalfPowerFrequency2',gamma_range(2),...
             'SampleRate',1/dt,'DesignMethod','butter');
         
-    case 'alpha_filter'
-        % Band-pass Butterworth filter for alpha response
-        dt = ns_get(NS, 'dt');  alpha_range = ns_get(NS, 'alpha_range');
-        val = designfilt('bandpassiir','FilterOrder',30, ...
-            'HalfPowerFrequency1',alpha_range(1),'HalfPowerFrequency2',alpha_range(2),...
-            'SampleRate',1/dt,'DesignMethod','butter');
-    
-    case 'alpha_filter_delay'
-        % Delay, in samples, caused by alpha filter
-        alpha_filter = ns_get(NS, 'alpha_filter');  
-        sample_rate  = 1/ns_get(NS, 'dt');
-        alpha_range  = ns_get(NS, 'alpha_range');
-        [delays, w] = grpdelay(alpha_filter); 
-        f = w/pi * sample_rate;
-        val = mean(delays(f>= alpha_range(1) & f < alpha_range(2)));
-        val = round(val);
-        
-    case 'lowpass_filter'
-        % LOW-pass Butterworth filter for alpha envelope
-        dt = ns_get(NS, 'dt');  
-        val = designfilt('lowpassiir','FilterOrder',10, ...
-            'HalfPowerFrequency',15,...
-            'SampleRate',1/dt,'DesignMethod','butter');
-
     % ---------------------------
     % -- trial variables --------
     % ---------------------------    
@@ -187,18 +117,22 @@ switch lower(param)
         % Get the condition number (equivalent to stimulus class) for each
         % trial
         val = NS.trial.condition_num;
-    case 'poisson_rate_bb'
-        % Get the Poisson rate for the broadband inputs for each trial
-        val = NS.trial.poisson_rate_bb;
-    case 'poisson_rate_g'
-        % Get the Poisson rate for the broadband inputs for each trial
-        val = NS.trial.poisson_rate_g;
-    case 'poisson_rate_a'
-        % Get the Poisson rate for the broadband inputs for each trial
-        val = NS.trial.poisson_rate_a;
-    case 'coherence_rate_g'
-        % Get the Poisson rate for the gamma inputs for each trial
-        val = NS.trial.coherence_rate_g;
+        
+    % Get the Poisson rate for the inputs for each trial
+    case 'trial_poisson_bb'
+        val = NS.trial.poisson_bb;
+    case 'trial_poisson_g'
+        val = NS.trial.poisson_g;
+    case 'trial_poisson_a'
+        val = NS.trial.poisson_a;
+
+    % Get the coherence for the inputs for each trial
+    case 'trial_coherence_bb'
+        val = NS.trial.coherence_bb;
+    case 'trial_coherence_g'
+        val = NS.trial.coherence_g;
+    case 'trial_coherence_a'
+        val = NS.trial.coherence_a;
         
     % ---------------------------
     % -- data -------------------
@@ -206,27 +140,27 @@ switch lower(param)
     case 'ts'
         % Get the simulated time series (3D or 4D array, time x neuron x trial x experiment)
         val = NS.data.ts;
-
-    case 'bb'
-        % Get the ecog broadband measures (num_trials x num_experiments)
-        val = NS.data.bb; 
                 
-    case 'lfp'
-        % Get the ecog lfp measures (num_trials x num_experiments)
-        val = NS.data.lfp; 
-        
-    case 'gamma'
-        % Get the ecog gamma measures (num_trials x num_experiments)
-        val = NS.data.gamma; 
-        
-    case 'alpha'
-        % Get the ecog alpha measures (num_trials x num_experiments)
-        val = NS.data.alpha; 
-
     case 'bold'
         % Get the bold measures (num_trials x num_experiments)
         val = NS.data.bold; 
 
+    case 'lfp'
+        % Get the ecog lfp measures (num_trials x num_experiments)
+        val = NS.data.lfp; 
+
+    % get the ECoG measures (num_trials x num_experiments):
+    case 'bb' % broadband
+        val = NS.data.bb; 
+    case 'gamma' % gamma
+        val = NS.data.gamma; 
+    case 'alpha' % alpha
+        val = NS.data.alpha; 
+
+    %%%%% TODO
+    %%%%% ADJUST THE FOLLOWING ACCORDING TO DATA:
+    %%%%% TODO
+    
     case 'power'
         % Compute the population power spectra (averaging over neurons)
         % Power is frequency x trial x experiment

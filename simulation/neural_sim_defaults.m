@@ -5,7 +5,7 @@ function NS = neural_sim_defaults()
 % NS = neural_sim_defaults()
 
 % see ns_set for description of parameters
-NS = ns_set([], 'simulate_method', 'SLOW'); 
+NS = [];
 NS = ns_set(NS, 'save_inputs', 0);
 NS = ns_set(NS, 'trials_save_inputs', []);
 NS = ns_set(NS, 'num_neurons', 600);      
@@ -17,9 +17,12 @@ NS = ns_set(NS, 'trial_length', 1);
 NS = ns_set(NS, 'gamma_range', [40 60]); 
 NS = ns_set(NS, 'alpha_range', [9 12]); 
 NS = ns_set(NS, 'poisson_baseline', 1);
-NS = ns_set(NS, 'poisson_bb_rg', [0 1]);
 
-% set gamma and alpha by default to have one amplitude, but scaled coherence
-NS = ns_set(NS, 'poisson_g_val', [1]);
-NS = ns_set(NS, 'poisson_a_rg', [0 1]);
-NS = ns_set(NS, 'gamma_coh_rg', [0 1]);
+% NS = ns_set(NS, 'poisson_bb', [0 1]);
+% NS = ns_set(NS, 'coherence_bb', [0]);
+% 
+% NS = ns_set(NS, 'poisson_g', [0 1]);
+% NS = ns_set(NS, 'coherence_g', [1]);
+% 
+% NS = ns_set(NS, 'poisson_a', [0 1]);
+% NS = ns_set(NS, 'coherence_a', [0]);
