@@ -48,4 +48,4 @@ gauss_f=x(3);
 
 % fit to data in log-space
 fit_f2=w_pwr-out_exp*log10(f) + ...
-    w_gauss*.08*sqrt(2*pi)*normpdf(log10(f),gauss_f,.08);
+    w_gauss*.04*sqrt(2*pi)*normpdf(log10(f),gauss_f,.04);

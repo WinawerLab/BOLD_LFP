@@ -47,7 +47,11 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
     % parameters
     tau         = 0.010;            % time constant of leaky integrator (seconds)
     dt          = ns_get(NS, 'dt'); % step size for simulation, in seconds
-    input_dc    = .25;              % DC added
+    input_dc    = .25;               % DC added, this needs to be the size of the maximum alpha
+    if input_dc<max(NS.trial.poisson_a)
+        fprintf(['WARNING: do not make alpha sent mean signal below zero \n' ...
+        ' change maximum poisson alpha range to <' num2str(input_dc)  '\n'])
+    end
     
     % generate the simulated data: time x neuron x trial one trial at a time
     for ii = 1:num_trials
@@ -57,7 +61,7 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
         this_rate       = poisson_bb(ii) + poisson_baseline;
         mu              = input_dc + zeros(1,num_neurons);
         sigma           = eye(num_neurons) + (1-eye(num_neurons)) * coherence_bb(ii);
-        bb_inputs       = this_rate * mvnrnd(mu,sigma,length(t));
+        bb_inputs       = input_dc + this_rate * (mvnrnd(mu,sigma,length(t))-input_dc);
         
         %%%%% Gamma inputs
         mu              = zeros(1,num_neurons);
@@ -82,12 +86,17 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
             alpha_pulses(inds) = poisson_a(ii);
             next_pulse = round(mean(this_pulse));
         end
-        % set the synchrony for all neurons, no asynchrony if highly
-        % coherent, asynchrony varying across alpha-range if less coherence
-        onset_asynchrony = randi([0 round(mean(wait_time)*(1-coherence_a(ii)))],[1 num_neurons]);
+        
+        % for alpha set the onset asynchrony for all neurons, synchronous
+        % (0-asynchrony) if highly coherent, asynchrony varying across
+        % alpha-range if less coherence
+        % pick a random start-time, because otherwise there can be tiny changes in the mean ts:
+        random_start = randi([round(length(t)/5) 2*round(length(t)/5)],1);
+        onset_asynchrony = random_start + ...
+            randi([0 round(mean(wait_time)*(1-coherence_a(ii)))],[1 num_neurons]);
         alpha_pulses_short = zeros(length(t), num_neurons);
         for k=1:num_neurons
-            alpha_pulses_short(:,k) = alpha_pulses(onset_asynchrony(k)+1:onset_asynchrony(k)+length(t),k);
+            alpha_pulses_short(:,k) = alpha_pulses(onset_asynchrony(k)+1 : onset_asynchrony(k)+length(t),k);
         end
         h = exp(-(t-.075).^2/(2*.02^2));
         alpha_inputs = -conv2(alpha_pulses_short, h', 'full');

@@ -1,9 +1,11 @@
 
 %% get all the correlation values 
 clear all
-sim_nr      = 1;
-set_nr      = 1;
-load(['./data/NS_simnr' int2str(sim_nr) '_set' int2str(set_nr)],'NS')
+sim_nr      = 2;
+set_nr      = 9;
+load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/'...
+    'NS_simnr' int2str(sim_nr) '_set' int2str(set_nr)],'NS')
+% load(['./data/NS_simnr' int2str(sim_nr) '_set' int2str(set_nr)],'NS')
 
 %% 
 numNeurons2plot     = 5;
@@ -133,8 +135,8 @@ signal2plot = NS.data.ts(:,:,NS.params.trials_save_inputs(trial2plot));
 barh(0,mean(signal2plot(:,neuron2plot).^2,1),'FaceColor',ax.ColorOrder(1,:))
 ylim([-2 2])
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['./figures/ns_MethodsFig02_trial' int2str(NS.params.trials_save_inputs(trial2plot))])
-print('-depsc','-r300',['./figures/ns_MethodsFig02_trial' int2str(NS.params.trials_save_inputs(trial2plot))])
+% print('-dpng','-r300',['./figures/ns_MethodsFig02_trial' int2str(NS.params.trials_save_inputs(trial2plot))])
+% print('-depsc','-r300',['./figures/ns_MethodsFig02_trial' int2str(NS.params.trials_save_inputs(trial2plot))])
 
 figure('Position',[0 0 500 60])
 f = ns_get(NS,'f');
@@ -173,8 +175,8 @@ plot(f(f_lims(1):f_lims(2)),pxx(f_lims(1):f_lims(2)),'Color',ax.ColorOrder(1,:))
 set(gca,'XScale','log','YScale','log')
 axis tight
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['./figures/ns_MethodsFig02_pxx_trial' int2str(NS.params.trials_save_inputs(trial2plot))])
-print('-depsc','-r300',['./figures/ns_MethodsFig02_pxx_trial' int2str(NS.params.trials_save_inputs(trial2plot))])
+% print('-dpng','-r300',['./figures/ns_MethodsFig02_pxx_trial' int2str(NS.params.trials_save_inputs(trial2plot))])
+% print('-depsc','-r300',['./figures/ns_MethodsFig02_pxx_trial' int2str(NS.params.trials_save_inputs(trial2plot))])
 
 %% plot a bunch of neurons
 

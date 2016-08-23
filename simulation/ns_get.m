@@ -83,11 +83,6 @@ switch lower(param)
         % Time vector for one trial (in seconds)
         dt  = ns_get(NS, 'dt'); 
         val = dt:dt:ns_get(NS, 'trial_length');
-        
-    case 'f'
-        % Temporal frequencies for one trial (in Hz)
-        t = ns_get(NS, 't');
-        val = (0:length(t)-1)/max(t);
                  
     % get frequencies for bb, gamma, alpha
     case 'freq_bb'
@@ -149,57 +144,48 @@ switch lower(param)
         % Get the ecog lfp measures (num_trials x num_experiments)
         val = NS.data.lfp; 
 
-    % get the ECoG measures (num_trials x num_experiments):
+    case 'lfp_spectra'
+        % Get the ecog lfp measures (num_trials x num_experiments)
+        val = NS.data.lfp_spectra; 
+    case 'f'
+        val = NS.data.f; 
+        
+    % get the bootstrapped LFP measures (num_conditions x num_bootstraps x frequency):
+    case 'lfp_spectra_bs' 
+        val = NS.data.lfp_spectra_bs; 
+
+    % get the bootstrapped BOLD measures (num_conditions x num_bootstraps):
+    case 'bold_bs' 
+        val = NS.data.bold_bs; 
+    case 'bold_bs_even' 
+        val = NS.data.bold_bs_even; 
+    case 'bold_bs_odd' 
+        val = NS.data.bold_bs_odd; 
+
+    % get the ECoG measures (num_conditions x num_bootstraps):
     case 'bb' % broadband
         val = NS.data.bb; 
     case 'gamma' % gamma
         val = NS.data.gamma; 
     case 'alpha' % alpha
         val = NS.data.alpha; 
+                
+    % get the ECoG measures (num_conditions x num_bootstraps):
+    case 'bb_even' % broadband
+        val = NS.data.bb_even; 
+    case 'gamma_even' % gamma
+        val = NS.data.gamma_even; 
+    case 'alpha_even' % alpha
+        val = NS.data.alpha_even; 
 
-    %%%%% TODO
-    %%%%% ADJUST THE FOLLOWING ACCORDING TO DATA:
-    %%%%% TODO
-    
-    case 'power'
-        % Compute the population power spectra (averaging over neurons)
-        % Power is frequency x trial x experiment
-        ts = ns_get(NS, 'ts');
-        ts_for_fft = squeeze(mean(ts,2));
-        
-        % fft power
-        val = ns_fftpower(ts_for_fft);
+    % get the ECoG measures (num_conditions x num_bootstraps):
+    case 'bb_odd' % broadband
+        val = NS.data.bb_odd; 
+    case 'gamma_odd' % gamma
+        val = NS.data.gamma_odd; 
+    case 'alpha_odd' % alpha
+        val = NS.data.alpha_odd; 
 
-    case 'fitbroadbandgamma'
-        % compute broadband and gamma estimes
-        data_power      = ns_get(NS, 'power'); 
-        f               = ns_get(NS,'f');
-        conditions      = ns_get(NS, 'condition_num');
-        baseline_trials = find(conditions==0);
-
-        f_use4fit       = 30:200;
-
-        data_base       = mean(data_power(:,baseline_trials),2);
-        out_weights     = zeros(size(data_power,2),2);
-        for k=1:size(data_power,2)
-            data_fit        = data_power(:,k);
-            [out_exp,w_pwr,w_gauss,gauss_f,fit_f2] = ...
-                fit_gammadata(f,f_use4fit,data_base,data_fit);
-            out_weights(k,:) = [w_pwr w_gauss];
-        end
-        val = out_weights;
-        
-    case 'power_law'
-        % derive power law parameters for baseline
-        power = ns_get(NS, 'power'); freq_bb = ns_get(NS, 'freq_bb');
-        conditions = ns_get(NS, 'condition_num');
-        for sim_number = 1:ns_get(NS, 'num_experiments');
-            data_power_baseline = mean(log(power(freq_bb,conditions == 0, sim_number)),2);
-            power_law_coefficients = polyfit(log(freq_bb)',data_power_baseline ,1);
-            power_law(:,sim_number) = polyval(power_law_coefficients,log(freq_bb)');
-        end
-        val = power_law;
-        
     otherwise
         error('Unknown parameter %s', param);
 end

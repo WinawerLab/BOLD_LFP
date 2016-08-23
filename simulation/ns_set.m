@@ -101,6 +101,15 @@ switch lower(param)
         %   time x neurons x trials x experiments
         NS.data.ts = val;
     
+    case 'lfp_spectra'
+        % Set the time series data field, 3D or 4D: 
+        %   time x neurons x trials x experiments
+        NS.data.lfp_spectra = val;
+    case 'f'
+        % Set the time series data field, 3D or 4D: 
+        %   time x neurons x trials x experiments
+        NS.data.f = val;
+
     case 'bb_input'
         NS.data.bb_inputs = val;
         
@@ -110,29 +119,57 @@ switch lower(param)
     case 'a_input'
         NS.data.a_inputs = val;
         
-    case 'bb'
-        % Set the ecog broadband measures (num_trials x num_experiments)
-        NS.data.bb = val; 
     case 'bold'
-        % Set the BOLD measures (num_trials x num_experiments)
+        % Set the BOLD measures (num_trials)
         NS.data.bold = val; 
     case 'lfp'
-        % Set the ecog lfp measures (num_trials x num_experiments)
+        % Set the ecog lfp measures (num_trials)
         NS.data.lfp = val; 
-    case 'gamma'
-        % Set the ecog gamma measures (num_trials x num_experiments)
+
+    % Set the bootstrapped LFP values all trials (num_conditions x num_bootstraps X freq)
+    case 'lfp_spectra_bs' % broadband all trials
+        NS.data.lfp_spectra_bs = val; 
+
+    % Set the bootstrapped BOLD values all trials (num_conditions x num_bootstraps)
+    case 'bold_bs' % broadband all trials
+        NS.data.bold_bs = val; 
+    case 'bold_bs_even' % broadband all trials
+        NS.data.bold_bs_even = val; 
+    case 'bold_bs_odd' % broadband all trials
+        NS.data.bold_bs_odd = val; 
+
+    % Set the extracted ecog values all trials (num_conditions x num_bootstraps)
+    case 'bb' % broadband all trials
+        NS.data.bb = val; 
+    case 'gamma' % gamma all trials
         NS.data.gamma = val; 
-    case 'alpha'
-        % Set the ecog alpha measures (num_trials x num_experiments)
-        NS.data.alpha = val;         
+    case 'alpha' % alpha all trials
+        NS.data.alpha = val;     
+
+    % Set the extracted ecog values even trials (num_conditions x num_bootstraps)
+    case 'bb_even' % broadband all trials
+        NS.data.bb_even = val; 
+    case 'gamma_even' % gamma all trials
+        NS.data.gamma_even = val; 
+    case 'alpha_even' % alpha all trials
+        NS.data.alpha_even = val;     
+        
+    % Set the extracted ecog values odd trials (num_conditions x num_bootstraps)
+    case 'bb_odd' % broadband all trials
+        NS.data.bb_odd = val; 
+    case 'gamma_odd' % gamma all trials
+        NS.data.gamma_odd = val; 
+    case 'alpha_odd' % alpha all trials
+        NS.data.alpha_odd = val;     
+
     % ---------------------------
     % -- statistics -------------
     % ---------------------------
-    case 'r2'
+    case 'stats'
         % Correlation values across trial types, requires a specification
         % of which variables are correlated in varargin{1}, e.g., 
         % NS = ns_set(NS, 'r2', r2data, 'bold_bb');
-        NS.stats.(varargin{1}) = val;         
+        NS.stats = val;         
      
     otherwise
         error('Unknown parameter %s', param);

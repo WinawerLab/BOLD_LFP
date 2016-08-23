@@ -14,7 +14,7 @@ NS = ns_set(NS, 'num_averages', 30);
 NS = ns_set(NS, 'num_experiments', 1);
 NS = ns_set(NS, 'dt', 0.001); 
 NS = ns_set(NS, 'trial_length', 1);
-NS = ns_set(NS, 'gamma_range', [40 60]); 
+NS = ns_set(NS, 'gamma_range', [50 60]); 
 NS = ns_set(NS, 'alpha_range', [9 12]); 
 NS = ns_set(NS, 'poisson_baseline', 1);
 

@@ -17,5 +17,5 @@ function F = fit_func3_loglog(x,P,f,p_exp)
 %     You should have received a copy of the GNU General Public License
 %     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-F= P - (x(1)-p_exp*f + x(2)*.08*sqrt(2*pi)*normpdf(f,x(3),.08));
+F= P - (x(1)-p_exp*f + x(2)*.04*sqrt(2*pi)*normpdf(f,x(3),.04));
 % note: .04*sqrt(2*pi) gives an amplitude of 1 to the Gaussian for x(2)=1;

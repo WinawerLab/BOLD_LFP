@@ -1,15 +1,24 @@
 function out = script_make_uncorrelated_conditions(nr_conds)
 % Uncorrelate gamma, alpha, from broadband
 
-%%%%% vary poisson ranges across sets:
-poisson_bb_range = [0 .5;0 .2];
-poisson_g_range = [.5 .5;.5 .5]; % this should not be 0-0
-poisson_a_range = [0 .3;0 .3];
-%%%%% vary coherence ranges across sets:
-coherence_bb_range = [0 0;0 0];
-coherence_g_range = [0 1;0 1];
-coherence_a_range = [.5 .5;.5 .5];
+% to get baselines:
+% %%%%% vary poisson ranges across sets:
+% poisson_bb_range =   [0 0; 0 1;.2 .2; 0 0; 0 0  ; 0 0; 0 0  ;0 0; 0 1; 0 .2];
+% poisson_g_range =    [0 0; 0 0; 0 0;  0 1;.2 .2 ; 0 0; 0 0  ;0 0; 0 0;  0 0];
+% poisson_a_range =    [0 0; 0 0; 0 0;  0 0; 0 0  ; 0 1;.2 .2 ;0 1; 0 .5; 0 .5];
+% %%%%% vary coherence ranges across sets:
+% coherence_bb_range = [0 0; 0 0; 0 1;  0 0; 0 0  ; 0 0; 0 0  ;0 0; 0 0;  0 0];
+% coherence_g_range =  [0 0; 0 0; 0 0;  0 0; 0 1  ; 0 0; 0 0  ;0 0; 0 0;  0 0];
+% coherence_a_range =  [0 0; 0 0; 0 0;  0 0; 0 0  ; 0 0; 0 1  ;1 1; 1 1;  1 1];
 
+%%%%% vary poisson ranges across sets:
+poisson_bb_range =   [0 .5;  0 .2; 0 0];
+poisson_g_range =    [.2 .2;.2 .2; .2 .2];
+poisson_a_range =    [.1 .25; .1 .25; .25 .25];
+%%%%% vary coherence ranges across sets:
+coherence_bb_range = [0 0;   0 0; 0 0];
+coherence_g_range =  [0 1;   0 1; 0 1];
+coherence_a_range =  [1 1;   1 1; 1 1];
 
 poisson_bb = NaN(size(poisson_bb_range,1),nr_conds);
 poisson_g = NaN(size(poisson_bb_range,1),nr_conds);
@@ -56,57 +65,65 @@ for k = 1:size(poisson_bb_range,1)
     end
 end
 
-% uncorrelate poisson_g from poisson_bb in the first set:
-k = 1;
+% always have broadband increasing
+% and get two additional uncorrelated vectors, here we just assume linearly
+% increasing, as set above:
+% temporary BB vector: 
+temp_bb_vect = 1:1:nr_conds;
+% temporary GAMMA vector, to decorrelate from BB 
+temp_g_vect = 1:1:nr_conds;
+% temporary ALPHA vector, to decorrelate from BB and GAMMA
+temp_a_vect = 1:1:nr_conds;
+
+%%%%%%%%%%%%%%%%%%%%%%%
+% DECORRELATE temp_gamma_vect from poisson_bb:
 b = zeros(100, nr_conds);
 c = zeros(nr_conds,1);
 for ii = 1:100;
-    % define baseline as the minimum poisson_gamma
-    [~,ind] = min(poisson_g(k,:));
-    tmp =  [poisson_g(k,ind(1)) poisson_g(k, setdiff(randperm(nr_conds),ind(1),'stable'))];
+    % define baseline as the minimum gamma
+    [~,ind_tmp] = min(temp_g_vect);
+    tmp =  [temp_g_vect(ind_tmp) temp_g_vect(setdiff(randperm(nr_conds),ind_tmp(1),'stable'))];
     b(ii,:) = tmp;
-    c(ii) = corr(poisson_bb(k,:)', tmp');
+    c(ii) = corr(temp_bb_vect', tmp');
 end
 [~, ind]  = min(abs(c));
-poisson_g(k,:) = b(ind,:);
+ind_g = b(ind,:);
+clear tmp ind_tmp ii b c ind
 
-% uncorrelate coherence_g from poisson_bb in the first set:
-k = 1;
-b = zeros(100, nr_conds);
-c = zeros(nr_conds,1);
-for ii = 1:100;
-    % define baseline as the minimum poisson_gamma
-    [~,ind] = min(coherence_g(k,:));
-    tmp =  [coherence_g(k,ind(1)) coherence_g(k, setdiff(randperm(nr_conds),ind(1),'stable'))];
-    b(ii,:) = tmp;
-    c(ii) = corr(poisson_bb(k,:)', tmp');
-end
-[~, ind]  = min(abs(c));
-coherence_g(k,:) = b(ind,:);
-
-% also put in the second set:
-k = 2;
-coherence_g(k,:) = b(ind,:);
-
-% Decorrelate alpha (in same way as bb/gamma) in the first set:
-k = 1;
-% Randomize alpha levels across trials
+% DECORRELATE temp_gamma_vect from broadband and gamma:
 b = zeros(1000, nr_conds);
 c = zeros(nr_conds,2); % correlation with bb and gamma
 for ii = 1:1000;
-    [~,ind] = max(poisson_a(k,:));
-    tmp =  [poisson_a(k,ind(1)) poisson_a(k, setdiff(randperm(nr_conds),ind(1),'stable'))];
+    % define baseline as the maximum alpha
+    [~,ind_tmp] = max(temp_a_vect);
+    tmp =  [temp_a_vect(ind_tmp) temp_a_vect(setdiff(randperm(nr_conds),ind_tmp(1),'stable'))];
     b(ii,:) = tmp;
-    c(ii,1) = corr(poisson_bb(k,:)', tmp');
-    c(ii,2) = corr(coherence_g(k,:)', tmp');
+    c(ii,1) = corr(temp_bb_vect', tmp');
+    c(ii,2) = corr(ind_g', tmp');
 end
 [~, ind]  = min(sum(abs(c),2));
-poisson_a(k,:) = b(ind,:);
+ind_a = b(ind,:);
+clear tmp ind_tmp ii b c ind
 
-% also put in the second set:
-k = 2;
-poisson_a(k,:) = b(ind,:);
+%%%%%%%%%%%%%%%%%%%%%%%
+% now run through all sets and enter decorrelated sequences:
+for k = 1:size(poisson_bb_range,1)
+    if diff(poisson_g_range(k,:))~=0 % if it should be uncorrelated
+        poisson_g(k,:) = poisson_g(k,ind_g);
+    end
+    if diff(coherence_g_range(k,:))~=0 % if it should be uncorrelated
+        coherence_g(k,:) = coherence_g(k,ind_g);
+    end
+    if diff(poisson_a_range(k,:))~=0 % if it should be uncorrelated
+        poisson_a(k,:) = poisson_a(k,ind_a);
+    end
+    if diff(coherence_a_range(k,:))~=0 % if it should be uncorrelated
+        coherence_a(k,:) = coherence_a(k,ind_a);
+    end
+end
 
+%%%%%%%%%%%%%%%%%%%%%%%
+% create output:
 out.poisson_bb = poisson_bb;
 out.poisson_g = poisson_g;
 out.poisson_a = poisson_a;
