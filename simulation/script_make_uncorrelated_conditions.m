@@ -12,13 +12,13 @@ coherence_g_range =  [0 0  ; 0 0;  0 0;  0 0;  0 1 ; 0 0;  0 0];
 coherence_a_range =  [1 1  ; 1 1;  1 1;  1 1;  1 1 ; 1 1;  0 1];
 
 %%%%% vary poisson ranges across sets:
-poisson_bb_range =   [0 .5;   0 .2;  0 .2  ; 0 .2];
-poisson_g_range =    [.2 .2; .2 .2;  0  1.5; 0 1.5];
-poisson_a_range =    [.1 .2; .1 .2; .1 .2  ;.1 .2 ];
+poisson_bb_range =   [0 .5;   0 .2;  0 .2  ; 0 .2; 0 0; 0 0];
+poisson_g_range =    [.2 .2; .2 .2;  0  1.5; 0 1.5;0 0; 0 0];
+poisson_a_range =    [.1 1; .1 .2; .1 .2  ;.1 .2 ; 0 1; .5 .5];
 %%%%% vary coherence ranges across sets:
-coherence_bb_range = [0 0;    0 0;   0 0;    0 0];
-coherence_g_range =  [0 .2;   0 .2;  0 0;   .2 .2];
-coherence_a_range =  [1 1;    1 1;   1 1;    1 1];
+coherence_bb_range = [0 0;    0 0;   0 0;    0 0 ; 0 0; 0 0];
+coherence_g_range =  [0 .2;   0 .2;  0 0;   .2 .2; 0 0; 0 0];
+coherence_a_range =  [1 1;    1 1;   1 1;    1 1 ; 1 1; 0 1];
 
 poisson_bb = NaN(size(poisson_bb_range,1),nr_conds);
 poisson_g = NaN(size(poisson_bb_range,1),nr_conds);

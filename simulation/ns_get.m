@@ -104,6 +104,13 @@ switch lower(param)
         val = designfilt('bandpassiir','FilterOrder',10, ...
             'HalfPowerFrequency1',gamma_range(1),'HalfPowerFrequency2',gamma_range(2),...
             'SampleRate',1/dt,'DesignMethod','butter');
+
+    case 'alpha_filter'
+        % Band-pass Butterworth filter for alpha response
+        dt = ns_get(NS, 'dt');  alpha_range = ns_get(NS, 'alpha_range');
+        val = designfilt('bandpassiir','FilterOrder',10, ...
+            'HalfPowerFrequency1',alpha_range(1),'HalfPowerFrequency2',alpha_range(2),...
+            'SampleRate',1/dt,'DesignMethod','butter');
         
     % ---------------------------
     % -- trial variables --------

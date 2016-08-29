@@ -7,7 +7,7 @@
 
 %%%% TODO: check alpha - influence by bb (set bb to zero/variable)
 
-sim_nr = 3;
+sim_nr = 5;
 
 % make conditions of input:
 nr_conds = 8;
@@ -15,7 +15,7 @@ out = script_make_uncorrelated_conditions(nr_conds);
 
 tic
 clear ns_params
-for k=4%1:size(out.poisson_bb,1) % number of settings
+for k=6%1:size(out.poisson_bb,1) % number of settings
 
     % Set default parameters
     NS = neural_sim_defaults; %disp(NS.params)
@@ -62,9 +62,9 @@ end
 
 clear all
 
-sim_nr = 3; % simulation number (general settings change)
+sim_nr = 5; % simulation number (general settings change)
 
-for param_set=4%1:3%1:10 % parameter set (bb, gamma, alpha)
+for param_set=6%1:3%1:10 % parameter set (bb, gamma, alpha)
 
 load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_set' int2str(param_set) ],'NS')
 
