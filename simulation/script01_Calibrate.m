@@ -12,7 +12,7 @@
 % sim_nr = 2 has input_dc = .25 and alpha_envelop*1, poisson_baseline = .3
 % and alpha_synchrony  = .75
 
-sim_nr = 3; 
+% sim_nr = 3; 
 % sim_nr = 3 has input_dc = .25 and alpha_envelop*1, poisson_baseline = .4
 % and alpha_synchrony  = .75
 
