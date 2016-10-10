@@ -14,6 +14,26 @@ coherence_bb    = ns_get(NS, 'coherence_bb');
 coherence_g     = ns_get(NS, 'coherence_g');
 coherence_a     = ns_get(NS, 'coherence_a');
 
+% make sure that these are all rows:
+if size(poisson_bb,1)>size(poisson_bb,2)
+   poisson_bb = poisson_bb'; 
+end
+if size(poisson_g,1)>size(poisson_g,2)
+   poisson_g = poisson_g'; 
+end
+if size(poisson_a,1)>size(poisson_a,2)
+   poisson_a = poisson_a'; 
+end
+if size(coherence_bb,1)>size(coherence_bb,2)
+   coherence_bb = coherence_bb'; 
+end
+if size(coherence_g,1)>size(coherence_g,2)
+   coherence_g = coherence_g'; 
+end
+if size(coherence_a,1)>size(coherence_a,2)
+   coherence_a = coherence_a'; 
+end
+
 % make function to repeat across conditions:
 vectorize = @(data,repeats) reshape(repmat(data, repeats, 1), num_trials, 1);
 

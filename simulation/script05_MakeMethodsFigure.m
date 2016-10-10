@@ -1,8 +1,8 @@
 
 %% get all the correlation values 
 clear all
-sim_nr      = 2;
-set_nr      = 9;
+sim_nr      = 4;
+set_nr      = 1;
 load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/'...
     'NS_simnr' int2str(sim_nr) '_set' int2str(set_nr)],'NS')
 % load(['./data/NS_simnr' int2str(sim_nr) '_set' int2str(set_nr)],'NS')
@@ -95,48 +95,54 @@ axis tight
 %% plot one neuron
 %% 
 
-neuron2plot         = 5;
+neuron2plot         = 1;
 numNeuronsColor     = {};
 trial2plot          = 1;
 t_int               = 70:240;
 
-figure('Position',[0 0 800 50]);
+figure('Position',[0 300 800 50]);
 ax = get(gca); % to get colororder to make bars the same color as the neuronal timeseries
 
 subplot(1,7,1),hold on
 plot(1:length(t_int),zeros(size(t_int)),'k')
-plot(NS.data.bb_inputs(t_int,neuron2plot,trial2plot))
+plot(NS.data.bb_inputs(t_int,neuron2plot,trial2plot),'k')
 axis tight
 
 subplot(1,7,2),hold on
 plot(1:length(t_int),zeros(size(t_int)),'k')
-plot(NS.data.g_inputs(t_int,neuron2plot,trial2plot))
+plot(NS.data.g_inputs(t_int,neuron2plot,trial2plot),'k')
 axis tight
 
 subplot(1,7,3),hold on
 plot(1:length(t_int),zeros(size(t_int)),'k')
-plot(NS.data.a_inputs(t_int,neuron2plot,trial2plot))
+plot(NS.data.a_inputs(t_int,neuron2plot,trial2plot),'k')
 axis tight
 
 subplot(1,7,4),hold on
 plot(1:length(t_int),zeros(size(t_int)),'k')
 signal2plot = NS.data.bb_inputs+NS.data.g_inputs+NS.data.a_inputs;
-plot(signal2plot(t_int,neuron2plot,trial2plot))
+plot(signal2plot(t_int,neuron2plot,trial2plot),'k')
 axis tight
 
 subplot(1,7,5),hold on
 plot(1:length(t_int),zeros(size(t_int)),'k')
 signal2plot = NS.data.ts(:,:,NS.params.trials_save_inputs(trial2plot));
-plot(signal2plot(t_int,neuron2plot))
+plot(signal2plot(t_int,neuron2plot),'k')
 axis tight
+
+% for k = 1:5
+%     subplot(1,7,k),hold on
+%     plot([150 150],[0 .1],'r')
+% end
 
 subplot(1,7,6),hold on
 signal2plot = NS.data.ts(:,:,NS.params.trials_save_inputs(trial2plot));
 barh(0,mean(signal2plot(:,neuron2plot).^2,1),'FaceColor',ax.ColorOrder(1,:))
 ylim([-2 2])
+
 set(gcf,'PaperPositionMode','auto')
-% print('-dpng','-r300',['./figures/ns_MethodsFig02_trial' int2str(NS.params.trials_save_inputs(trial2plot))])
-% print('-depsc','-r300',['./figures/ns_MethodsFig02_trial' int2str(NS.params.trials_save_inputs(trial2plot))])
+print('-dpng','-r300',['../figures/ns_MethodsFig02_trial' int2str(NS.params.trials_save_inputs(trial2plot))])
+print('-depsc','-r300',['../figures/ns_MethodsFig02_trial' int2str(NS.params.trials_save_inputs(trial2plot))])
 
 figure('Position',[0 0 500 60])
 f = ns_get(NS,'f');
@@ -145,38 +151,38 @@ f_lims = [find(f>=5,1) find(f>=100,1)];
 subplot(1,7,1),hold on
 ts_for_fft = NS.data.bb_inputs(:,neuron2plot,trial2plot);
 pxx = ns_fftpower(ts_for_fft);
-plot(f(f_lims(1):f_lims(2)),pxx(f_lims(1):f_lims(2)),'Color',ax.ColorOrder(1,:))
+plot(f(f_lims(1):f_lims(2)),pxx(f_lims(1):f_lims(2)),'k');%,'Color',ax.ColorOrder(1,:))
 axis tight
 
 subplot(1,7,2),hold on
 ts_for_fft = NS.data.g_inputs(:,neuron2plot,trial2plot);
 pxx = ns_fftpower(ts_for_fft);
-plot(f(f_lims(1):f_lims(2)),pxx(f_lims(1):f_lims(2)),'Color',ax.ColorOrder(1,:))
+plot(f(f_lims(1):f_lims(2)),pxx(f_lims(1):f_lims(2)),'k');%,'Color',ax.ColorOrder(1,:))
 axis tight
 
 subplot(1,7,3),hold on
 ts_for_fft = NS.data.a_inputs(:,neuron2plot,trial2plot);
 pxx = ns_fftpower(ts_for_fft);
-plot(f(f_lims(1):f_lims(2)),pxx(f_lims(1):f_lims(2)),'Color',ax.ColorOrder(1,:))
+plot(f(f_lims(1):f_lims(2)),pxx(f_lims(1):f_lims(2)),'k');%,'Color',ax.ColorOrder(1,:))
 axis tight
 
 subplot(1,7,4),hold on
 signal2plot = NS.data.bb_inputs+NS.data.g_inputs+NS.data.a_inputs;
 ts_for_fft = signal2plot(:,neuron2plot,trial2plot);
 pxx = ns_fftpower(ts_for_fft);
-plot(f(f_lims(1):f_lims(2)),pxx(f_lims(1):f_lims(2)),'Color',ax.ColorOrder(1,:))
+plot(f(f_lims(1):f_lims(2)),pxx(f_lims(1):f_lims(2)),'k');%,'Color',ax.ColorOrder(1,:))
 axis tight
 
 subplot(1,7,5),hold on
 hold on
 ts_for_fft = squeeze(NS.data.ts(:,neuron2plot,NS.params.trials_save_inputs(trial2plot)));
 pxx = ns_fftpower(ts_for_fft);
-plot(f(f_lims(1):f_lims(2)),pxx(f_lims(1):f_lims(2)),'Color',ax.ColorOrder(1,:))
+plot(f(f_lims(1):f_lims(2)),pxx(f_lims(1):f_lims(2)),'k');%,'Color',ax.ColorOrder(1,:))
 set(gca,'XScale','log','YScale','log')
 axis tight
 set(gcf,'PaperPositionMode','auto')
-% print('-dpng','-r300',['./figures/ns_MethodsFig02_pxx_trial' int2str(NS.params.trials_save_inputs(trial2plot))])
-% print('-depsc','-r300',['./figures/ns_MethodsFig02_pxx_trial' int2str(NS.params.trials_save_inputs(trial2plot))])
+print('-dpng','-r300',['../figures/ns_MethodsFig02_pxx_trial' int2str(NS.params.trials_save_inputs(trial2plot))])
+print('-depsc','-r300',['../figures/ns_MethodsFig02_pxx_trial' int2str(NS.params.trials_save_inputs(trial2plot))])
 
 %% plot a bunch of neurons
 
