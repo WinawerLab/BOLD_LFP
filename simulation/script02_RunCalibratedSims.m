@@ -164,7 +164,7 @@ end
 
 clear all
 sim_nr = 2;
-for elec = 1:22
+elec = 18;%1:22
 
 % load the simulation outputs 
 load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_elec' int2str(elec) '_simulation_outputs'],'simulation_outputs')
@@ -176,7 +176,7 @@ load('/Volumes/DoraBigDrive/data/visual/m-files/bold_datalikesimulation/data/bol
 prm_set = 1;
 load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_elec' int2str(elec) '_NS_prmset' int2str(prm_set)],'NS')
 
-
+%%
 % plot measured versus predicted LFP and BOLD
 num_conditions  = ns_get(NS, 'num_conditions');
 plot_colors = [0 0 0; jet(num_conditions-1)];
@@ -223,7 +223,7 @@ set(gcf,'PaperPositionMode','auto')
 print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) '_allmodels'])
 print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) '_allmodels'])
 
-% plot inputs/outputs from one specific simulation
+%% plot inputs/outputs from one specific simulation
 
 bold_avg        = median(NS.data.bold_bs,2);
 bb_avg          = median(NS.data.bb,2);
@@ -387,142 +387,8 @@ for k = 1:3 % bb, g, a
     xlabel(['simulated ' lfp_output{k}])
 end
 
-set(gcf,'PaperPositionMode','auto')
-print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) 'model' int2str(prm_set)])
-print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) 'model' int2str(prm_set)])
-
-end
-
-%% now load all fitted electrodes
-
-clear all
-sim_nr = 2;
-els = 1:1:22;
-r2_data_fit = NaN(8,length(els));
-
-all_data = NaN(4,length(els),10);
-all_simulation = NaN(4,length(els),10,8);
-% 4:bb,g,a,bold, nr els, up to 10 conditions, 8 simulations
-
-for l = 1:length(els)
-    
-    elec = els(l);
-
-    % load the simulation outputs 
-    load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_elec' int2str(elec) '_simulation_outputs'],'simulation_outputs')
-
-    % load the ECoG/fMRI data
-    load('/Volumes/DoraBigDrive/data/visual/m-files/bold_datalikesimulation/data/boldecog_structure_final.mat');
-
-    data_bb = median(data{elec}.bb_all,2);
-    data_g = median(data{elec}.gamma_all,2);
-    data_a = median(data{elec}.alpha_all,2);
-    data_bold = data{elec}.betas * mean(data{elec}.norm);
-    
-    all_data(1,l,1:length(data_bb))=data_bb;
-    all_data(2,l,1:length(data_g))=data_g;
-    all_data(3,l,1:length(data_a))=data_a;
-    all_data(4,l,1:length(data_bold))=data_bold;
-        
-    for k=1:8 
-        % ECoG:
-        all_simulation(1,l,[1:size(simulation_outputs,1)],k) = simulation_outputs(:,k,1);
-        all_simulation(2,l,[1:size(simulation_outputs,1)],k) = simulation_outputs(:,k,2);
-        all_simulation(3,l,[1:size(simulation_outputs,1)],k) = simulation_outputs(:,k,3);
-        % BOLD baseline subtract and vectro length normalize:
-        % subtract baseline:
-        y = simulation_outputs(:,k,4)-simulation_outputs(1,k,4);% subtract baseline
-        y = y/sqrt(sum(y.^2)); % vector length normalize
-        all_simulation(4,l,[1:size(simulation_outputs,1)],k) = y;
-        % BOLD, raw from simulation:
-        all_simulation(4,l,[1:size(simulation_outputs,1)],k) = simulation_outputs(:,k,4);
-        
-        fitted_bold = simulation_outputs(:,k,4);
-        r2_data_fit(k,l) = corr(fitted_bold,data_bold').^2;
-    end
-
-end
-
-%% now plot simulation LFP and BOLD output versus data for all electrodes
-
-figure('Position',[0 0 700 500])
-for k = 1:8
-    subplot(4,4,k),hold on
-    signal_use = 4; % bold
-    x = squeeze(all_simulation(signal_use,:,:,k));% signal, all electrodes all conditions
-    y = squeeze(all_data(signal_use,:,:)); % signal, all electrodes all conditions
-    for m = 1:size(x,2)
-        plot(x(:,m),y(:,m),'.','MarkerSize',10,'Color',data{10}.colors{m})
-    end
-    p = polyfit(x(~isnan(x)),y(~isnan(x)),1);
-    x_line=[min(x(:)):0.001:max(x(:))];
-    plot(x_line,p(1)*x_line + p(2),'k')
-    axis tight
-    title(['mean R^2 = ' num2str(mean(r2_data_fit(k,:)),2)])
-    xlabel('simulated bold'),ylabel('measured bold')   
-end
-set(gcf,'PaperPositionMode','auto')
-
-ecog_colors = {'k','r','b'};
-for k = 1:8
-    subplot(4,4,8+k),hold on
-    for signal_use = 1:3
-        x = squeeze(all_simulation(signal_use,:,:,k));% bb, all electrodes all conditions
-        y = squeeze(all_data(signal_use,:,:)); % bb, all electrodes all conditions
-        plot(x,y,'.','MarkerSize',10,'Color',ecog_colors{signal_use})
-    end
-%     xlim([-0.1 1]),ylim([-0.1 1])
-%     xlim([-1.1 1.1]),ylim([-1.1 1.1])
-    axis tight
-    xlabel('simulated lfp'),ylabel('measured lfp')   
-end
-set(gcf,'PaperPositionMode','auto')
-print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/simulatedVSdataLFP_BOLD_allelectrodes'])
-print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/simulatedVSdataLFP_BOLD_allelectrodes'])
+% set(gcf,'PaperPositionMode','auto')
+% print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) 'model' int2str(prm_set)])
+% print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) 'model' int2str(prm_set)])
 
 
-%%
-figure('Position',[0 0 300 400]),hold on
-subplot(2,1,1),hold on
-for k = [.25 .5 .75]
-    plot([0 5],[k k],'Color',[.5 .5 .5])
-end
-bar(mean(corr_data_fit(1:4,:),2),'FaceColor',[.8 .8 .9])
-errorbar([1:4],mean(r2_data_fit(1:4,:),2),std(r2_data_fit(1:4,:),[],2)/sqrt(6),'k.')
-ylim([0 1.01])
-ylabel('r^2')
-xlim([0 5])
-set(gca,'YTick',[0:.5:1],'XTick',[1:4],...
-    'XTickLabel',{'bLgCaL','bLgCaC','bLgLaL','bLgLaC'})
-
-subplot(2,1,2),hold on
-for k =[.25 .5 .75]
-    plot([0 5],[k k],'Color',[.5 .5 .5])
-end
-
-bar(mean(corr_data_fit(5:8,:),2),'FaceColor',[.8 .8 .9])
-errorbar([1:4],mean(r2_data_fit(5:8,:),2),std(r2_data_fit(5:8,:),[],2)/sqrt(6),'k.')
-% plot([1:8],corr_data_fit,'k.')
-ylim([0 1.01])
-ylabel('r^2')
-xlim([0 5])
-set(gca,'YTick',[0:.5:1],'XTick',[1:4],...
-    'XTickLabel',{'bCgCaL','bCgCaC','bCgLaL','bCgLaC'})
-
-set(gcf,'PaperPositionMode','auto')
-print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/bestModel'])
-print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/bestModel'])
-
-%%
-
-anova_gr1 = zeros(size(r2_data_fit));
-anova_gr1(5:8,:)=1;
-
-anova_gr2 = zeros(size(r2_data_fit));
-anova_gr2([3 4 7 8],:)=1;
-
-anova_gr3 = zeros(size(r2_data_fit));
-anova_gr3([2 4 6 8],:)=1;
-
-anovan(corr_data_fit(:),{anova_gr1(:) anova_gr2(:) anova_gr3(:)},'model','full')
- 

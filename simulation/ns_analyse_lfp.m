@@ -1,4 +1,4 @@
-function NS = ns_analyse_lfp(NS)
+function NS = ns_analyse_lfp(NS,varargin)
 %
 % NS = ns_analyse_lfp(NS)
 % 
@@ -11,13 +11,19 @@ alpha_range     = ns_get(NS,'alpha_range');
 f_use4fit       = 40:200;
 num_conditions  = ns_get(NS, 'num_conditions');
 
+if ~isempty(varargin)
+    window_length = varargin{1};
+else
+    window_length = srate/4;
+end
+
 lfp = ns_get(NS, 'lfp');
 
 lfp_spectra = NaN(nr_freq,num_trials);
 
 for k = 1:num_trials
     % get the spectra per trial
-    [pxx,f] = ecog_spectra(lfp(:,k),srate,nr_freq);
+    [pxx,f] = ecog_spectra(lfp(:,k),srate,nr_freq,window_length);
     lfp_spectra(:,k) = pxx;    
 end
 
