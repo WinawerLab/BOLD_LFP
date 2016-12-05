@@ -59,44 +59,49 @@ for cond_nr = 1:nr_conditions
         % broadband
         b = lookup(lookup_combs(k,3)).b; % lookup_combs(k,3) is 5 or 6: vary level/coherence
         if lookup_combs(k,3)==5 % lookup bb level, coherence fixed
-            poisson_bb = nthroot(bb_amp./b(1),b(2));
+            % inverse of ns_in2out_singleparam:
+            poisson_bb = b(2).*(10.^(bb_amp./b(1)) - 1); %nthroot(bb_amp./b(1),b(2));
             coherence_bb = out.coherence_bb(1,5);
         elseif lookup_combs(k,3)==6 % lookup bb coherence, level fixed
             poisson_bb = out.poisson_bb(1,6);
-            coherence_bb = nthroot(bb_amp./b(1),b(2));
+            % inverse of ns_in2out_singleparam:
+            coherence_bb = b(2).*(10.^(bb_amp./b(1)) - 1); %nthroot(bb_amp./b(1),b(2));
             coherence_bb(coherence_bb>1)=1;
+            coherence_bb(coherence_bb<0)=0;
         end
 
         % gamma
         b = lookup(lookup_combs(k,1)).b; % lookup_combs(k,1) is 1 or 2: vary level/coherence
         if lookup_combs(k,1)==1 % lookup gamma level, coherence fixed
-%             poisson_g = nthroot(gamma_amp*(b(2)+bb_amp)./b(1),b(3));
-            param1 = (gamma_amp - bb_amp*b(3))*(1+bb_amp);
-            if param1<0, param1=0; end
-            poisson_g = nthroot(param1./b(1), b(2));
+            
+            param1 = 10.^( (gamma_amp-b(4)) ./ (b(1)*10.^(-bb_amp./b(5))) );%(gamma_amp - bb_amp*b(3))*(1+bb_amp);
+%             if param1<0, param1=0; end
+            poisson_g = b(2)*(param1-bb_amp*b(3)-1);%nthroot(param1./b(1), b(2));
             coherence_g = out.coherence_g(1,1);
         elseif lookup_combs(k,1)==2 % lookup gamma coherence, level fixed
             poisson_g = out.poisson_g(1,2);
-            param1 = (gamma_amp - bb_amp*b(3))*(1+bb_amp);
-            if param1<0, param1=0; end
-            coherence_g = nthroot(param1./b(1), b(2));
+            param1 = 10.^( (gamma_amp-b(4)) ./ (b(1)*10.^(-bb_amp./b(5))) );
+%             if param1<0, param1=0; end
+            coherence_g = b(2)*(param1-bb_amp*b(3)-1);%nthroot(param1./b(1), b(2));
             coherence_g(coherence_g>1)=1;
+            coherence_g(coherence_g<0)=0;
         end
 
         % alpha
         b = lookup(lookup_combs(k,2)).b; % lookup_combs(k,2) is 3 or 4: vary level/coherence
         if lookup_combs(k,2)==3 % lookup alpha level, coherence fixed
 %             poisson_a = nthroot(alpha_amp*(b(2)+bb_amp)./b(1),b(3));
-            param1 = (alpha_amp - bb_amp*b(3))*(1+bb_amp);
-            if param1<0, param1=0; end
-            poisson_a = nthroot(param1./b(1), b(2));
+            param1 = 10.^( (alpha_amp-b(4)) ./ (b(1)*10.^(-bb_amp./b(5))) );%(alpha_amp - bb_amp*b(3))*(1+bb_amp);
+%             if param1<0, param1=0; end
+            poisson_a = b(2)*(param1-bb_amp*b(3)-1);%nthroot(param1./b(1), b(2));
             coherence_a = out.coherence_a(1,3);
         elseif lookup_combs(k,2)==4 % lookup alpha coherence, level fixed
             poisson_a = out.poisson_a(1,4);
-            param1 = (alpha_amp - bb_amp*b(3))*(1+bb_amp);
-            if param1<0, param1=0; end
-            coherence_a = nthroot(param1./b(1), b(2));
+            param1 = 10.^( (alpha_amp-b(4)) ./ (b(1)*10.^(-bb_amp./b(5))) );%(alpha_amp - bb_amp*b(3))*(1+bb_amp);
+%             if param1<0, param1=0; end
+            coherence_a = b(2)*(param1-bb_amp*b(3)-1);%nthroot(param1./b(1), b(2));
             coherence_a(coherence_a>1)=1;
+            coherence_a(coherence_a<0)=0;
         end
         simulation_inputs(cond_nr,k,1,1)=poisson_bb;
         simulation_inputs(cond_nr,k,1,2)=coherence_bb;
@@ -220,8 +225,8 @@ for k = 1:8
 end
 
 set(gcf,'PaperPositionMode','auto')
-print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) '_allmodels'])
-print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) '_allmodels'])
+% print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) '_allmodels'])
+% print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) '_allmodels'])
 
 %% plot inputs/outputs from one specific simulation
 

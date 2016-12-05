@@ -19,11 +19,17 @@ function F = ns_in2out(b,P,x,bb_in)
 
 % this is a multidimensional function, with x and bb_in being vectors
 
-% polynomial option:
-% F= P - (b(4)./(1+bb_in) .* (b(1).*x.^2 + b(2).*x + b(3)));
-
 % sqrt option:
-% F= P - (b(1)./(b(2)+bb_in) .* x.^b(3));
+% F= P - (b(1)./(1+bb_in) .* x.^b(2) + bb_in*b(3));
 
-% sqrt option:
-F= P - (b(1)./(1+bb_in) .* x.^b(2) + bb_in*b(3));
+% log10 option:
+% F= P - (b(1)./(1+bb_in) .* log10((b(2)+x)./b(2)) + bb_in*b(3));
+
+% log10 option with different bb correction:
+F= P - (b(1) .*10.^(-bb_in./b(5)).* log10((b(2)+x)./b(2) + bb_in*b(3)) + b(4));
+
+% invert is:
+% param1 = 10.^( (y-b(4)) ./ (b(1)*10.^(-bb_in./b(5))) );
+% x2 = b(2)*(param1-bb_in*b(3)-1);
+
+

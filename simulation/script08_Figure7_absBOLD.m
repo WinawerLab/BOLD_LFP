@@ -7,9 +7,9 @@ els = 1:1:22;
 %%% OUTPUTS:
 v_area = NaN(length(els),1); %visual area per electrode
 r2_data_fit = NaN(8,length(els)); % R2 between BOLD data and fit for each model:
-% DATA: 4:bb,g,a,bold, nr els, up to 10 conditions, 8 simulations
+% DATA: 4:bb-g-a-bold, nr els, up to 10 conditions, 8 simulations
 all_data = NaN(4,length(els),10); % ECoG / BOLD data
-% SIMULATION: 4:bb,g,a,bold, nr els, up to 10 conditions, 8 simulations
+% SIMULATION: 4:bb-g-a-bold, nr els, up to 10 conditions, 8 simulations
 all_simulation = NaN(4,length(els),10,8); % BOLD simulation
 
 % SIMULATION output regression models
@@ -45,21 +45,23 @@ for l = 1:length(els)
         all_simulation(1,l,[1:size(simulation_outputs,1)],k) = simulation_outputs(:,k,1);
         all_simulation(2,l,[1:size(simulation_outputs,1)],k) = simulation_outputs(:,k,2);
         all_simulation(3,l,[1:size(simulation_outputs,1)],k) = simulation_outputs(:,k,3);
-%         % BOLD baseline subtract and vector length normalize:
-%         % subtract baseline:
-%         y = simulation_outputs(:,k,4)-simulation_outputs(1,k,4);% subtract baseline
-%         y = y/sqrt(sum(y.^2)); % vector length normalize
-%         all_simulation(4,l,[1:size(simulation_outputs,1)],k) = y;
-        % BOLD, raw from simulation:
-        all_simulation(4,l,[1:size(simulation_outputs,1)],k) = simulation_outputs(:,k,4);
-        
-        fitted_bold = simulation_outputs(:,k,4);
-        r2_data_fit(k,l) = corr(fitted_bold,data_bold').^2;
     end
 
     % load output from the first model (BB - level, G - coh, A - level)
     prm_set = 1;
     load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_elec' int2str(elec) '_NS_prmset' int2str(prm_set)],'NS')
+    % change BOLD output:
+    NS = ns_neural2instruments_alternativeBOLD(NS);
+    % recalculate bootstrapped BOLD:
+    NS = ns_analyse_lfp(NS); %disp(NS.data)
+    % recalculate correlations BOLD/LFP:
+    NS = ns_summary_statistics(NS);
+    
+    % put BOLD in for the prem_set 
+    all_simulation(4,l,[1:NS.params.num_conditions],prm_set) = median(NS.data.bold_bs,2);
+    
+    r2_data_fit(prm_set,l) = corr(median(NS.data.bold_bs,2),data_bold').^2;
+    
     for k = 1:length(NS.stats)
         % cross validated R3:
         all_regressmodels(l,k) = median(NS.stats(k).stats(:,3));
@@ -111,9 +113,9 @@ for k = 1:8
     xlabel('simulated lfp'),ylabel('measured lfp')   
 end
 
-set(gcf,'PaperPositionMode','auto')
-print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/simulatedVSdataLFP_BOLD_allV1electrodes_new'])
-print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/simulatedVSdataLFP_BOLD_allV1electrodes_new'])
+% set(gcf,'PaperPositionMode','auto')
+% print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/simulatedVSdataLFP_BOLD_allV1electrodes_BOLDabs'])
+% print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/simulatedVSdataLFP_BOLD_allV1electrodes_BOLDabs'])
 
 %% V2/V3: now plot simulation LFP and BOLD output versus data for all electrodes
 cm = lines(length(find(ismember(v_area,[2 3]))));
@@ -151,9 +153,9 @@ for k = 1:8
     xlabel('simulated lfp'),ylabel('measured lfp')   
 end
 
-set(gcf,'PaperPositionMode','auto')
-print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/simulatedVSdataLFP_BOLD_allV23electrodes_new'])
-print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/simulatedVSdataLFP_BOLD_allV23electrodes_new'])
+% set(gcf,'PaperPositionMode','auto')
+% print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/simulatedVSdataLFP_BOLD_allV23electrodes'])
+% print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/simulatedVSdataLFP_BOLD_allV23electrodes'])
 
 %% Figure with R2
 
@@ -237,9 +239,9 @@ set(gca,'XTick',[1:7],'XTickLabel',{'bb','g','bb_g','a','bb_a','g_a','bb_g_a'})
 set(gca,'YTick',[0:.2:1])
 title('V2/V3 R^2 cross-val')
 
-% set(gcf,'PaperPositionMode','auto')
-% print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/r2_plotsV1V23'])
-% print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/r2_plotsV1V23'])
+set(gcf,'PaperPositionMode','auto')
+print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/r2_plotsV1V23_absBOLD'])
+print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/r2_plotsV1V23_absBOLD'])
 
 
 disp(['V1 R^2:' num2str(mean(all_regressmodels(v_area==1,:),1))])
@@ -261,7 +263,7 @@ for k=1:size(all_regressbeta,2)
     for m=1:3 % nr of betas
         % take the median across the bootstraps for each electrode
         temp_beta=all_regressbeta(v_area==1,k,m);
-        if ~isnan(temp_beta)
+        if ~isnan(temp_beta(1)) && sum(temp_beta)~=0
             % plot mean across electrodes
             bar(xl_ind(m),mean(temp_beta),.7,'FaceColor',bb_g_a_color{xl_ind(m)})
             % plot 2 x standard error as error bar
@@ -286,7 +288,7 @@ for k=1:size(all_regressbeta,2)
     for m=1:3 % nr of betas
         % take the median across the bootstraps for each electrode
         temp_beta=all_regressbeta(v_area==2 | v_area==3,k,m);
-        if ~isnan(temp_beta)
+        if ~isnan(temp_beta(1)) && sum(temp_beta)~=0
             % plot mean across electrodes
             bar(xl_ind(m),mean(temp_beta),.7,'FaceColor',bb_g_a_color{xl_ind(m)})
             % plot 2 x standard error as error bar
@@ -304,5 +306,5 @@ for k=1:size(all_regressbeta,2)
 end
 
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/beta_plotsV1V23'])
-print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/beta_plotsV1V23'])
+print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/beta_plotsV1V23_absBOLD'])
+print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/beta_plotsV1V23_absBOLD'])

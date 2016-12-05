@@ -12,8 +12,13 @@ load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim
 load('/Volumes/DoraBigDrive/data/visual/m-files/bold_datalikesimulation/data/boldecog_structure_final.mat');
 
 % load output from the first model (BB - level, G - coh, A - level)
-prm_set = 1;
+prm_set = 6;
 load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_elec' int2str(elec) '_NS_prmset' int2str(prm_set)],'NS')
+
+data_bb = median(data{elec}.bb_all,2);
+data_g = median(data{elec}.gamma_all,2);
+data_a = median(data{elec}.alpha_all,2);
+data_bold = data{elec}.betas * mean(data{elec}.norm); % to get %signal change
 
 %% plot inputs
 figure('Position',[0 0 200 200])  
@@ -221,11 +226,9 @@ for k = 1:3 % bb, g, a
     xlabel(['simulated ' lfp_output{k}])
 end
 
-% set(gcf,'PaperPositionMode','auto')
-% print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) 'model' int2str(prm_set)])
-% print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) 'model' int2str(prm_set)])
-
-
+set(gcf,'PaperPositionMode','auto')
+print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) 'model' int2str(prm_set)])
+print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) 'model' int2str(prm_set)])
 
 %%
 % plot measured versus predicted LFP and BOLD

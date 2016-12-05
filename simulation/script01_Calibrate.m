@@ -69,7 +69,7 @@ end
 
 clear all
 
-sim_nr = 3; % simulation number (general settings change)
+sim_nr = 2; % simulation number (general settings change)
 
 lookup = struct([]); 
 
@@ -95,9 +95,12 @@ for param_set = 1:4
         'y = ' param_set_vary{param_set}(end) '_avg;']);
 
     % estimate 
-    X0 = [1 1 0];
-    LB = [-Inf -Inf 0];
-    UB = [Inf Inf Inf];
+%     X0 = [1 1 0];
+%     LB = [-Inf -Inf 0];
+%     UB = [Inf Inf Inf];
+    X0 = [1 1 1 0 1];
+    LB = [0 0 0 0 1];
+    UB = [Inf Inf Inf Inf Inf];
     my_options=optimset('Display','off','Algorithm','trust-region-reflective'); 
     [b] = lsqnonlin(@(b) ns_in2out(b,y,x,b_avg),X0,LB,UB,my_options);
     
@@ -105,17 +108,21 @@ for param_set = 1:4
     % plot data
     plot(x,y,'k.','MarkerSize',20)
     % plot estimate with inputs
-%     plot(x,b(4)./(1+b_avg) .* (b(1).*x.^2 + b(2).*x + b(3)),'ms')
-    plot(x,b(1)./(1+b_avg) .* x.^b(2) + b_avg*b(3),'cs')
+%     plot(x,b(1)./(1+b_avg) .* x.^b(2) + b_avg*b(3),'cs')
+    plot(x,b(1) .* 10.^(-b_avg./b(5)) .* log10((b(2)+x)./b(2) + b_avg*b(3)) + b(4),'rs');
+    plot(x(1:10),b(1) .* 10.^(-b_avg(1:10)./b(5)) .* log10((b(2)+x(1:10))./b(2) + b_avg(1:10)*b(3)) + b(4),'r');
+    plot(x(11:20),b(1) .* 10.^(-b_avg(11:20)./b(5)) .* log10((b(2)+x(11:20))./b(2) + b_avg(11:20)*b(3)) + b(4),'r');
+    plot(x(21:30),b(1) .* 10.^(-b_avg(21:30)./b(5)) .* log10((b(2)+x(21:30))./b(2) + b_avg(21:30)*b(3)) + b(4),'r');
+
     xlabel([param_set_vary{param_set}]),ylabel(['LFP ' param_set_vary{param_set}(end)])
     lookup = setfield(lookup,{param_set},'b',{1:length(b)},b);
     
 end
 
 set(gcf,'PaperPositionMode','auto')
-print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/calibrate_lfpvals_g_a'])
-print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/calibrate_lfpvals_g_a'])
-
+print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/calibrate_lfpvals_g_a_new'])
+print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/calibrate_lfpvals_g_a_new'])
+%%
 f = figure('Position',[0 0 700 250]);hold on
 for param_set = 5:6
     load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_set' int2str(param_set) ],'NS')
@@ -129,9 +136,13 @@ for param_set = 5:6
         'y = ' param_set_vary{param_set}(end) '_avg;']);
     
     % estimate 
-    X0 = [1 0];
-    LB = [-Inf -Inf];
+%     X0 = [1 0];
+%     LB = [-Inf -Inf];
+%     UB = [Inf Inf];
+    X0 = [1 1];
+    LB = [0 0];
     UB = [Inf Inf];
+
     my_options=optimset('Display','off','Algorithm','trust-region-reflective'); 
     [b] = lsqnonlin(@(b) ns_in2out_singleparam(b,y,x),X0,LB,UB,my_options);
 
@@ -140,15 +151,17 @@ for param_set = 5:6
     plot(x,y,'k.','MarkerSize',20)
     % plot estimate with inputs
 %     plot(x,b(4)./(1+bb_avg) .* (b(1).*x.^2 + b(2).*x + b(3)),'ms')
-    plot(x,b(1) .* x.^b(2),'cs')
+%     plot(x,b(1) .* x.^b(2),'c')
+    plot(x,b(1) .* (log10((b(2)+x)./b(2))),'rd')
+    plot(x,b(1) .* (log10((b(2)+x)./b(2))),'r')
     xlabel([param_set_vary{param_set}]),ylabel(['LFP ' param_set_vary{param_set}(end)])
     
     lookup = setfield(lookup,{param_set},'b',{1:length(b)},b);
 end
 
 set(gcf,'PaperPositionMode','auto')
-print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/calibrate_lfpvals_bb'])
-print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/calibrate_lfpvals_bb'])
+print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/calibrate_lfpvals_bb_new'])
+print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/calibrate_lfpvals_bb_new'])
 
 save(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_lookup_table' ],'lookup')
 

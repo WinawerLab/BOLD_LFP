@@ -20,5 +20,9 @@ function F = ns_in2out_singleparam(b,P,x)
 % this is a multidimensional function, with x and bb_in being vectors
 
 % sqrt option:
-F= P - (b(1) .* x.^b(2));
+% F= P - (b(1) .* x.^b(2));
 
+F= P - ( b(1) .* (log10((b(2)+x)./b(2))) );
+
+
+% invert is: x = b(2).*(10.^(y./bb(1)) - 1);
