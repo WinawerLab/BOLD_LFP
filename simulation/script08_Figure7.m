@@ -184,9 +184,9 @@ xlim([0 5])
 set(gca,'YTick',[0:.5:1],'XTick',[1:4],...
     'XTickLabel',{'bCgCaL','bCgCaC','bCgLaL','bCgLaC'})
 
-% set(gcf,'PaperPositionMode','auto')
-% print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/bestModel'])
-% print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/bestModel'])
+set(gcf,'PaperPositionMode','auto')
+print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/bestModel'])
+print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/bestModel'])
 
 %%
 
@@ -237,9 +237,9 @@ set(gca,'XTick',[1:7],'XTickLabel',{'bb','g','bb_g','a','bb_a','g_a','bb_g_a'})
 set(gca,'YTick',[0:.2:1])
 title('V2/V3 R^2 cross-val')
 
-% set(gcf,'PaperPositionMode','auto')
-% print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/r2_plotsV1V23'])
-% print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/r2_plotsV1V23'])
+set(gcf,'PaperPositionMode','auto')
+print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/r2_plotsV1V23'])
+print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/r2_plotsV1V23'])
 
 
 disp(['V1 R^2:' num2str(mean(all_regressmodels(v_area==1,:),1))])

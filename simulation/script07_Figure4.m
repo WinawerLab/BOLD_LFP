@@ -3,7 +3,7 @@
 
 clear all
 sim_nr = 2;
-elec = 18;%1:22 % examples electrode V1 - 21, V2 - 18
+elec = 21;%1:22 % examples electrode V1 - 21, V2 - 18
 
 % load the simulation outputs 
 load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_elec' int2str(elec) '_simulation_outputs'],'simulation_outputs')
@@ -12,7 +12,7 @@ load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim
 load('/Volumes/DoraBigDrive/data/visual/m-files/bold_datalikesimulation/data/boldecog_structure_final.mat');
 
 % load output from the first model (BB - level, G - coh, A - level)
-prm_set = 6;
+prm_set = 1;
 load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_elec' int2str(elec) '_NS_prmset' int2str(prm_set)],'NS')
 
 data_bb = median(data{elec}.bb_all,2);
@@ -59,8 +59,6 @@ end
 set(gcf,'PaperPositionMode','auto')
 print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) 'model' int2str(prm_set) '_inputs'])
 print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) 'model' int2str(prm_set) '_inputs'])
-
-
 
 %% plot inputs/outputs from one specific simulation
 
@@ -230,8 +228,8 @@ set(gcf,'PaperPositionMode','auto')
 print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) 'model' int2str(prm_set)])
 print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) 'model' int2str(prm_set)])
 
-%%
-% plot measured versus predicted LFP and BOLD
+%
+%% plot measured versus predicted LFP and BOLD
 num_conditions  = ns_get(NS, 'num_conditions');
 plot_colors = [0 0 0; jet(num_conditions-1)];
 
@@ -278,3 +276,4 @@ end
 set(gcf,'PaperPositionMode','auto')
 print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) '_allmodels'])
 print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) '_allmodels'])
+
