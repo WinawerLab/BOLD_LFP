@@ -73,7 +73,7 @@ end
 
 cm = lines(length(find(ismember(v_area,1))));
 
-figure('Position',[0 0 700 550])
+figure('Position',[0 0 700 750])
 for k = 1:8
     subplot(4,4,k),hold on
     signal_use = 4; % bold
@@ -118,7 +118,7 @@ print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/simulatedVSdataLFP_BOL
 %% V2/V3: now plot simulation LFP and BOLD output versus data for all electrodes
 cm = lines(length(find(ismember(v_area,[2 3]))));
 
-figure('Position',[0 0 700 550])
+figure('Position',[0 0 700 750])
 for k = 1:8
     subplot(4,4,k),hold on
     signal_use = 4; % bold
@@ -184,9 +184,30 @@ xlim([0 5])
 set(gca,'YTick',[0:.5:1],'XTick',[1:4],...
     'XTickLabel',{'bCgCaL','bCgCaC','bCgLaL','bCgLaC'})
 
+% set(gcf,'PaperPositionMode','auto')
+% print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/bestModel'])
+% print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/bestModel'])
+
+%%
+figure('Position',[0 0 150 100]),hold on
+model_plot = 1;
+
+subplot(1,2,1),hold on
+y = r2_data_fit(model_plot,v_area==1);
+boxplot(y,'Width',.4);
+plot([1-.1:.2./(length(y)-1):1+.1],y,'k.')
+
+ylim([0 1])
+subplot(1,2,2),hold on
+y = r2_data_fit(model_plot,v_area==2 | v_area==3);
+boxplot(y,'Width',.4);
+plot([1-.1:.2./(length(y)-1):1+.1],y,'k.')
+ylim([0 1])
+
 set(gcf,'PaperPositionMode','auto')
-print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/bestModel'])
-print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/bestModel'])
+print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/Model' int2str(model_plot) '_r2box'])
+print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/Model' int2str(model_plot) '_r2box'])
+
 
 %%
 
@@ -200,7 +221,6 @@ anova_gr3 = zeros(size(r2_data_fit));
 anova_gr3([2 4 6 8],:)=1;
 
 anovan(r2_data_fit(:),{anova_gr1(:) anova_gr2(:) anova_gr3(:)},'model','full')
- 
 
 
 %% R2 plots averaged for V1 and V2 simulations
@@ -306,3 +326,5 @@ end
 set(gcf,'PaperPositionMode','auto')
 print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/beta_plotsV1V23'])
 print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/beta_plotsV1V23'])
+
+

@@ -122,6 +122,7 @@ end
 set(gcf,'PaperPositionMode','auto')
 print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/calibrate_lfpvals_g_a_new'])
 print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/calibrate_lfpvals_g_a_new'])
+
 %%
 f = figure('Position',[0 0 700 250]);hold on
 for param_set = 5:6
@@ -159,11 +160,11 @@ for param_set = 5:6
     lookup = setfield(lookup,{param_set},'b',{1:length(b)},b);
 end
 
-set(gcf,'PaperPositionMode','auto')
-print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/calibrate_lfpvals_bb_new'])
-print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/calibrate_lfpvals_bb_new'])
+% set(gcf,'PaperPositionMode','auto')
+% print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/calibrate_lfpvals_bb_new'])
+% print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/calibrate_lfpvals_bb_new'])
 
-save(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_lookup_table' ],'lookup')
+% save(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_lookup_table' ],'lookup')
 
 
 %% 

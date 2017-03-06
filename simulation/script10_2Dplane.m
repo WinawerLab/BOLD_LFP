@@ -104,7 +104,7 @@ end
 %%
 
 % f = figure('Position',[0 0 700 250]);hold on
-figure('Position',[0 0 700 250]);hold on
+figure('Position',[0 0 700 300]);hold on
 subplot(1,2,1)
 plot3(bb_in_poisson,bb_in_coherence,b_avg,'k.','MarkerSize',20);
 xlabel('poisson')
@@ -116,6 +116,8 @@ plot3(bb_in_poisson,bb_in_coherence,bold_avg,'k.','MarkerSize',20);
 xlabel('poisson')
 ylabel('coherence')
 zlabel('BOLD')
+
+set(gcf,'PaperPositionMode','auto')
 
 print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/2Dplane'])
 print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/2Dplane'])
