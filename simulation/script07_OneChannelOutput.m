@@ -2,8 +2,8 @@
 %% load and plot results for two example electrodes
 
 clear all
-sim_nr = 2;
-elec = 21;%1:22 % examples electrode V1 - 21, V2 - 18
+sim_nr = 2; % simulation number 2 for paper
+elec = 18;%1:22 % examples electrode V1 - 21, V2 - 18
 
 % load the simulation outputs 
 load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_elec' int2str(elec) '_simulation_outputs'],'simulation_outputs')
@@ -18,7 +18,9 @@ load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim
 data_bb = median(data{elec}.bb_all,2);
 data_g = median(data{elec}.gamma_all,2);
 data_a = median(data{elec}.alpha_all,2);
-data_bold = data{elec}.betas * mean(data{elec}.norm); % to get %signal change
+data_bold = median(nanmean(data{elec}.allboots,2),3)' * mean(data{elec}.norm);%data{elec}.betas * mean(data{elec}.norm); % to get %signal change
+data_bold_ci = data{elec}.se * mean(data{elec}.norm); % ci = 68% confidence interval across bootstraps
+
 
 %% plot inputs
 figure('Position',[0 0 200 200])  
@@ -99,16 +101,19 @@ end
 ylabel('BOLD')
 
 subplot(4,6,3),hold on
-fitted_bold = simulation_outputs(:,prm_set,4);
-for m = 1:length(fitted_bold)
-    plot(fitted_bold(m),data_bold(m),'.','Color',plot_colors(m,:),'MarkerSize',20)
+for m = 1:length(bold_avg)
+    plot(bold_avg(m),data_bold(m),'.','Color',plot_colors(m,:),'MarkerSize',20)
+    % plot simulated errorbar (x-axis variance)
+    plot(bold_ci(m,:),[data_bold(m) data_bold(m)],'-','Color',[.5 .5 .5])
+    % plot data errorbar (y-axis variance)
+    plot([bold_avg(m) bold_avg(m)],data_bold_ci(m,:),'-','Color',[.5 .5 .5])
 end
-r = corr(fitted_bold,data_bold');
-p = polyfit(fitted_bold,data_bold',1);
-x_line=[min(fitted_bold):0.001:max(fitted_bold)];
+r = corr(bold_avg,data_bold');
+p = polyfit(bold_avg,data_bold',1);
+x_line=[min(bold_avg):0.001:max(bold_avg)];
 plot(x_line,p(1)*x_line + p(2),'k')
 title(['R^2 = ' num2str(r.^2,2)]);
-axis tight
+xlim([9.5 15.5]),ylim([-.2 2.2])%ylim([min(data_bold_ci(:))-.2 max(data_bold_ci(:))+.2])
 ylabel('measured bold')
 xlabel('simulated bold')
 

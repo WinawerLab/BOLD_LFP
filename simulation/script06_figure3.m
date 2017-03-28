@@ -11,7 +11,8 @@ out.poisson_a =    [.0  .0  ;.0  .0; .0  .5]';
 out.coherence_bb = [.0  .0  ;.0  .0; .0  .0]';
 out.coherence_g =  [.0  .0  ;.0  .6; .0  .0]';
 out.coherence_a =  [.0  .0  ;.0  .0; .75 .75]';
-out.num_neurons = [1 200 1];
+% out.num_neurons = [1 200 1];
+out.num_neurons = [200 200 200];
 
 y0 = NaN(size(out.poisson_bb,2),200);
 y1 = NaN(size(out.poisson_bb,2),200);
@@ -76,6 +77,6 @@ for k = 1:3
     xlim([5 200])
 end
 
-% set(gcf,'PaperPositionMode','auto')
-% print('-depsc','-r300',['../figures/Paper_Figure3_1000msWindow'])
-% print('-dpng','-r300',['../figures/Paper_Figure3_1000msWindow'])
+set(gcf,'PaperPositionMode','auto')
+print('-depsc','-r300',['../figures/Paper_Figure3_1000msWindow_200Neurons'])
+print('-dpng','-r300',['../figures/Paper_Figure3_1000msWindow_200Neurons'])

@@ -12,7 +12,8 @@ sigma = v * (eye(n) + (1-eye(n)) * s);
 x = mvnrnd(ones(T,n) * m, sigma);
 
 % observed total cross power
-total_cp  = x' * x * dt;
+% this should have a time factor added for integration period
+total_cp  = x' * x * dt; 
 
 % partitioned into diagonal (power) and off-diagonal ('cross power')
 pw  = sum(diag(total_cp));
@@ -25,7 +26,7 @@ pw_pred  = (m^2 + v)*n;
 cpw_pred = (m^2 + v*s)*(n^2-n);
 disp([pw_pred cpw_pred])
 
-disp('note that these are only the same if 1 sec of data')
+disp('note that these are similar only if data are 1 sec long or add the time period to total_cp')
 
 %%
 %% Plot total power (LFP), power (BOLD) and cross-power
@@ -50,7 +51,7 @@ for ii = 1:2
     else
         surf(v, s, total_pw, total_pw - min(total_pw(:))),  hold on
     end
-    title('Total Power (LFP)')
+    title('Power of sum (LFP)')
     zlim([0 200])
     
     subplot(1,3,2), set(gca, 'FontSize', fs);
@@ -60,7 +61,7 @@ for ii = 1:2
         sH = surf(v, s, pw_pred, pw_pred - min(pw_pred(:)));  hold on
     end
     set(sH, 'FaceLighting', 'gouraud')
-    title('Power (BOLD)')
+    title('Sum of power (BOLD)')
     zlim([0 200]) 
     
     subplot(1,3,3),set(gca, 'FontSize', fs);
@@ -69,7 +70,7 @@ for ii = 1:2
     else
         surf(v, s, cpw_pred, cpw_pred-min(cpw_pred(:))), hold on
     end
-    title('Cross Power')
+    title('Sum of cross Power')
     zlim([0 200])
 end
 
