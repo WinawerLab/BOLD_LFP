@@ -1,9 +1,7 @@
 clear all
 close all
 
-addpath('/Volumes/DoraBigDrive/data/visual/m-files/')
-
-load(['./data/boldecog_structure_final.mat'],'data')
+load(['/Volumes/DoraBigDrive/data/visual/m-files/bold_datalikesimulation/data/boldecog_structure_final.mat'],'data')
 
 %% plot BOLD response for one electrode
 el_nr = 14; % 14 = electrode 92
@@ -33,7 +31,7 @@ title('%change')
 % print('-depsc','-r300',['./figures/BOLD_data_el' int2str(data{el_nr}.channel)])
 clear y
 
-%% data regression 
+%% Regression analysis ECoG data
 
 clear reg_out
 
@@ -123,7 +121,7 @@ for k=1:length(data)
     end        
 end
 
-%% reshuffled regression 
+%% Reshuffled regression analysis
 
 clear reg_outShuff
 
@@ -213,7 +211,10 @@ for k=1:length(data)
     end        
 end
 
-%% STATS USING BOOTSTRAPS ACROSS ELECTRODES
+%% cross-validated R2 across electrodes
+% plot reshuffled R2 as an indication of baseline
+%
+% for the bootstraps:
 % 1) median across 100 bootstraps 
 % 2) variance across electrodes
 
@@ -622,6 +623,7 @@ for k=1:length(data)
     data_var(k,3) = mean(abs_response(2:end));
 
 end
+
 %% ECoG and BOLD plot
 figure('Position',[0 0 600 300],'Color',[1 1 1])
 signal_in = {'Broadband','Gamma','Alpha'};
