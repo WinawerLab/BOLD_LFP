@@ -1,24 +1,32 @@
-%% ECOG BOLD simulation two main simulations
-
+%%
+% This script generates pannels for Fig 2 from Hermes et al:
+%
 % Purpose: Simulate neural data - time varying membrane potentials - and
-% then ask whether the simulated BOLD signal and various metrics of the
-% simulated field potentials are correlated.
+% show the effects of the three input parameters on the output LFP spectra
+%
+% DH & JW 2016
 
+%% ECOG BOLD simulation main simulations
+
+% simulate three data sets: one in which only C1 varies, one in which only
+% C2 varies and one in which only C3 varies
+
+% set amplitude levels for C1, C2 and C3
 out.poisson_bb =   [.0  .4  ;.0  .0; .0  .0]';
 out.poisson_g =    [.0  .0  ;.2  .2; .0  .0]';
 out.poisson_a =    [.0  .0  ;.0  .0; .0  .5]';
-%%%%% vary coherence ranges across sets:
+% set coherence levels for C1, C2 and C3
 out.coherence_bb = [.0  .0  ;.0  .0; .0  .0]';
 out.coherence_g =  [.0  .0  ;.0  .6; .0  .0]';
 out.coherence_a =  [.0  .0  ;.0  .0; .75 .75]';
-% out.num_neurons = [1 200 1];
 out.num_neurons = [200 200 200];
 
+% generate structure for output LFP spectra:
 y0 = NaN(size(out.poisson_bb,2),200);
 y1 = NaN(size(out.poisson_bb,2),200);
+clear ns_params allNS
 
 tic
-clear ns_params allNS
 for k=1:size(out.poisson_bb,2) % number of settings
 
     % Set default parameters
@@ -47,8 +55,10 @@ for k=1:size(out.poisson_bb,2) % number of settings
     % Convert the neural time series into instrument (LFP/BOLD) measures
     NS = ns_neural2instruments(NS); %disp(NS.data)
     
+    % get LFP spectra
     NS = ns_analyse_lfp(NS,1000); %disp(NS.data)
 
+    % get output LFP spectra
     y0(k,:) = mean(NS.data.lfp_spectra(:,NS.trial.condition_num==0),2);
     y1(k,:) = mean(NS.data.lfp_spectra(:,NS.trial.condition_num==1),2);
     

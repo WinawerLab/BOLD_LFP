@@ -1,22 +1,22 @@
-%% ECOG BOLD simulation two main simulations
+%%
+% This script generates pannels for Fig 6 from Hermes et al:
+%
+% Purpose: Simulate neural data - time varying membrane potentials - with a
+% structured set of inputs, such that the relation between the input level
+% (amplitude and coherence) of C1, C2 and C3 and the output broadband,
+% gamma and alpha power can be described
+%
+% DH 2016
 
-% Purpose: Simulate neural data - time varying membrane potentials - and
-% then ask whether the simulated BOLD signal and various metrics of the
-% simulated field potentials are correlated.
 
-% sim_nr = 1; 
-% sim_nr = 1 has input_dc = .2 and alpha_envelop*.5, poisson_baseline = .2
-% previous fitting function without offset and b1/(b2+bb)
+%% Simulate data for calibration:
 
-% sim_nr = 2; 
+sim_nr = 2; 
 % sim_nr = 2 has input_dc = .25 and alpha_envelop*1, poisson_baseline = .3
 % and alpha_synchrony  = .75
 
-% sim_nr = 3; 
-% sim_nr = 3 has input_dc = .25 and alpha_envelop*1, poisson_baseline = .4
-% and alpha_synchrony  = .75
-
-% make conditions of input:
+% make conditions of input -  vary gamma, alpha and broadband
+% systematically: change amplitude and coherence of each
 nr_conds = 10;
 out.poss = script_make_calibration_conds(nr_conds);
 
@@ -30,7 +30,7 @@ for k=1:size(out.poisson_bb,2) % number of settings
     NS = ns_set(NS, 'save_inputs', 1);
     NS = ns_set(NS, 'num_conditions', size(out.poisson_bb,1));
     NS = ns_set(NS, 'num_neurons', 200); 
-    NS = ns_set(NS, 'poisson_baseline', .4); 
+    NS = ns_set(NS, 'poisson_baseline', .3); 
     NS = ns_set(NS, 'poisson_bb',out.poisson_bb(:,k));
     NS = ns_set(NS, 'poisson_g',out.poisson_g(:,k));
     NS = ns_set(NS, 'poisson_a',out.poisson_a(:,k));
@@ -58,7 +58,6 @@ for k=1:size(out.poisson_bb,2) % number of settings
         
     NS.data.ts = single(NS.data.ts); % to reduce size
     
-%     save(['../data/NS_simnr' int2str(sim_nr) '_set' int2str(k) ],'NS')
     save(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_set' int2str(k) ],'NS')
     ns_params{k} = NS.params;
     disp(['done simulation ' int2str(k) ' of ' int2str(size(out.poisson_bb,2))])
@@ -95,9 +94,6 @@ for param_set = 1:4
         'y = ' param_set_vary{param_set}(end) '_avg;']);
 
     % estimate 
-%     X0 = [1 1 0];
-%     LB = [-Inf -Inf 0];
-%     UB = [Inf Inf Inf];
     X0 = [1 1 1 0 1];
     LB = [0 0 0 0 1];
     UB = [Inf Inf Inf Inf Inf];
@@ -108,7 +104,6 @@ for param_set = 1:4
     % plot data
     plot(x,y,'k.','MarkerSize',20)
     % plot estimate with inputs
-%     plot(x,b(1)./(1+b_avg) .* x.^b(2) + b_avg*b(3),'cs')
     plot(x,b(1) .* 10.^(-b_avg./b(5)) .* log10((b(2)+x)./b(2) + b_avg*b(3)) + b(4),'rs');
     plot(x(1:10),b(1) .* 10.^(-b_avg(1:10)./b(5)) .* log10((b(2)+x(1:10))./b(2) + b_avg(1:10)*b(3)) + b(4),'r');
     plot(x(11:20),b(1) .* 10.^(-b_avg(11:20)./b(5)) .* log10((b(2)+x(11:20))./b(2) + b_avg(11:20)*b(3)) + b(4),'r');
@@ -123,7 +118,8 @@ set(gcf,'PaperPositionMode','auto')
 print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/calibrate_lfpvals_g_a_new'])
 print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/calibrate_lfpvals_g_a_new'])
 
-%%
+%% broadband lookup table and save all
+
 f = figure('Position',[0 0 700 250]);hold on
 for param_set = 5:6
     load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_set' int2str(param_set) ],'NS')
@@ -137,9 +133,6 @@ for param_set = 5:6
         'y = ' param_set_vary{param_set}(end) '_avg;']);
     
     % estimate 
-%     X0 = [1 0];
-%     LB = [-Inf -Inf];
-%     UB = [Inf Inf];
     X0 = [1 1];
     LB = [0 0];
     UB = [Inf Inf];
@@ -151,8 +144,6 @@ for param_set = 5:6
     % plot data
     plot(x,y,'k.','MarkerSize',20)
     % plot estimate with inputs
-%     plot(x,b(4)./(1+bb_avg) .* (b(1).*x.^2 + b(2).*x + b(3)),'ms')
-%     plot(x,b(1) .* x.^b(2),'c')
     plot(x,b(1) .* (log10((b(2)+x)./b(2))),'rd')
     plot(x,b(1) .* (log10((b(2)+x)./b(2))),'r')
     xlabel([param_set_vary{param_set}]),ylabel(['LFP ' param_set_vary{param_set}(end)])
@@ -165,74 +156,3 @@ end
 % print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/calibrate_lfpvals_bb_new'])
 
 % save(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_lookup_table' ],'lookup')
-
-
-%% 
-
-clear all
-sim_nr = 2;
-% load the lookup table
-load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_lookup_table' ],'lookup');
-
-% load the data
-load('/Volumes/DoraBigDrive/data/visual/m-files/bold_datalikesimulation/data/boldecog_structure_final.mat');
-    
-lookup_combs=[...
-    1 3 5
-    1 4 5
-    2 3 5
-    2 4 5
-    1 3 6
-    1 4 6
-    2 3 6
-    2 4 6];
-
-%%
-out = script_make_calibration_conds(10);
-
-y = [1 1 -.3]; % 1 electrode, 1 condition
-
-bb_amp = y(1);
-if bb_amp<0 % can not bb values < 0
-    bb_amp = 0;
-end
-gamma_amp = y(2);
-alpha_amp = y(3)+1.2;
-
-k = 3; % first lookup combination
-% broadband
-b = lookup(lookup_combs(k,3)).b; % lookup_combs(k,3) is 5 or 6: vary level/coherence
-if lookup_combs(k,3)==5 % lookup bb level, coherence fixed
-    poisson_bb = nthroot(bb_amp./b(1),b(2));
-    coherence_bb = out.coherence_bb(1,5);
-elseif lookup_combs(k,3)==6 % lookup bb coherence, level fixed
-    poisson_bb = out.poisson_bb(1,6);
-    coherence_bb = nthroot(bb_amp./b(1),b(2));
-end
-
-% gamma
-b = lookup(lookup_combs(k,1)).b; % lookup_combs(k,1) is 1 or 2: vary level/coherence
-if lookup_combs(k,1)==1 % lookup gamma level, coherence fixed
-    poisson_g = nthroot(gamma_amp*(b(2)+bb_amp)./b(1),b(3));
-    coherence_g = out.coherence_g(1,1);
-elseif lookup_combs(k,1)==2 % lookup gamma coherence, level fixed
-    poisson_g = out.poisson_g(1,2);
-    coherence_g = nthroot(gamma_amp*(b(2)+bb_amp)./b(1),b(3));
-end
-
-% alpha
-b = lookup(lookup_combs(k,2)).b; % lookup_combs(k,2) is 3 or 4: vary level/coherence
-if lookup_combs(k,2)==3 % lookup alpha level, coherence fixed
-    poisson_a = nthroot(alpha_amp*(b(2)+bb_amp)./b(1),b(3));
-    coherence_a = out.coherence_a(1,3);
-elseif lookup_combs(k,2)==4 % lookup alpha coherence, level fixed
-    poisson_a = out.poisson_a(1,4);
-    coherence_a = nthroot(alpha_amp*(b(2)+bb_amp)./b(1),b(3));
-end
-
-
-
-
-
-
-

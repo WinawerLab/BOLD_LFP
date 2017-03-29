@@ -1,3 +1,7 @@
+%%
+% This script generates pannels for Fig 4 from Hermes et al
+%
+% DH 2017
 
 %% get all the correlation values 
 clear all

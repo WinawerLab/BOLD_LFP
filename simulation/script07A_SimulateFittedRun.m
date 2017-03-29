@@ -1,12 +1,22 @@
+%%
+% This script runs the simulation used in Hermes et al:
+%
+% Purpose: Simulate neural data - time varying membrane potentials - that
+% are fit to ECoG data
+%
+% DH 2016
+%
 %% 
 clear all
 sim_nr = 2;
-% load the lookup table from sim_nr:
+
+% load the lookup table from calibration with correct sim_nr:
 load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_lookup_table' ],'lookup');
+
 % load one of the calibrations, to get baseline settings correct:
 load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_set1' ],'NS')
 
-% load the data
+% load the ECoG data
 load('/Volumes/DoraBigDrive/data/visual/m-files/bold_datalikesimulation/data/boldecog_structure_final.mat');
 
 %% settings to run the calibrated simulations:
@@ -28,7 +38,7 @@ out = script_make_calibration_conds(nr_conds);
 poisson_baseline = NS.params.poisson_baseline;
 num_neurons = NS.params.num_neurons;
 clear NS
-%%
+%% Run the simulations fitted to all electrodes
 
 tic
 
@@ -59,13 +69,11 @@ for cond_nr = 1:nr_conditions
         % broadband
         b = lookup(lookup_combs(k,3)).b; % lookup_combs(k,3) is 5 or 6: vary level/coherence
         if lookup_combs(k,3)==5 % lookup bb level, coherence fixed
-            % inverse of ns_in2out_singleparam:
-            poisson_bb = b(2).*(10.^(bb_amp./b(1)) - 1); %nthroot(bb_amp./b(1),b(2));
+            poisson_bb = ns_out2in_singleparam(bb_amp,b); % inverse of ns_in2out_singleparam:
             coherence_bb = out.coherence_bb(1,5);
         elseif lookup_combs(k,3)==6 % lookup bb coherence, level fixed
             poisson_bb = out.poisson_bb(1,6);
-            % inverse of ns_in2out_singleparam:
-            coherence_bb = b(2).*(10.^(bb_amp./b(1)) - 1); %nthroot(bb_amp./b(1),b(2));
+            coherence_bb = ns_out2in_singleparam(bb_amp,b); % inverse of ns_in2out_singleparam:
             coherence_bb(coherence_bb>1)=1;
             coherence_bb(coherence_bb<0)=0;
         end
@@ -73,16 +81,11 @@ for cond_nr = 1:nr_conditions
         % gamma
         b = lookup(lookup_combs(k,1)).b; % lookup_combs(k,1) is 1 or 2: vary level/coherence
         if lookup_combs(k,1)==1 % lookup gamma level, coherence fixed
-            
-            param1 = 10.^( (gamma_amp-b(4)) ./ (b(1)*10.^(-bb_amp./b(5))) );%(gamma_amp - bb_amp*b(3))*(1+bb_amp);
-%             if param1<0, param1=0; end
-            poisson_g = b(2)*(param1-bb_amp*b(3)-1);%nthroot(param1./b(1), b(2));
+            poisson_g = ns_out2in(gamma_amp,b,bb_amp); % inverse of ns_in2out:
             coherence_g = out.coherence_g(1,1);
         elseif lookup_combs(k,1)==2 % lookup gamma coherence, level fixed
             poisson_g = out.poisson_g(1,2);
-            param1 = 10.^( (gamma_amp-b(4)) ./ (b(1)*10.^(-bb_amp./b(5))) );
-%             if param1<0, param1=0; end
-            coherence_g = b(2)*(param1-bb_amp*b(3)-1);%nthroot(param1./b(1), b(2));
+            coherence_g = ns_out2in(gamma_amp,b,bb_amp);% inverse of ns_in2out:
             coherence_g(coherence_g>1)=1;
             coherence_g(coherence_g<0)=0;
         end
@@ -90,16 +93,11 @@ for cond_nr = 1:nr_conditions
         % alpha
         b = lookup(lookup_combs(k,2)).b; % lookup_combs(k,2) is 3 or 4: vary level/coherence
         if lookup_combs(k,2)==3 % lookup alpha level, coherence fixed
-%             poisson_a = nthroot(alpha_amp*(b(2)+bb_amp)./b(1),b(3));
-            param1 = 10.^( (alpha_amp-b(4)) ./ (b(1)*10.^(-bb_amp./b(5))) );%(alpha_amp - bb_amp*b(3))*(1+bb_amp);
-%             if param1<0, param1=0; end
-            poisson_a = b(2)*(param1-bb_amp*b(3)-1);%nthroot(param1./b(1), b(2));
+            poisson_a = ns_out2in(alpha_amp,b,bb_amp); % inverse of ns_in2out:
             coherence_a = out.coherence_a(1,3);
         elseif lookup_combs(k,2)==4 % lookup alpha coherence, level fixed
             poisson_a = out.poisson_a(1,4);
-            param1 = 10.^( (alpha_amp-b(4)) ./ (b(1)*10.^(-bb_amp./b(5))) );%(alpha_amp - bb_amp*b(3))*(1+bb_amp);
-%             if param1<0, param1=0; end
-            coherence_a = b(2)*(param1-bb_amp*b(3)-1);%nthroot(param1./b(1), b(2));
+            coherence_a = ns_out2in(alpha_amp,b,bb_amp); % inverse of ns_in2out:
             coherence_a(coherence_a>1)=1;
             coherence_a(coherence_a<0)=0;
         end
@@ -165,6 +163,8 @@ toc
 
 end
 
+%% TEST figures:
+%%
 %% load and plot results for one electrode:
 
 clear all
@@ -224,9 +224,6 @@ for k = 1:8
     xlabel('simulated lfp')
 end
 
-set(gcf,'PaperPositionMode','auto')
-% print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) '_allmodels'])
-% print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) '_allmodels'])
 
 %% plot inputs/outputs from one specific simulation
 
@@ -392,8 +389,5 @@ for k = 1:3 % bb, g, a
     xlabel(['simulated ' lfp_output{k}])
 end
 
-% set(gcf,'PaperPositionMode','auto')
-% print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) 'model' int2str(prm_set)])
-% print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) 'model' int2str(prm_set)])
 
 

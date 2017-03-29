@@ -47,7 +47,7 @@ for sim_number = 1:ns_get(NS, 'num_experiments')
     % parameters
     tau         = 0.010;            % time constant of leaky integrator (seconds)
     dt          = ns_get(NS, 'dt'); % step size for simulation, in seconds
-    input_dc    = .25;               % DC added, this needs to be the size of the maximum alpha
+    input_dc    = .25;              % DC added, this needs to be the size of the maximum alpha
     if 2*input_dc<max(NS.trial.poisson_a)
         fprintf(['WARNING: do not make alpha sent mean signal below zero \n' ...
         ' change maximum poisson alpha range to <' num2str(input_dc*2)  '\n'])

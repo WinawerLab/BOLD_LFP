@@ -1,4 +1,11 @@
-
+%%
+% This script generates pannels for Fig 7 and 8 from Hermes et al:
+%
+% Purpose: load simulated neural data - time varying membrane potentials -
+% that are fit to ECoG data and plot results
+%
+% DH 2016
+%
 %% load and plot results for two example electrodes
 
 clear all
@@ -22,7 +29,7 @@ data_bold = median(nanmean(data{elec}.allboots,2),3)' * mean(data{elec}.norm);%d
 data_bold_ci = data{elec}.se * mean(data{elec}.norm); % ci = 68% confidence interval across bootstraps
 
 
-%% plot inputs
+%% plot inputs to check
 figure('Position',[0 0 200 200])  
 
 plot_colors     = cell2mat(data{elec}.colors(:));
@@ -58,11 +65,11 @@ for s = 1:length(signal_plot)
     set(gca,'XTick',[1:8])
 end
 
-set(gcf,'PaperPositionMode','auto')
-print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) 'model' int2str(prm_set) '_inputs'])
-print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) 'model' int2str(prm_set) '_inputs'])
+% set(gcf,'PaperPositionMode','auto')
+% print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) 'model' int2str(prm_set) '_inputs'])
+% print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) 'model' int2str(prm_set) '_inputs'])
 
-%% plot inputs/outputs from one specific simulation
+%% plot inputs/outputs from a simulation fitted to one ECoG channel
 
 bold_avg        = median(NS.data.bold_bs,2);
 bb_avg          = median(NS.data.bb,2);
@@ -229,12 +236,13 @@ for k = 1:3 % bb, g, a
     xlabel(['simulated ' lfp_output{k}])
 end
 
-set(gcf,'PaperPositionMode','auto')
-print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) 'model' int2str(prm_set)])
-print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) 'model' int2str(prm_set)])
+% set(gcf,'PaperPositionMode','auto')
+% print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) 'model' int2str(prm_set)])
+% print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) 'model' int2str(prm_set)])
 
 %
-%% plot measured versus predicted LFP and BOLD
+%% plot measured versus predicted LFP and BOLD for all models for one channel
+
 num_conditions  = ns_get(NS, 'num_conditions');
 plot_colors = [0 0 0; jet(num_conditions-1)];
 
@@ -278,7 +286,7 @@ for k = 1:8
     xlabel('simulated lfp')
 end
 
-set(gcf,'PaperPositionMode','auto')
-print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) '_allmodels'])
-print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) '_allmodels'])
+% set(gcf,'PaperPositionMode','auto')
+% print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) '_allmodels'])
+% print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/Channel' int2str(elec) '_allmodels'])
 
