@@ -47,7 +47,7 @@ reg_out(6).stats=zeros(length(data),nr_boot,5);
 reg_out(7).stats=zeros(length(data),nr_boot,6); 
 
 % for cross-validated R2:
-r2_crossval_out=zeros(length(data),7,nr_boot); 
+r2_crossval_out=zeros(length(data),8,nr_boot); 
 
 % fit regression model
 for k=1:length(data)
@@ -73,6 +73,7 @@ for k=1:length(data)
         ecog_in{5}.data=[ecog_bb ecog_a];
         ecog_in{6}.data=[ecog_g ecog_a];
         ecog_in{7}.data=[ecog_bb ecog_g ecog_a];
+        ecog_in{8}.data=[0; ones(size(data{k}.labels,2)-1,1)];
         
         for m=1:length(ecog_in)
             stats1 = regstats(fmri_d,ecog_in{m}.data); % stats.beta, first one is intercept
@@ -111,6 +112,7 @@ for k=1:length(data)
         ecog_in{5}.data=[ecog_bb ecog_a];
         ecog_in{6}.data=[ecog_g ecog_a];
         ecog_in{7}.data=[ecog_bb ecog_g ecog_a];
+        ecog_in{8}.data=[0; ones(size(data{k}.labels,2)-1,1)];
 
         for m=1:length(ecog_in)
             reg_parms=squeeze(median(reg_out(m).stats(k,:,3:end),2));
@@ -224,7 +226,7 @@ figure('Position',[0 0 580 200])
 plotted_r2 = NaN(length(reg_out),2);
 % CROSS-VALIDATED R^2 when taking all boots
 subplot(1,2,1),hold on % plot V1
-for k=1:length(reg_out)
+for k=1:length(reg_out)-1
     bar(k,mean(median(r2_crossval_out(v_area==1,k,:),3),1),'FaceColor',bar_colors{k})
     plot([k-.4 k+.4],[mean(median(r2_crossval_outShuff(v_area==1,k,:),3),1) ...
         mean(median(r2_crossval_outShuff(v_area==1,k,:),3),1)],'Color',[.5 .5 .5],'LineWidth',2)
@@ -237,6 +239,12 @@ for k=1:length(reg_out)
     plotted_r2(k,1) = mean_resp;
     plot([k k],[mean_resp-st_err mean_resp+st_err],'k')
 end
+
+% plot mean prediction:
+plot([0 9],[mean(median(r2_crossval_out(v_area==1,8,:),3),1) ...
+    mean(median(r2_crossval_out(v_area==1,8,:),3),1)],'Color',[.5 .5 .5],'LineWidth',2)
+
+plot 
 clear mean_resp st_err
 xlim([0 8]),ylim([0 1])
 set(gca,'XTick',[1:7],'XTickLabel',{'bb','g','bb_g','a','bb_a','g_a','bb_g_a'})
@@ -244,7 +252,7 @@ set(gca,'YTick',[0:.2:1])
 title('V1 R^2 cross-val')
 
 subplot(1,2,2),hold on % plot V2/V3
-for k=1:length(reg_out)
+for k=1:length(reg_out)-1
     bar(k,mean(median(r2_crossval_out(v_area==2 | v_area==3,k,:),3),1),'FaceColor',bar_colors{k})
     plot([k-.4 k+.4],[mean(median(r2_crossval_outShuff(v_area==2 | v_area==3,k,:),3),1) ...
         mean(median(r2_crossval_outShuff(v_area==2 | v_area==3,k,:),3),1)],'Color',[.5 .5 .5],'LineWidth',2)
@@ -261,9 +269,13 @@ set(gca,'XTick',[1:7],'XTickLabel',{'bb','g','bb_g','a','bb_a','g_a','bb_g_a'})
 set(gca,'YTick',[0:.2:1])
 title('V2/V3 R^2 cross-val')
 
+% plot mean prediction:
+plot([0 9],[mean(median(r2_crossval_out(v_area==2 | v_area==3,8,:),3),1) ...
+    mean(median(r2_crossval_out(v_area==2 | v_area==3,8,:),3),1)],'Color',[.5 .5 .5],'LineWidth',2)
+
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['./figures/paper_V03/r2_plots'])
-print('-depsc','-r300',['./figures/paper_V03/r2_plots'])
+% print('-dpng','-r300',['./figures/paper_V03/r2_plots'])
+% print('-depsc','-r300',['./figures/paper_V03/r2_plots'])
 
 disp(['R^2: ' num2str(mean(median(r2_crossval_out(v_area==1,:,:),3),1))]);
 disp(['R^2: ' num2str(mean(median(r2_crossval_out(v_area==2 | v_area==3,:,:),3),1))]);

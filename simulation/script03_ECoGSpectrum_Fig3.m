@@ -15,7 +15,7 @@ load(['/Volumes/DoraBigDrive/data/visual/m-files/bold_datalikesimulation/data/bo
 
 %% plot power spectrum for one electrode
 
-elec = 7; % the electrode to plot
+elec = 9; % the electrode to plot
 
 figure('Position',[0 0 150 150]),hold on
 for k = 1:length(data{elec}.ecog_spectra250_500) % [1 4 7]
