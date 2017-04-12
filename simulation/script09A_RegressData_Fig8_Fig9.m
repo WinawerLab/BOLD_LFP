@@ -45,9 +45,11 @@ reg_out(4).stats=zeros(length(data),nr_boot,4);
 reg_out(5).stats=zeros(length(data),nr_boot,5); 
 reg_out(6).stats=zeros(length(data),nr_boot,5); 
 reg_out(7).stats=zeros(length(data),nr_boot,6); 
+reg_out(8).stats=zeros(length(data),nr_boot,4); 
+reg_out(9).stats=zeros(length(data),nr_boot,4); 
 
 % for cross-validated R2:
-r2_crossval_out=zeros(length(data),8,nr_boot); 
+r2_crossval_out=zeros(length(data),9,nr_boot); 
 
 % fit regression model
 for k=1:length(data)
@@ -73,7 +75,10 @@ for k=1:length(data)
         ecog_in{5}.data=[ecog_bb ecog_a];
         ecog_in{6}.data=[ecog_g ecog_a];
         ecog_in{7}.data=[ecog_bb ecog_g ecog_a];
+        % check uniform model
         ecog_in{8}.data=[0; ones(size(data{k}.labels,2)-1,1)];
+        % check for fmri_data test-retest
+        ecog_in{9}.data=[fmri_d];
         
         for m=1:length(ecog_in)
             stats1 = regstats(fmri_d,ecog_in{m}.data); % stats.beta, first one is intercept
@@ -112,7 +117,10 @@ for k=1:length(data)
         ecog_in{5}.data=[ecog_bb ecog_a];
         ecog_in{6}.data=[ecog_g ecog_a];
         ecog_in{7}.data=[ecog_bb ecog_g ecog_a];
+        % check uniform model
         ecog_in{8}.data=[0; ones(size(data{k}.labels,2)-1,1)];
+        % check fMRI data test-retest
+        ecog_in{9}.data=data{k}.allbootsS12(:,bs);
 
         for m=1:length(ecog_in)
             reg_parms=squeeze(median(reg_out(m).stats(k,:,3:end),2));
@@ -226,13 +234,18 @@ figure('Position',[0 0 580 200])
 plotted_r2 = NaN(length(reg_out),2);
 % CROSS-VALIDATED R^2 when taking all boots
 subplot(1,2,1),hold on % plot V1
-for k=1:length(reg_out)-1
+
+for k=1:length(reg_out)-2
     bar(k,mean(median(r2_crossval_out(v_area==1,k,:),3),1),'FaceColor',bar_colors{k})
+    
+    % plot R2 from reshuffeling
     plot([k-.4 k+.4],[mean(median(r2_crossval_outShuff(v_area==1,k,:),3),1) ...
-        mean(median(r2_crossval_outShuff(v_area==1,k,:),3),1)],'Color',[.5 .5 .5],'LineWidth',2)
-    % quantiles:
-%     plot([k k],[quantile(median(r2_crossval_out(v_area==1,k,:),3),.16,1) ...
-%         quantile(median(r2_crossval_out(v_area==1,k,:),3),.84,1)],'k')
+        mean(median(r2_crossval_outShuff(v_area==1,k,:),3),1)],':','Color',[.5 .5 .5],'LineWidth',2)
+    
+    % plot R2 from test-retest
+    plot([k-.4 k+.4],[mean(median(r2_crossval_out(v_area==1,9,:),3),1) ...
+    mean(median(r2_crossval_out(v_area==1,9,:),3),1)],'-','Color',[.5 .5 .5],'LineWidth',2)
+
     % standard error
     mean_resp = mean(median(r2_crossval_out(v_area==1,k,:),3),1);
     st_err = std(median(r2_crossval_out(v_area==1,k,:),3))./sqrt(sum(ismember(v_area,1)));
@@ -240,11 +253,6 @@ for k=1:length(reg_out)-1
     plot([k k],[mean_resp-st_err mean_resp+st_err],'k')
 end
 
-% plot mean prediction:
-plot([0 9],[mean(median(r2_crossval_out(v_area==1,8,:),3),1) ...
-    mean(median(r2_crossval_out(v_area==1,8,:),3),1)],'Color',[.5 .5 .5],'LineWidth',2)
-
-plot 
 clear mean_resp st_err
 xlim([0 8]),ylim([0 1])
 set(gca,'XTick',[1:7],'XTickLabel',{'bb','g','bb_g','a','bb_a','g_a','bb_g_a'})
@@ -252,10 +260,17 @@ set(gca,'YTick',[0:.2:1])
 title('V1 R^2 cross-val')
 
 subplot(1,2,2),hold on % plot V2/V3
-for k=1:length(reg_out)-1
+
+for k=1:length(reg_out)-2
     bar(k,mean(median(r2_crossval_out(v_area==2 | v_area==3,k,:),3),1),'FaceColor',bar_colors{k})
+    
+    % plot R2 from reshuffeling
     plot([k-.4 k+.4],[mean(median(r2_crossval_outShuff(v_area==2 | v_area==3,k,:),3),1) ...
-        mean(median(r2_crossval_outShuff(v_area==2 | v_area==3,k,:),3),1)],'Color',[.5 .5 .5],'LineWidth',2)
+        mean(median(r2_crossval_outShuff(v_area==2 | v_area==3,k,:),3),1)],':','Color',[.5 .5 .5],'LineWidth',2)
+
+    % plot R2 from test-retest
+    plot([k-.4 k+.4],[mean(median(r2_crossval_out(v_area==2 | v_area==3,9,:),3),1) ...
+    mean(median(r2_crossval_out(v_area==2 | v_area==3,9,:),3),1)],'-','Color',[.5 .5 .5],'LineWidth',2)
 
     % standard error
     mean_resp = mean(median(r2_crossval_out(v_area==2 | v_area==3,k,:),3),1);
@@ -269,13 +284,9 @@ set(gca,'XTick',[1:7],'XTickLabel',{'bb','g','bb_g','a','bb_a','g_a','bb_g_a'})
 set(gca,'YTick',[0:.2:1])
 title('V2/V3 R^2 cross-val')
 
-% plot mean prediction:
-plot([0 9],[mean(median(r2_crossval_out(v_area==2 | v_area==3,8,:),3),1) ...
-    mean(median(r2_crossval_out(v_area==2 | v_area==3,8,:),3),1)],'Color',[.5 .5 .5],'LineWidth',2)
-
 set(gcf,'PaperPositionMode','auto')
-% print('-dpng','-r300',['./figures/paper_V03/r2_plots'])
-% print('-depsc','-r300',['./figures/paper_V03/r2_plots'])
+print('-dpng','-r300',['../figures/data/regress_r2_plots'])
+print('-depsc','-r300',['../figures/data/regress_r2_plots'])
 
 disp(['R^2: ' num2str(mean(median(r2_crossval_out(v_area==1,:,:),3),1))]);
 disp(['R^2: ' num2str(mean(median(r2_crossval_out(v_area==2 | v_area==3,:,:),3),1))]);
@@ -672,3 +683,155 @@ set(gca,'XTick',[1 2 3],'XTickLabel',{'V1','V2','V3'})
 set(gcf,'PaperPositionMode','auto')
 print('-dpng','-r300',['./figures/paper_V03/BOLDchangeV123'])
 print('-depsc','-r300',['./figures/paper_V03/BOLDchangeV123'])
+
+%% plot R2 compared to fMRI test-retest and uniform model [0 1 1 1 1 1 1 1]
+
+% plot reshuffled R2 as an indication of baseline
+% plot uniform R2 as an indication of baseline
+
+%% load outputs simulation
+
+sim_nr = 2;
+%%% OUTPUTS:
+r2_data_fit = NaN(8,length(data)); % R2 between BOLD data and fit for each model:
+for elec = 1:length(data)
+    % get the data
+    data_bold = data{elec}.betas * mean(data{elec}.norm);   
+    % load the simulation outputs 
+    load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_elec' int2str(elec) '_simulation_outputs'],'simulation_outputs')   
+    for k=1:8 % run across models
+        fitted_bold = simulation_outputs(:,k,4);
+        r2_data_fit(k,elec) = corr(fitted_bold,data_bold').^2;
+    end
+end
+
+%% load mean BOLD change
+bold_sc = NaN(1,length(data));
+for elec = 1:length(data)
+    fmri_d=median(nanmean(data{elec}.allboots,2),3) * mean(data{elec}.norm);
+    bold_sc(elec) = mean(fmri_d(2:end));
+    bold_max(elec) = max(fmri_d);
+end
+
+%%
+r2_uniform = squeeze(median(r2_crossval_out(:,8,:),3));
+r2_testretest = squeeze(median(r2_crossval_out(:,9,:),3));
+r2_model5 = squeeze(median(r2_crossval_out(:,5,:),3));
+r2_simulation = r2_data_fit(1,:);
+el_nrs = [1:length(data)];
+
+figure
+subplot(1,2,1),hold on
+
+plot(r2_testretest(v_area==1),'k','LineWidth',2)
+plot(r2_uniform(v_area==1),'Color',[.5 .5 .5])
+plot(r2_model5(v_area==1),'co','MarkerSize',10)
+plot(r2_simulation(v_area==1),'go','MarkerSize',10)
+plot(r2_testretest(v_area==1),'k.','MarkerSize',20)
+plot(r2_uniform(v_area==1),'.','MarkerSize',20,'Color',[.5 .5 .5])
+xlim([0 14]),ylim([0 1])
+set(gca,'XTick',[1:length(find(v_area==1))],'XTickLabel',el_nrs(v_area==1))
+ylabel('r^2')
+title('V1')
+legend({'r^2 testretest','r^2 uniform','r^2 regressdata','r^2 simulation'})
+
+subplot(1,2,2),hold on
+plot(r2_uniform(v_area==2 | v_area==3),'.','MarkerSize',20,'Color',[.5 .5 .5])
+plot(r2_uniform(v_area==2 | v_area==3),'Color',[.5 .5 .5])
+plot(r2_testretest(v_area==2 | v_area==3),'k.','MarkerSize',20)
+plot(r2_testretest(v_area==2 | v_area==3),'k','LineWidth',2)
+plot(r2_model5(v_area==2 | v_area==3),'co','MarkerSize',10)
+plot(r2_simulation(v_area==2 | v_area==3),'go','MarkerSize',10)
+xlim([0 14]),ylim([0 1])
+ylabel('r^2')
+title('V2/V3')
+
+set(gca,'XTick',[1:length(find(v_area==2 | v_area==3))],'XTickLabel',el_nrs(v_area==2 | v_area==3))
+
+set(gcf,'PaperPositionMode','auto')
+print('-painters','-r300','-dpng',strcat(['../figures/test_uniform/r2_V1V23']));
+print('-painters','-r300','-depsc',strcat(['../figures/test_uniform/r2_V1V23']));
+
+%% exclude some electrodes with small mean signal change
+
+figure,hold on
+
+t_h = bold_sc'>.7 & r2_testretest>.7;
+% t_h = ~(r2_testretest>.7);
+
+plot(r2_testretest(t_h),'k.','MarkerSize',20)
+plot(r2_testretest(t_h),'k')
+plot(r2_uniform(t_h),'.','MarkerSize',20,'Color',[.5 .5 .5])
+plot(r2_uniform(t_h),'Color',[.5 .5 .5])
+plot(r2_model5(t_h),'mo','MarkerSize',10)
+% plot(r2_simulation(t_h),'go','MarkerSize',10)
+ylim([0 1])
+el_nrs = [1:length(data)];
+set(gca,'XTick',[1:length(find(t_h>0))],'XTickLabel',el_nrs(t_h))
+
+
+
+%% plot sorted 
+
+figure('Position',[0 0 500 600])
+subplot(2,1,1),hold on
+% sorted by simulation r2
+[r2_simulation_sorted,sort_els] = sort(r2_simulation,'descend');
+v_area_sorted = v_area(sort_els);
+plot(r2_testretest(sort_els),'k')
+plot(r2_uniform(sort_els),'Color',[.5 .5 .5])
+plot(el_nrs(v_area_sorted==1),r2_simulation_sorted(v_area_sorted==1),'r.','MarkerSize',20)
+plot(r2_testretest(sort_els),'k.','MarkerSize',20)
+plot(r2_uniform(sort_els),'.','MarkerSize',20,'Color',[.5 .5 .5])
+% plot(r2_model5(sort_els),'mo','MarkerSize',10)
+plot(r2_simulation(sort_els),'go','MarkerSize',10,'LineWidth',3)
+ylim([0 1])
+el_nrs = [1:length(data)];
+set(gca,'XTick',[1:length(sort_els)],'XTickLabel',el_nrs(sort_els))
+title(['sorted by r^2 from simulated bold - measured bold'])
+legend({'r^2 testretest','r^2 uniform','V1'})
+xlabel('electrode nr'),ylabel('r^2')
+
+subplot(2,1,2),hold on
+% sorted by ecog-fmri r2
+[r2_model5_sorted,sort_els] = sort(r2_model5,'descend');
+v_area_sorted = v_area(sort_els);
+plot(r2_testretest(sort_els),'k')
+plot(r2_uniform(sort_els),'Color',[.5 .5 .5])
+plot(el_nrs(v_area_sorted==1),r2_model5_sorted(v_area_sorted==1),'r.','MarkerSize',20)
+plot(r2_testretest(sort_els),'k.','MarkerSize',20)
+plot(r2_uniform(sort_els),'.','MarkerSize',20,'Color',[.5 .5 .5])
+plot(r2_model5(sort_els),'co','MarkerSize',10,'LineWidth',3)
+% plot(r2_simulation(sort_els),'go','MarkerSize',10)
+ylim([0 1])
+el_nrs = [1:length(data)];
+set(gca,'XTick',[1:length(sort_els)],'XTickLabel',el_nrs(sort_els))
+title(['sorted by r^2 from ECoG-fMRI data model with bb and a'])
+xlabel('electrode nr'),ylabel('r^2')
+
+% set(gcf,'PaperPositionMode','auto')
+% print('-painters','-r300','-dpng',strcat(['../figures/test_uniform/sorted_r2']));
+% print('-painters','-r300','-depsc',strcat(['../figures/test_uniform/sorted_r2']));
+
+%%
+figure
+hold on
+% sorted by simulation r2
+[~,sort_els] = sort(bold_sc,'descend');
+v_area_sorted = v_area(sort_els);
+plot(r2_testretest(sort_els),'k')
+plot(r2_uniform(sort_els),'Color',[.5 .5 .5])
+plot(r2_model5(sort_els),'co','MarkerSize',10,'LineWidth',3)
+plot(r2_simulation(sort_els),'go','MarkerSize',10,'LineWidth',3)
+plot(r2_testretest(sort_els),'k.','MarkerSize',20)
+plot(r2_uniform(sort_els),'.','MarkerSize',20,'Color',[.5 .5 .5])
+ylim([0 1])
+el_nrs = [1:length(data)];
+set(gca,'XTick',[1:length(sort_els)],'XTickLabel',el_nrs(sort_els))
+title(['sorted by bold signal change'])
+legend({'r^2 testretest','r^2 uniform','r^2 regress ECoG bb&a','r^2 simulation'})
+xlabel('electrode nr'),ylabel('r^2')
+
+set(gcf,'PaperPositionMode','auto')
+print('-painters','-r300','-dpng',strcat(['../figures/test_uniform/sorted_by_BOLDsc']));
+print('-painters','-r300','-depsc',strcat(['../figures/test_uniform/sorted_by_BOLDsc']));

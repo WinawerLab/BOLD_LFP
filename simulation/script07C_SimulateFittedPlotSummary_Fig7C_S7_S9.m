@@ -36,7 +36,8 @@ for l = 1:length(els)
     data_bb = median(data{elec}.bb_all,2);
     data_g = median(data{elec}.gamma_all,2);
     data_a = median(data{elec}.alpha_all,2);
-    data_bold = data{elec}.betas * mean(data{elec}.norm);
+%     data_bold = data{elec}.betas * mean(data{elec}.norm);
+    data_bold = median(data{elec}.allbootsS34,2)' * mean(data{elec}.norm);
     
     all_data(1,l,1:length(data_bb))=data_bb;
     all_data(2,l,1:length(data_g))=data_g;

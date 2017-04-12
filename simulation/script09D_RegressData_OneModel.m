@@ -3,10 +3,8 @@ close all
 
 load(['/Volumes/DoraBigDrive/data/visual/m-files/bold_datalikesimulation/data/boldecog_structure_final.mat'],'data')
 
+%% Put all data in vectors/matrices to analyse in 1 analysis
 
-%% Regression analysis ECoG data
-
-% put all data in vectors/matrices
 % calculate matrix size:
 nr_rows = 0;
 elec_nr = [];
@@ -19,6 +17,7 @@ end
 vals_ecog = NaN(nr_rows,3);
 vals_fmri = NaN(nr_rows,1);
 v_area = NaN(nr_rows,1);
+vect_uniform = NaN(nr_rows,1);
 
 for k = 1:length(data)
     
@@ -37,6 +36,8 @@ for k = 1:length(data)
     vals_ecog(elec_nr==k,1) = ecog_bb;
     vals_ecog(elec_nr==k,2) = ecog_g;
     vals_ecog(elec_nr==k,3) = ecog_a;
+    
+    vect_uniform(elec_nr==k) = [0; ones(size(ecog_a,1)-1,1)];
     
     vals_fmri(elec_nr==k) = fmri_d;
 end
@@ -65,6 +66,15 @@ for k = 1:length(data)
     end
 end
 
+%%
+figure,hold on
+bar_colors={[1 0 0],[1 1 0],[1 .5 0],[0 .2 1],[.5 0 1],[0 .5 0],[.4 .2 .1]};
+
+for k = 1:7
+    bar(k,mean(r_vals(:,k).^2),'FaceColor',bar_colors{k})
+end
+ylim([0 1])
+title('all sites')
 
 %% regress with leave-one-out all V1 electrodes
 
