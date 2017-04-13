@@ -22,15 +22,16 @@ all_data = NaN(4,length(els),10); % ECoG / BOLD data
 all_simulation = NaN(4,length(els),10,8); % BOLD simulation
 
 % load the ECoG/fMRI data
-load('/Volumes/DoraBigDrive/data/visual/m-files/bold_datalikesimulation/data/boldecog_structure_final.mat');
+load(fullfile(BOLD_LFPRootPath, 'data', 'boldecog_structure_final'));
 
 for l = 1:length(els)
     
     elec = els(l);
        
     % load the simulation outputs 
-    load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_elec' int2str(elec) '_simulation_outputs'],'simulation_outputs')
-   
+    %load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_elec' int2str(elec) '_simulation_outputs'],'simulation_outputs')
+    load(fullfile(BOLD_LFPRootPath, 'data', sprintf('NS_simnr%d_elec%d_simulation_outputs', sim_nr, elec)),'simulation_outputs');
+
     v_area(l) = data{l}.v_area;
 
     data_bb = median(data{elec}.bb_all,2);
