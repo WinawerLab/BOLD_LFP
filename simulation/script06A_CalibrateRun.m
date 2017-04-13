@@ -76,7 +76,8 @@ param_set_vary = {'poisson_g','coherence_g','poisson_a','coherence_a','poisson_b
 
 f = figure('Position',[0 0 700 250]);hold on
 for param_set = 1:4
-    load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_set' int2str(param_set) ],'NS')
+    %load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_set' int2str(param_set) ],'NS')
+    load(fullfile(BOLD_LFPRootPath, 'data', sprintf('NS_simnr%d_set%d', sim_nr, param_set)), 'NS');
 
     bold_avg        = median(NS.data.bold_bs,2);
     b_avg           = median(NS.data.bb,2);
@@ -115,14 +116,16 @@ for param_set = 1:4
 end
 
 set(gcf,'PaperPositionMode','auto')
-print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/calibrate_lfpvals_g_a_new'])
-print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/calibrate_lfpvals_g_a_new'])
+
+print('-depsc','-r300',fullfile(BOLD_LFPRootPath, 'figures', sprintf('sim%d_calibrate_lfpvals_g_a_new', sim_nr)))
+
 
 %% broadband lookup table and save all
 
 f = figure('Position',[0 0 700 250]);hold on
 for param_set = 5:6
-    load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_set' int2str(param_set) ],'NS')
+    %load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_set' int2str(param_set) ],'NS')
+    load(fullfile(BOLD_LFPRootPath, 'data', sprintf('NS_simnr%d_set%d', sim_nr, param_set)), 'NS');
 
     bold_avg    = median(NS.data.bold_bs,2);
     b_avg       = median(NS.data.bb,2);
@@ -155,4 +158,5 @@ end
 % print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/calibrate_lfpvals_bb_new'])
 % print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/calibrate_lfpvals_bb_new'])
 
-% save(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_lookup_table' ],'lookup')
+%save(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_lookup_table' ],'lookup')
+save(fullfile(BOLD_LFPRootPath, 'data', sprintf('NS_simnr%d_lookup_table', sim_nr)), 'lookup');

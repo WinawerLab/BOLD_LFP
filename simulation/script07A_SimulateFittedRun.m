@@ -11,13 +11,13 @@ clear all
 sim_nr = 2;
 
 % load the lookup table from calibration with correct sim_nr:
-load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_lookup_table' ],'lookup');
+load(fullfile(BOLD_LFPRootPath, 'data', sprintf('NS_simnr%d_lookup_table', sim_nr)),'lookup');
 
 % load one of the calibrations, to get baseline settings correct:
-load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_set1' ],'NS')
+load(fullfile(BOLD_LFPRootPath, 'data', sprintf('NS_simnr%d_set1', sim_nr)),'NS');
 
 % load the ECoG data
-load('/Volumes/DoraBigDrive/data/visual/m-files/bold_datalikesimulation/data/boldecog_structure_final.mat');
+load(fullfile(BOLD_LFPRootPath, 'data', 'boldecog_structure_final'));
 
 %% settings to run the calibrated simulations:
 
@@ -151,13 +151,13 @@ for prm_set = 1:size(lookup_combs,1) % 8 combinations
     simulation_outputs(:,prm_set,3) = median(NS.data.alpha,2); %alpha
     simulation_outputs(:,prm_set,4) = median(NS.data.bold_bs,2); %bold
     
-    save(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_elec' int2str(elec) '_NS_prmset' int2str(prm_set)],'NS')
+    save(fullfile(BOLD_LFPRootPath, 'data', sprintf('NS_simnr%d_elec%d_NS_prmset%d',sim_nr ,elec, prm_set)),'NS')
 %     load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_elec' int2str(elec) '_NS_prmset' int2str(prm_set)],'NS')
     disp(['DONE elec ' int2str(elec) ' parameter set ' int2str(prm_set)])
     toc
 end
 % save(['../data/NS_simnr' int2str(sim_nr) '_set' int2str(k) ],'NS')
-save(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_elec' int2str(elec) '_simulation_outputs'],'simulation_outputs')
+save(fullfile(BOLD_LFPRootPath, 'data', sprintf('NS_simnr%d_elec%d_simulation_outputs', sim_nr, elec)),'simulation_outputs')
 ns_params{k} = NS.params;
 toc
 
@@ -172,14 +172,14 @@ sim_nr = 2;
 elec = 18;%1:22
 
 % load the simulation outputs 
-load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_elec' int2str(elec) '_simulation_outputs'],'simulation_outputs')
+load(fullfile(BOLD_LFPRootPath, 'data', sprintf('NS_simnr%d_elec%d_simulation_outputs', sim_nr,elec)),'simulation_outputs')
 
 % load the ECoG/fMRI data
-load('/Volumes/DoraBigDrive/data/visual/m-files/bold_datalikesimulation/data/boldecog_structure_final.mat');
+load(fullfile(BOLD_LFPRootPath, 'data', 'boldecog_structure_final'))
 
 % load output from the first model (BB - level, G - coh, A - level)
 prm_set = 1;
-load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_elec' int2str(elec) '_NS_prmset' int2str(prm_set)],'NS')
+load(fullfile(BOLD_LFPRootPath, 'data', sprintf('NS_simnr%d_elec%d_NS_prmset%d', sim_nr,elec, prm_set)), 'NS')
 
 %%
 % plot measured versus predicted LFP and BOLD

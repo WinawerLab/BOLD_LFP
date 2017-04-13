@@ -13,14 +13,17 @@ sim_nr = 2; % simulation number 2 for paper
 elec = 18;%1:22 % examples electrode V1 - 21, V2 - 18
 
 % load the simulation outputs 
-load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_elec' int2str(elec) '_simulation_outputs'],'simulation_outputs')
+%load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_elec' int2str(elec) '_simulation_outputs'],'simulation_outputs')
+load(fullfile(BOLD_LFPRootPath, 'data', sprintf('NS_simnr%d_elec%d_simulation_outputs', sim_nr, elec)),'simulation_outputs')
 
 % load the ECoG/fMRI data
-load('/Volumes/DoraBigDrive/data/visual/m-files/bold_datalikesimulation/data/boldecog_structure_final.mat');
+load(fullfile(BOLD_LFPRootPath, 'data', 'boldecog_structure_final'))
+
 
 % load output from the first model (BB - level, G - coh, A - level)
 prm_set = 1;
-load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_elec' int2str(elec) '_NS_prmset' int2str(prm_set)],'NS')
+%load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_elec' int2str(elec) '_NS_prmset' int2str(prm_set)],'NS')
+load(fullfile(BOLD_LFPRootPath, 'data', sprintf('NS_simnr%d_elec%d_NS_prmset%d', sim_nr, elec,prm_set)),'NS')
 
 data_bb = median(data{elec}.bb_all,2);
 data_g = median(data{elec}.gamma_all,2);
