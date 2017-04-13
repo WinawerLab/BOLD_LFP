@@ -17,10 +17,10 @@
 clear all
 sim_nr = 2;
 % load the lookup table
-load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_lookup_table' ],'lookup');
+load(fullfile(BOLD_LFPRootPath, 'data', sprintf('NS_simnr%d_lookup_table', sim_nr)),'lookup');
 
 % load the data
-load('/Volumes/DoraBigDrive/data/visual/m-files/bold_datalikesimulation/data/boldecog_structure_final.mat');
+load(fullfile(BOLD_LFPRootPath, 'data','boldecog_structure_final.mat'));
     
 lookup_combs=[...
     2 3 5

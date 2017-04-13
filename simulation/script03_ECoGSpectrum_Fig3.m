@@ -11,7 +11,7 @@
 clear all
 close all
 
-load(['/Volumes/DoraBigDrive/data/visual/m-files/bold_datalikesimulation/data/boldecog_structure_final.mat'],'data')
+load(fullfile(BOLD_LFPRootPath, 'data','boldecog_structure_final'),'data');
 
 %% plot power spectrum for one electrode
 

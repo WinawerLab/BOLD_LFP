@@ -88,5 +88,5 @@ for k = 1:3
 end
 
 set(gcf,'PaperPositionMode','auto')
-print('-depsc','-r300',['../figures/Paper_Figure3_1000msWindow_200Neurons'])
-print('-dpng','-r300',['../figures/Paper_Figure3_1000msWindow_200Neurons'])
+print('-depsc','-r300',fullfile(BOLD_LFPRootPath,'figures', 'Paper_Figure3_1000msWindow_200Neurons'))
+print('-dpng','-r300',fullfile(BOLD_LFPRootPath,'figures', 'Paper_Figure3_1000msWindow_200Neurons'))

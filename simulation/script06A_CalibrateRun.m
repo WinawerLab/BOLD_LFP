@@ -18,7 +18,7 @@ sim_nr = 2;
 % make conditions of input -  vary gamma, alpha and broadband
 % systematically: change amplitude and coherence of each
 nr_conds = 10;
-out.poss = script_make_calibration_conds(nr_conds);
+out = script_make_calibration_conds(nr_conds);
 
 tic
 clear ns_params
@@ -58,7 +58,7 @@ for k=1:size(out.poisson_bb,2) % number of settings
         
     NS.data.ts = single(NS.data.ts); % to reduce size
     
-    save(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_set' int2str(k) ],'NS')
+    save(fullfile(BOLD_LFPRootPath, 'data', sprintf('NS_simnr%d_set%d', sim_nr,k)),'NS');
     ns_params{k} = NS.params;
     disp(['done simulation ' int2str(k) ' of ' int2str(size(out.poisson_bb,2))])
     toc
