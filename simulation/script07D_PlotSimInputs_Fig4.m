@@ -8,9 +8,13 @@ clear all
 sim_nr      = 2;
 prm_set_nr  = 1;
 elec_nr     = 1;
-load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/'...
-    'NS_simnr' int2str(sim_nr) '_elec' int2str(elec_nr) '_NS_prmset' int2str(prm_set_nr)],'NS')
-% load(['./data/NS_simnr' int2str(sim_nr) '_set' int2str(set_nr)],'NS')
+load(fullfile(BOLD_LFPRootPath, 'data', ...
+    sprintf('NS_simnr%d_elec%d_NS_prmset%d', ...
+    sim_nr, elec_nr, prm_set_nr)),'NS');
+
+% load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/'...
+%     'NS_simnr' int2str(sim_nr) '_elec' int2str(elec_nr) '_NS_prmset' int2str(prm_set_nr)],'NS')
+% % load(['./data/NS_simnr' int2str(sim_nr) '_set' int2str(set_nr)],'NS')
 
 %% 
 numNeurons2plot     = 5;
@@ -85,8 +89,9 @@ barh(1,sum(mean(signal2plot.^2,1),2),'k')
 ylim([0 numNeurons2plot+1])
 
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['../figures/ns_MethodsFig01_inputs'])
-print('-depsc','-r300',['../figures/ns_MethodsFig01_inputs'])
+print('-dpng','-r300',fullfile(BOLD_LFPRootPath, 'figures', 'ns_MethodsFig01_inputs'))
+print('-depsc','-r300',fullfile(BOLD_LFPRootPath, 'figures', 'ns_MethodsFig01_inputs'))
+
 
 %% plot one neuron
 %% 
@@ -137,8 +142,8 @@ barh(0,mean(signal2plot(:,neuron2plot).^2,1),'FaceColor',ax.ColorOrder(1,:))
 ylim([-2 2])
 
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['../figures/ns_MethodsFig02_trial' int2str(NS.params.trials_save_inputs(trial2plot))])
-print('-depsc','-r300',['../figures/ns_MethodsFig02_trial' int2str(NS.params.trials_save_inputs(trial2plot))])
+print('-dpng','-r300',fullfile(BOLD_LFPRootPath, 'figures', sprintf('ns_MethodsFig02_trial%d', NS.params.trials_save_inputs(trial2plot))))
+print('-depsc','-r300',fullfile(BOLD_LFPRootPath, 'figures', sprintf('ns_MethodsFig02_trial%d', NS.params.trials_save_inputs(trial2plot))))
 
 figure('Position',[0 0 500 60])
 f = ns_get(NS,'f');
@@ -177,8 +182,9 @@ plot(f(f_lims(1):f_lims(2)),pxx(f_lims(1):f_lims(2)),'k');%,'Color',ax.ColorOrde
 set(gca,'XScale','log','YScale','log')
 axis tight
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['../figures/ns_MethodsFig02_pxx_trial' int2str(NS.params.trials_save_inputs(trial2plot))])
-print('-depsc','-r300',['../figures/ns_MethodsFig02_pxx_trial' int2str(NS.params.trials_save_inputs(trial2plot))])
+pth = fullfile(BOLD_LFPRootPath, 'figures', sprintf('ns_MethodsFig02_pxx_trial%d', NS.params.trials_save_inputs(trial2plot)));
+print('-dpng','-r300',pth)
+print('-depsc','-r300',pth)
 
 %% plot a bunch of neurons
 
