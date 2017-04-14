@@ -28,4 +28,4 @@ SSres = sum((x - y).^2);
 
 SSdata = sum((y - mean(y)).^2);
 
-cod = 1 - (SSres./SSdata);
+cod = 1 - (SSres/SSdata);

@@ -130,6 +130,8 @@ for k = 1:length(data)
     clear ecog_in
 end
 
+%%
+%%
 %% Reshuffled regression analysis
 
 clear reg_outShuff
@@ -137,13 +139,13 @@ clear reg_outShuff
 nr_boot=100; % number of reshuffles 
 
 % loop regression over electrodes and bootstraps
-reg_outShuff(1).stats=NaN(length(data),4); 
-reg_outShuff(2).stats=NaN(length(data),4); 
-reg_outShuff(3).stats=NaN(length(data),5); 
-reg_outShuff(4).stats=NaN(length(data),4); 
-reg_outShuff(5).stats=NaN(length(data),5); 
-reg_outShuff(6).stats=NaN(length(data),5); 
-reg_outShuff(7).stats=NaN(length(data),6); 
+reg_outShuff(1).stats=NaN(length(data),nr_boot,4); 
+reg_outShuff(2).stats=NaN(length(data),nr_boot,4); 
+reg_outShuff(3).stats=NaN(length(data),nr_boot,5); 
+reg_outShuff(4).stats=NaN(length(data),nr_boot,4); 
+reg_outShuff(5).stats=NaN(length(data),nr_boot,5); 
+reg_outShuff(6).stats=NaN(length(data),nr_boot,5); 
+reg_outShuff(7).stats=NaN(length(data),nr_boot,6); 
 
 % for cross-validated R2 and coefficient of determination (takes mean):
 r2_crossval_outShuff = NaN(length(data),7,nr_boot); 
@@ -155,16 +157,63 @@ for k = 1:length(data)
     v_area(k) = data{k}.v_area;
     % FIT THE MODEL:
     % fit model on fmri S12, even repeats ECoG
-    % train model on fmri S12, odd repeats ECoG
-    fmri_d = median(data{k}.allbootsS12,2);
-    ecog_bb = median(data{k}.bb_even,2);
-    ecog_g = median(data{k}.gamma_even,2);
-    ecog_a = median(data{k}.alpha_even,2);
+    for bs = 1:nr_boot
+        % train model on fmri S12, odd repeats ECoG
+%         %%%% reshuffle only non-blank conditions
+        fmri_shuffle = [1 randperm(size(data{k}.bb_all,1)-1,size(data{k}.bb_all,1)-1)+1];
+        %%%% reshuffle all conditions
+%         fmri_shuffle = randperm(size(data{k}.bb_even,1),size(data{k}.bb_even,1));
+        fmri_d = median(data{k}.allbootsS12(fmri_shuffle,:),2);
+        ecog_bb = median(data{k}.bb_even,2);
+        ecog_g = median(data{k}.gamma_even,2);
+        ecog_a = median(data{k}.alpha_even,2);
 
-    % vector length normalize:
-    ecog_bb = ecog_bb/sqrt(sum(ecog_bb.^2));
-    ecog_g = ecog_g/sqrt(sum(ecog_g.^2));
-    ecog_a = ecog_a/sqrt(sum(ecog_a.^2));
+%         % vector length normalize:
+%         ecog_bb = ecog_bb/sqrt(sum(ecog_bb.^2));
+%         ecog_g = ecog_g/sqrt(sum(ecog_g.^2));
+%         ecog_a = ecog_a/sqrt(sum(ecog_a.^2));
+        
+        ecog_in{1}.data = [ecog_bb];
+        ecog_in{2}.data = [ecog_g];
+        ecog_in{3}.data = [ecog_bb ecog_g];
+        ecog_in{4}.data = [ecog_a];
+        ecog_in{5}.data = [ecog_bb ecog_a];
+        ecog_in{6}.data = [ecog_g ecog_a];
+        ecog_in{7}.data = [ecog_bb ecog_g ecog_a];
+        
+        for m=1:length(ecog_in)
+            stats1 = regstats(fmri_d,ecog_in{m}.data); % stats.beta, first one is intercept
+            if ~isnan(stats1.rsquare) % nans if alpha all zeros
+                reg_outShuff(m).stats(k,bs,1)=stats1.rsquare;
+                reg_outShuff(m).stats(k,bs,2)=stats1.adjrsquare;
+                reg_outShuff(m).stats(k,bs,3:2+length(stats1.beta))=stats1.beta; % 1 is the intercept
+            else
+                reg_outShuff(m).stats(k,bs,1) = NaN;
+                reg_outShuff(m).stats(k,bs,2) = NaN;
+                reg_outShuff(m).stats(k,bs,3:2+length(stats1.beta)) = NaN;
+            end
+            clear stats1
+        end
+        clear ecog_in
+    end
+    
+    %%%%% now test the models from reshuffling
+    % test model on fmri S34, odd repeats ECoG
+%     fmri_d = median(data{k}.allbootsS34,2);
+    %         %%%% reshuffle only non-blank conditions
+    fmri_shuffle = [1 randperm(size(data{k}.bb_all,1)-1,size(data{k}.bb_all,1)-1)+1];
+    %%%% reshuffle all conditions
+%         fmri_shuffle = randperm(size(data{k}.bb_even,1),size(data{k}.bb_even,1));
+    fmri_d = median(data{k}.allbootsS34(fmri_shuffle,:),2);
+
+    ecog_bb = median(data{k}.bb_odd,2);
+    ecog_g = median(data{k}.gamma_odd,2);
+    ecog_a = median(data{k}.alpha_odd,2);
+
+%     % vector length normalize:
+%     ecog_bb = ecog_bb/sqrt(sum(ecog_bb.^2));
+%     ecog_g = ecog_g/sqrt(sum(ecog_g.^2));
+%     ecog_a = ecog_a/sqrt(sum(ecog_a.^2));
 
     ecog_in{1}.data = [ecog_bb];
     ecog_in{2}.data = [ecog_g];
@@ -174,145 +223,76 @@ for k = 1:length(data)
     ecog_in{6}.data = [ecog_g ecog_a];
     ecog_in{7}.data = [ecog_bb ecog_g ecog_a];
 
-    for m=1:length(ecog_in)
-        stats1 = regstats(fmri_d,ecog_in{m}.data); % stats.beta, first one is intercept
-        if ~isnan(stats1.rsquare) % nans if alpha all zeros
-            reg_outShuff(m).stats(k,1)=stats1.rsquare;
-            reg_outShuff(m).stats(k,2)=stats1.adjrsquare;
-            reg_outShuff(m).stats(k,3:2+length(stats1.beta))=stats1.beta; % 1 is the intercept
-        else
-            reg_outShuff(m).stats(k,1) = NaN;
-            reg_outShuff(m).stats(k,2) = NaN;
-            reg_outShuff(m).stats(k,3:2+length(stats1.beta)) = NaN;
-        end
-        clear stats1
-    end
-    clear ecog_in
-    
-    %%%%% now test the models from reshuffling
     for bs = 1:nr_boot
-        % test model on fmri S34, odd repeats ECoG
-    %     fmri_d = median(data{k}.allbootsS34,2);
-         %%%% reshuffle only non-blank conditions
-        fmri_shuffle = [1 randperm(size(data{k}.bb_all,1)-1,size(data{k}.bb_all,1)-1)+1];
-    %     %%%% reshuffle all conditions
-    %     fmri_shuffle = randperm(size(data{k}.bb_even,1),size(data{k}.bb_even,1));
-        fmri_d = median(data{k}.allbootsS34(fmri_shuffle,:),2);
-
-        ecog_bb = median(data{k}.bb_odd,2);
-        ecog_g = median(data{k}.gamma_odd,2);
-        ecog_a = median(data{k}.alpha_odd,2);
-
-        % vector length normalize:
-        ecog_bb = ecog_bb/sqrt(sum(ecog_bb.^2));
-        ecog_g = ecog_g/sqrt(sum(ecog_g.^2));
-        ecog_a = ecog_a/sqrt(sum(ecog_a.^2));
-
-        ecog_in{1}.data = [ecog_bb];
-        ecog_in{2}.data = [ecog_g];
-        ecog_in{3}.data = [ecog_bb ecog_g];
-        ecog_in{4}.data = [ecog_a];
-        ecog_in{5}.data = [ecog_bb ecog_a];
-        ecog_in{6}.data = [ecog_g ecog_a];
-        ecog_in{7}.data = [ecog_bb ecog_g ecog_a];
-
         for m = 1:length(ecog_in)
-            reg_parms = reg_outShuff(m).stats(k,3:end);
-            pred_fmri = reg_parms(1)+ecog_in{m}.data*reg_parms(2:end)';
+            reg_parms = squeeze(reg_outShuff(m).stats(k,bs,3:end));
+            pred_fmri = reg_parms(1)+ecog_in{m}.data*reg_parms(2:end);
             r2_crossval_outShuff(k,m,bs) = sign(corr(pred_fmri,fmri_d)) * corr(pred_fmri,fmri_d).^2;
-            cod_crossval_outShuff(k,m,bs) = ns_cod(pred_fmri,fmri_d,1); % rescale not necessary, same units
+            cod_crossval_outShuff(k,m,bs) = ns_cod(pred_fmri,fmri_d); % rescale not necessary, same units
         end
     end
     clear ecog_in
 
 end
 
-%% cross-validated R2 across electrodes
+%%
+%% PLOT cross-validated COD-R2 across electrodes
 % plot reshuffled R2 as an indication of baseline
+%
+% for the bootstraps:
+% 1) median across 100 bootstraps
+% 2) variance across electrodes
 
 bar_colors={[1 0 0],[1 1 0],[1 .5 0],[0 .2 1],[.5 0 1],[0 .5 0],[.4 .2 .1]};
+box_colors = zeros(length(bar_colors),3);
+for ii = 1:length(bar_colors), box_colors(ii,:) = bar_colors{ii}; end
 
 figure('Position',[0 0 580 200])
-plotted_r2 = NaN(length(reg_out),2);
+%plotted_r2 = NaN(length(reg_out),2);
+
 % CROSS-VALIDATED R^2 when taking all boots
-subplot(1,2,1),hold on % plot V1
-
-for k = 1:length(reg_out)-2
-    bar(k,mean(r2_crossval_out(v_area==1,k),1),'FaceColor',bar_colors{k})
+for whichAreas = 1:2
     
-    % plot R2 from reshuffeling
-    plot([k-.4 k+.4],[mean(median(r2_crossval_outShuff(v_area==1,k,:),3),1) ...
-        mean(median(r2_crossval_outShuff(v_area==1,k,:),3),1)],':','Color',[.5 .5 .5],'LineWidth',2)
+    subplot(1,2,whichAreas),hold on % plot V1
+    if whichAreas == 1
+        whichElectrodes = v_area==1;
+    else
+        whichElectrodes = v_area==2 | v_area==3;
+    end
     
-    % plot R2 from test-retest
-    plot([k-.4 k+.4],[mean(median(r2_crossval_out(v_area==1,9,:),3),1) ...
-    mean(r2_crossval_out(v_area==1,9),1)],'-','Color',[.5 .5 .5],'LineWidth',2)
-
-    % standard error
-    mean_resp = mean(r2_crossval_out(v_area==1,k),1);
-    st_err = std(r2_crossval_out(v_area==1,k))./sqrt(sum(ismember(v_area,1)));
-    plotted_r2(k,1) = mean_resp;
-    plot([k k],[mean_resp-st_err mean_resp+st_err],'k')
+    boxplot(cod_crossval_out(whichElectrodes==1,1:7),'Colors', box_colors);
+    for k=1:length(reg_out)-2
+        %bar(k,median(r2_crossval_out(v_area==1,k),1),'FaceColor',bar_colors{k})
+        %boxplot(r2_crossval_out(v_area==1,k),'Colors', bar_colors{k}, 'PlotStyle', 'compact')
+        
+        % plot R2 from reshuffeling
+        plot([k-.4 k+.4],[median(median(cod_crossval_outShuff(v_area==1,k,:),3),1) ...
+            median(median(cod_crossval_outShuff(v_area==1,k,:),3),1)],':','Color',[.5 .5 .5],'LineWidth',2)
+        
+        % plot R2 from test-retest
+        plot([k-.4 k+.4],[median(cod_crossval_out(whichElectrodes,9),1) ...
+            median(cod_crossval_out(whichElectrodes,9),1)],'-','Color',[.5 .5 .5],'LineWidth',2)
+        
+        % standard error
+        %mean_resp = median(r2_crossval_out(whichElectrodes,k),1);
+        %st_err = std(r2_crossval_out(whichElectrodes,k))./sqrt(sum(whichElectrodes));
+        %plotted_r2(k,1) = mean_resp;
+        %plot([k k],[mean_resp-st_err mean_resp+st_err],'k')
+    end
+    
+    clear mean_resp st_err
+    xlim([0 8]),ylim([-1 1])
+    set(gca,'XTick',[1:7],'XTickLabel',{'bb','g','bb_g','a','bb_a','g_a','bb_g_a'})
+    set(gca,'YTick',[-1:.2:1])
+    
+    if whichAreas == 1, title('V1 R^2 cross-val')
+    else, title('V2/V3 R^2 cross-val'); end
+    
 end
 
-clear mean_resp st_err
-xlim([0 8]),ylim([-0.1 1])
-set(gca,'XTick',[1:7],'XTickLabel',{'bb','g','bb_g','a','bb_a','g_a','bb_g_a'})
-set(gca,'YTick',[0:.2:1])
-title('V1 r^2 cross-val')
-
-subplot(1,2,2),hold on % plot V2/V3
-
-for k = 1:length(reg_out)-2
-    bar(k,mean(r2_crossval_out(v_area==2 | v_area==3,k),1),'FaceColor',bar_colors{k})
-    
-    % plot R2 from reshuffeling
-    plot([k-.4 k+.4],[mean(median(r2_crossval_outShuff(v_area==2 | v_area==3,k,:),3),1) ...
-        mean(median(r2_crossval_outShuff(v_area==2 | v_area==3,k,:),3),1)],':','Color',[.5 .5 .5],'LineWidth',2)
-
-    % plot R2 from test-retest
-    plot([k-.4 k+.4],[mean(r2_crossval_out(v_area==2 | v_area==3,9),1) ...
-    mean(r2_crossval_out(v_area==2 | v_area==3,9),1)],'-','Color',[.5 .5 .5],'LineWidth',2)
-
-    % standard error
-    mean_resp = mean(r2_crossval_out(v_area==2 | v_area==3,k),1);
-    st_err = std(r2_crossval_out(v_area==2 | v_area==3,k))./sqrt(sum(ismember(v_area,[2 3])));
-    plotted_r2(k,2) = mean_resp;
-    plot([k k],[mean_resp-st_err mean_resp+st_err],'k')
-end
-clear mean_resp st_err
-xlim([0 8]),ylim([-0.1 1])
-set(gca,'XTick',[1:7],'XTickLabel',{'bb','g','bb_g','a','bb_a','g_a','bb_g_a'})
-set(gca,'YTick',[0:.2:1])
-title('V2/V3 r^2 cross-val')
-
-% set(gcf,'PaperPositionMode','auto')
-% print('-dpng','-r300',['../figures/data/regress_r2_plots_reshuffleAll'])
-% print('-depsc','-r300',['../figures/data/regress_r2_plots_reshuffleAll'])
-set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['../figures/data/regress_r2_plots_reshuffleStimCond'])
-print('-depsc','-r300',['../figures/data/regress_r2_plots_reshuffleStimCond'])
-
-disp(['R^2: ' num2str(mean(r2_crossval_out(v_area==1,:),1))]);
-disp(['R^2: ' num2str(mean(r2_crossval_out(v_area==2 | v_area==3,:),1))]);
-
-%% compare models:
-
-to_comp=[1 5];
-
-%%%%% V1
-% median across bootstraps
-rsquare_1=median(r2_crossval_out(v_area==1,to_comp(1),:),3); 
-rsquare_2=median(r2_crossval_out(v_area==1,to_comp(2),:),3); 
-[mean(rsquare_1,1) mean(rsquare_2,1)]
-[~,p,~,stats]=ttest(atanh(rsquare_1),atanh(rsquare_2))
-
-%%%%% V2/3
-% median across bootstraps
-rsquare_1=median(r2_crossval_out(v_area==2 | v_area==3,to_comp(1),:),3); 
-rsquare_2=median(r2_crossval_out(v_area==2 | v_area==3,to_comp(2),:),3); 
-[mean(rsquare_1,1) mean(rsquare_2,1)]
-[~,p,~,stats]=ttest(atanh(rsquare_1),atanh(rsquare_2))
+disp(['R^2: ' num2str(median(cod_crossval_out(v_area==1,:),1))]);
+disp(['R^2: ' num2str(median(cod_crossval_out(v_area==2 | v_area==3,:),1))]);
+%%
 
 %%
 %% cross-validated Coefficient of Determination across electrodes
@@ -329,9 +309,9 @@ subplot(1,2,1),hold on % plot V1
 for k = 1:length(reg_out)-2
     bar(k,median(cod_crossval_out(v_area==1,k),1),'FaceColor',bar_colors{k})
     
-%     % plot R2 from reshuffeling
-%     plot([k-.4 k+.4],[mean(median(cod_crossval_outShuff(v_area==1,k,:),3),1) ...
-%         mean(median(cod_crossval_outShuff(v_area==1,k,:),3),1)],':','Color',[.5 .5 .5],'LineWidth',2)
+    % plot R2 from reshuffeling
+    plot([k-.4 k+.4],[mean(median(cod_crossval_outShuff(v_area==1,k,:),3),1) ...
+        mean(median(cod_crossval_outShuff(v_area==1,k,:),3),1)],':','Color',[.5 .5 .5],'LineWidth',2)
      
     % plot R2 from test-retest
     plot([k-.4 k+.4],[median(cod_crossval_out(v_area==1,9),1) ...
@@ -355,9 +335,9 @@ subplot(1,2,2),hold on % plot V2/V3
 for k = 1:length(reg_out)-2
     bar(k,median(cod_crossval_out(v_area==2 | v_area==3,k),1),'FaceColor',bar_colors{k})
     
-%     % plot R2 from reshuffeling
-%     plot([k-.4 k+.4],[mean(median(cod_crossval_outShuff(v_area==2 | v_area==3,k,:),3),1) ...
-%         mean(median(cod_crossval_outShuff(v_area==2 | v_area==3,k,:),3),1)],':','Color',[.5 .5 .5],'LineWidth',2)
+    % plot R2 from reshuffeling
+    plot([k-.4 k+.4],[mean(median(cod_crossval_outShuff(v_area==2 | v_area==3,k,:),3),1) ...
+        mean(median(cod_crossval_outShuff(v_area==2 | v_area==3,k,:),3),1)],':','Color',[.5 .5 .5],'LineWidth',2)
 
     % plot R2 from test-retest
     plot([k-.4 k+.4],[median(cod_crossval_out(v_area==2 | v_area==3,9),1) ...
@@ -365,9 +345,9 @@ for k = 1:length(reg_out)-2
 
     % standard error
     mean_resp = median(cod_crossval_out(v_area==2 | v_area==3,k),1);
-    st_err = std(cod_crossval_out(v_area==2 | v_area==3,k))./sqrt(sum(ismember(v_area,[2 3])));
+    st_err = [quantile(cod_crossval_out(v_area==2 | v_area==3,k),.16) quantile(cod_crossval_out(v_area==2 | v_area==3,k),.84)];
     plotted_r2(k,2) = mean_resp;
-    plot([k k],[mean_resp-st_err mean_resp+st_err],'k')
+    plot([k k],[st_err],'k')
 end
 clear mean_resp st_err
 xlim([0 8]),ylim([-1.1 1.1])
