@@ -64,9 +64,9 @@ for k = 1:length(data)
     ecog_a = median(data{k}.alpha_even,2);
 
     % vector length normalize - to make sure beta values are comparable:
-    ecog_bb_ = ecog_bb/sqrt(sum(ecog_bb.^2));
-    ecog_g = ecog_g/sqrt(sum(ecog_g.^2));
-    ecog_a = ecog_a/sqrt(sum(ecog_a.^2));
+%     ecog_bb_ = ecog_bb/sqrt(sum(ecog_bb.^2));
+%     ecog_g = ecog_g/sqrt(sum(ecog_g.^2));
+%     ecog_a = ecog_a/sqrt(sum(ecog_a.^2));
         
     ecog_in{1}.data = [ecog_bb];
     ecog_in{2}.data = [ecog_g];
@@ -105,9 +105,9 @@ for k = 1:length(data)
     ecog_a = median(data{k}.alpha_odd,2);
     
     % vector length normalize - to make sure beta values are comparable:
-    ecog_bb = ecog_bb/sqrt(sum(ecog_bb.^2));
-    ecog_g = ecog_g/sqrt(sum(ecog_g.^2));
-    ecog_a = ecog_a/sqrt(sum(ecog_a.^2));
+%     ecog_bb = ecog_bb/sqrt(sum(ecog_bb.^2));
+%     ecog_g = ecog_g/sqrt(sum(ecog_g.^2));
+%     ecog_a = ecog_a/sqrt(sum(ecog_a.^2));
 
     ecog_in{1}.data = [ecog_bb];
     ecog_in{2}.data = [ecog_g];
@@ -125,7 +125,7 @@ for k = 1:length(data)
         reg_parms = reg_out(m).stats(k,3:end);
         pred_fmri = reg_parms(1)+ecog_in{m}.data*reg_parms(2:end)';
         r2_crossval_out(k,m) = sign(corr(pred_fmri,fmri_d)) * corr(pred_fmri,fmri_d).^2;
-        cod_crossval_out(k,m) = ns_cod(pred_fmri,fmri_d,1); % rescale not necessary, same units
+        cod_crossval_out(k,m) = ns_cod(pred_fmri,fmri_d); % rescale not necessary, same units
     end
     clear ecog_in
 end
@@ -327,18 +327,18 @@ plotted_r2 = NaN(length(reg_out),2);
 subplot(1,2,1),hold on % plot V1
 
 for k = 1:length(reg_out)-2
-    bar(k,mean(cod_crossval_out(v_area==1,k),1),'FaceColor',bar_colors{k})
+    bar(k,median(cod_crossval_out(v_area==1,k),1),'FaceColor',bar_colors{k})
     
-    % plot R2 from reshuffeling
-    plot([k-.4 k+.4],[mean(median(cod_crossval_outShuff(v_area==1,k,:),3),1) ...
-        mean(median(cod_crossval_outShuff(v_area==1,k,:),3),1)],':','Color',[.5 .5 .5],'LineWidth',2)
+%     % plot R2 from reshuffeling
+%     plot([k-.4 k+.4],[mean(median(cod_crossval_outShuff(v_area==1,k,:),3),1) ...
+%         mean(median(cod_crossval_outShuff(v_area==1,k,:),3),1)],':','Color',[.5 .5 .5],'LineWidth',2)
      
     % plot R2 from test-retest
-    plot([k-.4 k+.4],[mean(cod_crossval_out(v_area==1,9),1) ...
-    mean(cod_crossval_out(v_area==1,9),1)],'-','Color',[.5 .5 .5],'LineWidth',2)
+    plot([k-.4 k+.4],[median(cod_crossval_out(v_area==1,9),1) ...
+    median(cod_crossval_out(v_area==1,9),1)],'-','Color',[.5 .5 .5],'LineWidth',2)
 
     % standard error
-    mean_resp = mean(cod_crossval_out(v_area==1,k),1);
+    mean_resp = median(cod_crossval_out(v_area==1,k),1);
     st_err = std(cod_crossval_out(v_area==1,k))./sqrt(sum(ismember(v_area,1)));
     plotted_r2(k,1) = mean_resp;
     plot([k k],[mean_resp-st_err mean_resp+st_err],'k')
@@ -353,18 +353,18 @@ title('V1 COD cross-val')
 subplot(1,2,2),hold on % plot V2/V3
 
 for k = 1:length(reg_out)-2
-    bar(k,mean(cod_crossval_out(v_area==2 | v_area==3,k),1),'FaceColor',bar_colors{k})
+    bar(k,median(cod_crossval_out(v_area==2 | v_area==3,k),1),'FaceColor',bar_colors{k})
     
-    % plot R2 from reshuffeling
-    plot([k-.4 k+.4],[mean(median(cod_crossval_outShuff(v_area==2 | v_area==3,k,:),3),1) ...
-        mean(median(cod_crossval_outShuff(v_area==2 | v_area==3,k,:),3),1)],':','Color',[.5 .5 .5],'LineWidth',2)
+%     % plot R2 from reshuffeling
+%     plot([k-.4 k+.4],[mean(median(cod_crossval_outShuff(v_area==2 | v_area==3,k,:),3),1) ...
+%         mean(median(cod_crossval_outShuff(v_area==2 | v_area==3,k,:),3),1)],':','Color',[.5 .5 .5],'LineWidth',2)
 
     % plot R2 from test-retest
-    plot([k-.4 k+.4],[mean(cod_crossval_out(v_area==2 | v_area==3,9),1) ...
-    mean(cod_crossval_out(v_area==2 | v_area==3,9),1)],'-','Color',[.5 .5 .5],'LineWidth',2)
+    plot([k-.4 k+.4],[median(cod_crossval_out(v_area==2 | v_area==3,9),1) ...
+    median(cod_crossval_out(v_area==2 | v_area==3,9),1)],'-','Color',[.5 .5 .5],'LineWidth',2)
 
     % standard error
-    mean_resp = mean(cod_crossval_out(v_area==2 | v_area==3,k),1);
+    mean_resp = median(cod_crossval_out(v_area==2 | v_area==3,k),1);
     st_err = std(cod_crossval_out(v_area==2 | v_area==3,k))./sqrt(sum(ismember(v_area,[2 3])));
     plotted_r2(k,2) = mean_resp;
     plot([k k],[mean_resp-st_err mean_resp+st_err],'k')
@@ -375,9 +375,9 @@ set(gca,'XTick',[1:7],'XTickLabel',{'bb','g','bb_g','a','bb_a','g_a','bb_g_a'})
 set(gca,'YTick',[-1:.2:1])
 title('V2/V3 COD cross-val')
 
-set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['../figures/data/regress_cod_plots_reshuffleStimCondTesting'])
-print('-depsc','-r300',['../figures/data/regress_cod_plots_reshuffleStimCondTesting'])
+% set(gcf,'PaperPositionMode','auto')
+% print('-dpng','-r300',['../figures/data/regress_cod_plots_reshuffleStimCondTesting'])
+% print('-depsc','-r300',['../figures/data/regress_cod_plots_reshuffleStimCondTesting'])
 
 % set(gcf,'PaperPositionMode','auto')
 % print('-dpng','-r300',['../figures/data/regress_cod_plots_reshuffleAll'])
@@ -390,9 +390,8 @@ print('-depsc','-r300',['../figures/data/regress_cod_plots_reshuffleStimCondTest
 % print('-dpng','-r300',['../figures/data/regress_cod_plots_NoRescale'])
 % print('-depsc','-r300',['../figures/data/regress_cod_plots_NoRescale'])
 
-
-disp(['R^2: ' num2str(mean(cod_crossval_out(v_area==1,:),1))]);
-disp(['R^2: ' num2str(mean(cod_crossval_out(v_area==2 | v_area==3,:),1))]);
+disp(['R^2: ' num2str(median(cod_crossval_out(v_area==1,:),1))]);
+disp(['R^2: ' num2str(median(cod_crossval_out(v_area==2 | v_area==3,:),1))]);
 
 %% make a figure of the betas per electrode
 
