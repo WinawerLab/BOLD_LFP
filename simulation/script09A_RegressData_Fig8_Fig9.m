@@ -132,6 +132,7 @@ for k = 1:length(data)
     clear ecog_in
 end
 
+
 %% Reshuffled regression analysis
 %% EDIT THIS TO RESHUFFLE 100 TIMES!!!
 
@@ -286,9 +287,10 @@ for whichAreas = 1:2
     
 end
 
-disp(['R^2: ' num2str(mean(r2_crossval_out(v_area==1,:),1))]);
-disp(['R^2: ' num2str(mean(r2_crossval_out(v_area==2 | v_area==3,:),1))]);
+disp(['R^2: ' num2str(median(r2_crossval_out(v_area==1,:),1))]);
+disp(['R^2: ' num2str(median(r2_crossval_out(v_area==2 | v_area==3,:),1))]);
 
+return
 %% compare models:
 
 to_comp=[1 5];
