@@ -137,13 +137,13 @@ clear reg_outShuff
 nr_boot=100; % number of reshuffles 
 
 % loop regression over electrodes and bootstraps
-reg_outShuff(1).stats=NaN(length(data),nr_boot,4); 
-reg_outShuff(2).stats=NaN(length(data),nr_boot,4); 
-reg_outShuff(3).stats=NaN(length(data),nr_boot,5); 
-reg_outShuff(4).stats=NaN(length(data),nr_boot,4); 
-reg_outShuff(5).stats=NaN(length(data),nr_boot,5); 
-reg_outShuff(6).stats=NaN(length(data),nr_boot,5); 
-reg_outShuff(7).stats=NaN(length(data),nr_boot,6); 
+reg_outShuff(1).stats=NaN(length(data),4); 
+reg_outShuff(2).stats=NaN(length(data),4); 
+reg_outShuff(3).stats=NaN(length(data),5); 
+reg_outShuff(4).stats=NaN(length(data),4); 
+reg_outShuff(5).stats=NaN(length(data),5); 
+reg_outShuff(6).stats=NaN(length(data),5); 
+reg_outShuff(7).stats=NaN(length(data),6); 
 
 % for cross-validated R2 and coefficient of determination (takes mean):
 r2_crossval_outShuff = NaN(length(data),7,nr_boot); 
@@ -155,59 +155,11 @@ for k = 1:length(data)
     v_area(k) = data{k}.v_area;
     % FIT THE MODEL:
     % fit model on fmri S12, even repeats ECoG
-    for bs = 1:nr_boot
-        % train model on fmri S12, odd repeats ECoG
-%         %%%% reshuffle only non-blank conditions
-        fmri_shuffle = [1 randperm(size(data{k}.bb_all,1)-1,size(data{k}.bb_all,1)-1)+1];
-        %%%% reshuffle all conditions
-%         fmri_shuffle = randperm(size(data{k}.bb_even,1),size(data{k}.bb_even,1));
-        fmri_d = median(data{k}.allbootsS12(fmri_shuffle,:),2);
-        ecog_bb = median(data{k}.bb_even,2);
-        ecog_g = median(data{k}.gamma_even,2);
-        ecog_a = median(data{k}.alpha_even,2);
-
-        % vector length normalize:
-        ecog_bb = ecog_bb/sqrt(sum(ecog_bb.^2));
-        ecog_g = ecog_g/sqrt(sum(ecog_g.^2));
-        ecog_a = ecog_a/sqrt(sum(ecog_a.^2));
-        
-        ecog_in{1}.data = [ecog_bb];
-        ecog_in{2}.data = [ecog_g];
-        ecog_in{3}.data = [ecog_bb ecog_g];
-        ecog_in{4}.data = [ecog_a];
-        ecog_in{5}.data = [ecog_bb ecog_a];
-        ecog_in{6}.data = [ecog_g ecog_a];
-        ecog_in{7}.data = [ecog_bb ecog_g ecog_a];
-        
-        for m=1:length(ecog_in)
-            stats1 = regstats(fmri_d,ecog_in{m}.data); % stats.beta, first one is intercept
-            if ~isnan(stats1.rsquare) % nans if alpha all zeros
-                reg_outShuff(m).stats(k,bs,1)=stats1.rsquare;
-                reg_outShuff(m).stats(k,bs,2)=stats1.adjrsquare;
-                reg_outShuff(m).stats(k,bs,3:2+length(stats1.beta))=stats1.beta; % 1 is the intercept
-            else
-                reg_outShuff(m).stats(k,bs,1) = NaN;
-                reg_outShuff(m).stats(k,bs,2) = NaN;
-                reg_outShuff(m).stats(k,bs,3:2+length(stats1.beta)) = NaN;
-            end
-            clear stats1
-        end
-        clear ecog_in
-    end
-    
-    %%%%% now test the models from reshuffling
-    % test model on fmri S34, odd repeats ECoG
-%     fmri_d = median(data{k}.allbootsS34,2);
-
-    %         %%%% reshuffle only non-blank conditions
-    fmri_shuffle = [1 randperm(size(data{k}.bb_all,1)-1,size(data{k}.bb_all,1)-1)+1];
-    %%%% reshuffle all conditions
-%         fmri_shuffle = randperm(size(data{k}.bb_even,1),size(data{k}.bb_even,1));
-    fmri_d = median(data{k}.allbootsS34(fmri_shuffle,:),2);
-
-    ecog_bb = median(data{k}.bb_odd,2);
-    ecog_g = median(data{k}.gamma_odd,2);
-    ecog_a = median(data{k}.alpha_odd,2);
+    % train model on fmri S12, odd repeats ECoG
+    fmri_d = median(data{k}.allbootsS12,2);
+    ecog_bb = median(data{k}.bb_even,2);
+    ecog_g = median(data{k}.gamma_even,2);
+    ecog_a = median(data{k}.alpha_even,2);
 
     % vector length normalize:
     ecog_bb = ecog_bb/sqrt(sum(ecog_bb.^2));
@@ -222,10 +174,51 @@ for k = 1:length(data)
     ecog_in{6}.data = [ecog_g ecog_a];
     ecog_in{7}.data = [ecog_bb ecog_g ecog_a];
 
+    for m=1:length(ecog_in)
+        stats1 = regstats(fmri_d,ecog_in{m}.data); % stats.beta, first one is intercept
+        if ~isnan(stats1.rsquare) % nans if alpha all zeros
+            reg_outShuff(m).stats(k,1)=stats1.rsquare;
+            reg_outShuff(m).stats(k,2)=stats1.adjrsquare;
+            reg_outShuff(m).stats(k,3:2+length(stats1.beta))=stats1.beta; % 1 is the intercept
+        else
+            reg_outShuff(m).stats(k,1) = NaN;
+            reg_outShuff(m).stats(k,2) = NaN;
+            reg_outShuff(m).stats(k,3:2+length(stats1.beta)) = NaN;
+        end
+        clear stats1
+    end
+    clear ecog_in
+    
+    %%%%% now test the models from reshuffling
     for bs = 1:nr_boot
+        % test model on fmri S34, odd repeats ECoG
+    %     fmri_d = median(data{k}.allbootsS34,2);
+         %%%% reshuffle only non-blank conditions
+        fmri_shuffle = [1 randperm(size(data{k}.bb_all,1)-1,size(data{k}.bb_all,1)-1)+1];
+    %     %%%% reshuffle all conditions
+    %     fmri_shuffle = randperm(size(data{k}.bb_even,1),size(data{k}.bb_even,1));
+        fmri_d = median(data{k}.allbootsS34(fmri_shuffle,:),2);
+
+        ecog_bb = median(data{k}.bb_odd,2);
+        ecog_g = median(data{k}.gamma_odd,2);
+        ecog_a = median(data{k}.alpha_odd,2);
+
+        % vector length normalize:
+        ecog_bb = ecog_bb/sqrt(sum(ecog_bb.^2));
+        ecog_g = ecog_g/sqrt(sum(ecog_g.^2));
+        ecog_a = ecog_a/sqrt(sum(ecog_a.^2));
+
+        ecog_in{1}.data = [ecog_bb];
+        ecog_in{2}.data = [ecog_g];
+        ecog_in{3}.data = [ecog_bb ecog_g];
+        ecog_in{4}.data = [ecog_a];
+        ecog_in{5}.data = [ecog_bb ecog_a];
+        ecog_in{6}.data = [ecog_g ecog_a];
+        ecog_in{7}.data = [ecog_bb ecog_g ecog_a];
+
         for m = 1:length(ecog_in)
-            reg_parms = squeeze(reg_outShuff(m).stats(k,bs,3:end));
-            pred_fmri = reg_parms(1)+ecog_in{m}.data*reg_parms(2:end);
+            reg_parms = reg_outShuff(m).stats(k,3:end);
+            pred_fmri = reg_parms(1)+ecog_in{m}.data*reg_parms(2:end)';
             r2_crossval_outShuff(k,m,bs) = sign(corr(pred_fmri,fmri_d)) * corr(pred_fmri,fmri_d).^2;
             cod_crossval_outShuff(k,m,bs) = ns_cod(pred_fmri,fmri_d,1); % rescale not necessary, same units
         end
@@ -381,6 +374,10 @@ xlim([0 8]),ylim([-1.1 1.1])
 set(gca,'XTick',[1:7],'XTickLabel',{'bb','g','bb_g','a','bb_a','g_a','bb_g_a'})
 set(gca,'YTick',[-1:.2:1])
 title('V2/V3 COD cross-val')
+
+set(gcf,'PaperPositionMode','auto')
+print('-dpng','-r300',['../figures/data/regress_cod_plots_reshuffleStimCondTesting'])
+print('-depsc','-r300',['../figures/data/regress_cod_plots_reshuffleStimCondTesting'])
 
 % set(gcf,'PaperPositionMode','auto')
 % print('-dpng','-r300',['../figures/data/regress_cod_plots_reshuffleAll'])
