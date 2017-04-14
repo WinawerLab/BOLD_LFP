@@ -37,20 +37,20 @@ clear reg_out
 
 % loop regression over electrodes 
 v_area=zeros(length(data),1);
-reg_out(1).stats=zeros(length(data),4); 
-reg_out(2).stats=zeros(length(data),4); 
-reg_out(3).stats=zeros(length(data),5); 
-reg_out(4).stats=zeros(length(data),4); 
-reg_out(5).stats=zeros(length(data),5); 
-reg_out(6).stats=zeros(length(data),5); 
-reg_out(7).stats=zeros(length(data),6); 
-reg_out(8).stats=zeros(length(data),4); 
-reg_out(9).stats=zeros(length(data),4); 
+reg_out(1).stats=NaN(length(data),4); 
+reg_out(2).stats=NaN(length(data),4); 
+reg_out(3).stats=NaN(length(data),5); 
+reg_out(4).stats=NaN(length(data),4); 
+reg_out(5).stats=NaN(length(data),5); 
+reg_out(6).stats=NaN(length(data),5); 
+reg_out(7).stats=NaN(length(data),6); 
+reg_out(8).stats=NaN(length(data),4); 
+reg_out(9).stats=NaN(length(data),4); 
 
 % cross-validated squared Pearson:
-r2_crossval_out=zeros(length(data),9); 
+r2_crossval_out=NaN(length(data),length(reg_out)); 
 % cross-validated coefficient of determination
-cod_crossval_out=zeros(length(data),9); 
+cod_crossval_out=NaN(length(data),length(reg_out)); 
 
 % fit regression model
 for k = 1:length(data)
@@ -148,8 +148,8 @@ reg_outShuff(6).stats=NaN(length(data),nr_boot,5);
 reg_outShuff(7).stats=NaN(length(data),nr_boot,6); 
 
 % for cross-validated R2 and coefficient of determination (takes mean):
-r2_crossval_outShuff = NaN(length(data),7,nr_boot); 
-cod_crossval_outShuff = NaN(length(data),7,nr_boot); 
+r2_crossval_outShuff = NaN(length(data),length(reg_outShuff),nr_boot); 
+cod_crossval_outShuff = NaN(length(data),length(reg_outShuff),nr_boot); 
 
 % fit regression model
 for k = 1:length(data)
@@ -201,10 +201,10 @@ for k = 1:length(data)
     % test model on fmri S34, odd repeats ECoG
 %     fmri_d = median(data{k}.allbootsS34,2);
     %         %%%% reshuffle only non-blank conditions
-    fmri_shuffle = [1 randperm(size(data{k}.bb_all,1)-1,size(data{k}.bb_all,1)-1)+1];
+%     fmri_shuffle = [1 randperm(size(data{k}.bb_all,1)-1,size(data{k}.bb_all,1)-1)+1];
     %%%% reshuffle all conditions
 %         fmri_shuffle = randperm(size(data{k}.bb_even,1),size(data{k}.bb_even,1));
-    fmri_d = median(data{k}.allbootsS34(fmri_shuffle,:),2);
+    fmri_d = median(data{k}.allbootsS34,2);
 
     ecog_bb = median(data{k}.bb_odd,2);
     ecog_g = median(data{k}.gamma_odd,2);
