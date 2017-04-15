@@ -1,37 +1,39 @@
-clear all
-close all
+load(fullfile(BOLD_LFPRootPath, 'data', 'boldecog_structure_final'));
 
-load(['/Volumes/DoraBigDrive/data/visual/m-files/bold_datalikesimulation/data/boldecog_structure_final.mat'],'data')
+nr_elec = length(data);
+% bounds for quantile plots
+ub = .75;
+lb = .25;
 
 %% plot BOLD response for one electrode
-el_nr = 14; % 14 = electrode 92
-
-figure('Position',[0 0 80 150]),hold on
-for k=1:8
-    bar(k,data{el_nr}.betas(k),'FaceColor',data{el_nr}.colors{k})
-end
-xlim([0 9])
-set(gca,'XTick',[1:8])
-set(gcf,'PaperPositionMode','auto')
-title('VL Norm')
-
-figure('Position',[0 0 80 150]),hold on
-for k=1:8
-    % multiply vector length normalized betas by norm to get an estimate of
-    % % signal change again
-    y = data{el_nr}.betas(k) * mean(data{el_nr}.norm);
-    bar(k,y,'FaceColor',data{el_nr}.colors{k})
-end
-xlim([0 9])
-set(gca,'XTick',[1:8])
-set(gcf,'PaperPositionMode','auto')
-title('%change')
-% print('-dpng','-r300',['./figures/BOLD_data_el' int2str(data{el_nr}.channel)])
-% print('-depsc','-r300',['./figures/BOLD_data_el' int2str(data{el_nr}.channel)])
-clear y
+% el_nr = 14; % 14 = electrode 92
+% 
+% figure('Position',[0 0 80 150]),hold on
+% for k=1:8
+%     bar(k,data{el_nr}.betas(k),'FaceColor',data{el_nr}.colors{k})
+% end
+% xlim([0 9])
+% set(gca,'XTick',[1:8])
+% set(gcf,'PaperPositionMode','auto')
+% title('VL Norm')
+% 
+% figure('Position',[0 0 80 150]),hold on
+% for k=1:8
+%     % multiply vector length normalized betas by norm to get an estimate of
+%     % % signal change again
+%     y = data{el_nr}.betas(k) * mean(data{el_nr}.norm);
+%     bar(k,y,'FaceColor',data{el_nr}.colors{k})
+% end
+% xlim([0 9])
+% set(gca,'XTick',[1:8])
+% set(gcf,'PaperPositionMode','auto')
+% title('%change')
+% % print('-dpng','-r300',['./figures/BOLD_data_el' int2str(data{el_nr}.channel)])
+% % print('-depsc','-r300',['./figures/BOLD_data_el' int2str(data{el_nr}.channel)])
+% clear y
 
 %% Regression analysis ECoG data
-%% predict ECoGodd/fMRIsubj34 from ECoGeven/fMRIsubj12
+% predict ECoGodd/fMRIsubj34 from ECoGeven/fMRIsubj12 and reverse
 
 clear reg_out
 
@@ -53,86 +55,101 @@ r2_crossval_out=zeros(length(data),9);
 cod_crossval_out=zeros(length(data),9); 
 
 % fit regression model
-for k = 1:length(data)
-    disp(['el ' int2str(k) ' of ' int2str(length(data))])
+for k = 1:nr_elec
+    disp(['el ' int2str(k) ' of ' int2str(nr_elec)])
     v_area(k) = data{k}.v_area;
-    % FIT THE MODEL:
-    % fit model on fmri S12, even repeats ECoG
-    fmri_d = median(data{k}.allbootsS12,2);
-    ecog_bb = median(data{k}.bb_even,2);
-    ecog_g = median(data{k}.gamma_even,2);
-    ecog_a = median(data{k}.alpha_even,2);
+    
+    % FIT THE MODEL (training):
+    
+    % fit model on fmri12, even repeats ECoG; fmri34, odd repeats of ECoG
+    fmri_d12 = median(data{k}.allbootsS12,2);
+    ecog_bbE = median(data{k}.bb_even,2);
+    ecog_gE  = median(data{k}.gamma_even,2);
+    ecog_aE  = median(data{k}.alpha_even,2);
+   
+    fmri_d34 = median(data{k}.allbootsS34,2);
+    ecog_bbO = median(data{k}.bb_odd,2);
+    ecog_gO  = median(data{k}.gamma_odd,2);
+    ecog_aO  = median(data{k}.alpha_odd,2);
+    
+    % 7 models regressing on different combinations of ECoG measures
+    ecog_in{1,1}.data = [ecog_bbE];
+    ecog_in{2,1}.data = [ecog_gE];
+    ecog_in{3,1}.data = [ecog_bbE ecog_gE];
+    ecog_in{4,1}.data = [ecog_aE];
+    ecog_in{5,1}.data = [ecog_bbE ecog_aE];
+    ecog_in{6,1}.data = [ecog_gE ecog_aE];
+    ecog_in{7,1}.data = [ecog_bbE ecog_gE ecog_aE];
 
-    % vector length normalize - to make sure beta values are comparable:
-%     ecog_bb_ = ecog_bb/sqrt(sum(ecog_bb.^2));
-%     ecog_g = ecog_g/sqrt(sum(ecog_g.^2));
-%     ecog_a = ecog_a/sqrt(sum(ecog_a.^2));
+    ecog_in{1,2}.data = [ecog_bbO];
+    ecog_in{2,2}.data = [ecog_g2];
+    ecog_in{3,2}.data = [ecog_bbO ecog_g2];
+    ecog_in{4,2}.data = [ecog_aO];
+    ecog_in{5,2}.data = [ecog_bbO ecog_aO];
+    ecog_in{6,2}.data = [ecog_g2 ecog_aO];
+    ecog_in{7,2}.data = [ecog_bbO ecog_g2 ecog_aO];   
+    
+    % 1 uniform model
+    ecog_in{8,1}.data = [0; ones(size(data{k}.labels,2)-1,1)];    
+    ecog_in{8,2}.data = [0; ones(size(data{k}.labels,2)-1,1)];    
+    
+    % 1 test-retest model
+    ecog_in{9,1}.data = [fmri_d34];
+    ecog_in{9,2}.data = [fmri_d12];
+    
+    
+    % loop over all models
+    for m=1:size(ecog_in,1)
+        stats1 = regstats(fmri_d12,ecog_in{m,1}.data); % stats.beta, first one is intercept
+        stats2 = regstats(fmri_d34,ecog_in{m,2}.data); % stats.beta, first one is intercept
         
-    ecog_in{1}.data = [ecog_bb];
-    ecog_in{2}.data = [ecog_g];
-    ecog_in{3}.data = [ecog_bb ecog_g];
-    ecog_in{4}.data = [ecog_a];
-    ecog_in{5}.data = [ecog_bb ecog_a];
-    ecog_in{6}.data = [ecog_g ecog_a];
-    ecog_in{7}.data = [ecog_bb ecog_g ecog_a];
-    % check uniform model
-    ecog_in{8}.data = [0; ones(size(data{k}.labels,2)-1,1)];
-    % check for fmri_data test-retest
-    ecog_in{9}.data = [fmri_d];
-        
-    for m=1:length(ecog_in)
-        stats1 = regstats(fmri_d,ecog_in{m}.data); % stats.beta, first one is intercept
         if ~isnan(stats1.rsquare) % nans if alpha all zeros
-            reg_out(m).stats(k,1)=stats1.rsquare;
-            reg_out(m).stats(k,2)=stats1.adjrsquare;
-            reg_out(m).stats(k,3:2+length(stats1.beta))=stats1.beta; % 1 is the intercept
+            reg_out(m,1).stats(k,1)=stats1.rsquare;
+            reg_out(m,1).stats(k,2)=stats1.adjrsquare;
+            reg_out(m,1).stats(k,3:2+length(stats1.beta))=stats1.beta; % 1 is the intercept
+            reg_out(m,2).stats(k,1)=stats2.rsquare;
+            reg_out(m,2).stats(k,2)=stats2.adjrsquare;
+            reg_out(m,2).stats(k,3:2+length(stats2.beta))=stats2.beta; % 1 is the intercept
+            
         else
-            reg_out(m).stats(k,1) = 0;
-            reg_out(m).stats(k,2) = 0;
-            reg_out(m).stats(k,3:2+length(stats1.beta)) = 0;
+            reg_out(m,1).stats(k,1) = 0;
+            reg_out(m,1).stats(k,2) = 0;
+            reg_out(m,1).stats(k,3:2+length(stats1.beta)) = 0;
+            reg_out(m,2).stats(k,1) = 0;
+            reg_out(m,2).stats(k,2) = 0;
+            reg_out(m,2).stats(k,3:2+length(stats2.beta)) = 0;
+                                    
         end
-        clear stats1
+        clear stats1 stats2
     end
-    clear ecog_in
 
 
     % TEST THE MODEL:
-    % CALCULATE PREDICTIONS HERE for each bootstraps
-    % test model on fmri S34, odd repeats ECoG
-    fmri_d = median(data{k}.allbootsS34,2);
-    ecog_bb = median(data{k}.bb_odd,2);
-    ecog_g = median(data{k}.gamma_odd,2);
-    ecog_a = median(data{k}.alpha_odd,2);
-    
-    % vector length normalize - to make sure beta values are comparable:
-%     ecog_bb = ecog_bb/sqrt(sum(ecog_bb.^2));
-%     ecog_g = ecog_g/sqrt(sum(ecog_g.^2));
-%     ecog_a = ecog_a/sqrt(sum(ecog_a.^2));
+    % CALCULATE PREDICTIONS HERE
+    %   We use the regression parameters from the first data set (odd ecog,
+    %   fmri S12) to make predictions for the second data set (even ecog,
+    %   fmri34) and the opposite - use the regression parameters from the
+    %   second data set (even ecog, fmri34) to make predictions for the
+    %   first data set
 
-    ecog_in{1}.data = [ecog_bb];
-    ecog_in{2}.data = [ecog_g];
-    ecog_in{3}.data = [ecog_bb ecog_g];
-    ecog_in{4}.data = [ecog_a];
-    ecog_in{5}.data = [ecog_bb ecog_a];
-    ecog_in{6}.data = [ecog_g ecog_a];
-    ecog_in{7}.data = [ecog_bb ecog_g ecog_a];
-    % check uniform model
-    ecog_in{8}.data = [0; ones(size(data{k}.labels,2)-1,1)];
-    % check fMRI data test-retest
-    ecog_in{9}.data = median(data{k}.allbootsS12,2);
+    for m = 1:size(ecog_in,1)
+        % Note that for x-validation, we use reg_out(m,2) with ecog_in{m,1}
+        reg_parms   = reg_out(m,2).stats(k,3:end);
+        pred_fmri12 = reg_parms(1)+ecog_in{m,1}.data*reg_parms(2:end)';
 
-    for m = 1:length(ecog_in)
-        reg_parms = reg_out(m).stats(k,3:end);
-        pred_fmri = reg_parms(1)+ecog_in{m}.data*reg_parms(2:end)';
+        reg_parms   = reg_out(m,1).stats(k,3:end);
+        pred_fmri34 = reg_parms(1)+ecog_in{m,2}.data*reg_parms(2:end)';
+        
+        pred_fmri = [pred_fmri12; pred_fmri34];
+        fmri_d    = [fmri_d12; fmri_d34];
         r2_crossval_out(k,m) = sign(corr(pred_fmri,fmri_d)) * corr(pred_fmri,fmri_d).^2;
         cod_crossval_out(k,m) = ns_cod(pred_fmri,fmri_d); % rescale not necessary, same units
     end
     clear ecog_in
 end
 
-%%
-%%
-%% Reshuffled regression analysis
+
+%% Shuffled regression analysis
 
 clear reg_outShuff
 
@@ -148,7 +165,7 @@ reg_outShuff(6).stats=NaN(length(data),nr_boot,5);
 reg_outShuff(7).stats=NaN(length(data),nr_boot,6); 
 
 % for cross-validated R2 and coefficient of determination (takes mean):
-r2_crossval_outShuff = NaN(length(data),7,nr_boot); 
+r2_crossval_outShuff  = NaN(length(data),7,nr_boot); 
 cod_crossval_outShuff = NaN(length(data),7,nr_boot); 
 
 % fit regression model
@@ -157,76 +174,89 @@ for k = 1:length(data)
     v_area(k) = data{k}.v_area;
     % FIT THE MODEL:
     % fit model on fmri S12, even repeats ECoG
-    for bs = 1:nr_boot
-        % train model on fmri S12, odd repeats ECoG
-%         %%%% reshuffle only non-blank conditions
-        fmri_shuffle = [1 randperm(size(data{k}.bb_all,1)-1,size(data{k}.bb_all,1)-1)+1];
-        %%%% reshuffle all conditions
-%         fmri_shuffle = randperm(size(data{k}.bb_even,1),size(data{k}.bb_even,1));
-        fmri_d = median(data{k}.allbootsS12(fmri_shuffle,:),2);
-        ecog_bb = median(data{k}.bb_even,2);
-        ecog_g = median(data{k}.gamma_even,2);
-        ecog_a = median(data{k}.alpha_even,2);
+    % train model on fmri S12, odd repeats ECoG
+    
+    nr_stim = size(data{k}.bb_even,1);
+    
+    fmri_d34 = median(data{k}.allbootsS34,2);
+    fmri_d12 = median(data{k}.allbootsS12,2);
 
-%         % vector length normalize:
-%         ecog_bb = ecog_bb/sqrt(sum(ecog_bb.^2));
-%         ecog_g = ecog_g/sqrt(sum(ecog_g.^2));
-%         ecog_a = ecog_a/sqrt(sum(ecog_a.^2));
+    
+    ecog_bbE = median(data{k}.bb_even,2);
+    ecog_gE  = median(data{k}.gamma_even,2);
+    ecog_aE  = median(data{k}.alpha_even,2);
+
+    ecog_bbO = median(data{k}.bb_odd,2);
+    ecog_gO  = median(data{k}.gamma_odd,2);
+    ecog_aO  = median(data{k}.alpha_odd,2);
+    
+    ecog_in{1,1}.data = [ecog_bbE];
+    ecog_in{2,1}.data = [ecog_gE];
+    ecog_in{3,1}.data = [ecog_bbE ecog_gE];
+    ecog_in{4,1}.data = [ecog_aE];
+    ecog_in{5,1}.data = [ecog_bbE ecog_aE];
+    ecog_in{6,1}.data = [ecog_gE ecog_aE];
+    ecog_in{7,1}.data = [ecog_bbE ecog_gE ecog_aE];
+    
+    ecog_in{1,2}.data = [ecog_bbO];
+    ecog_in{2,2}.data = [ecog_gO];
+    ecog_in{3,2}.data = [ecog_bbO ecog_gO];
+    ecog_in{4,2}.data = [ecog_aO];
+    ecog_in{5,2}.data = [ecog_bbO ecog_aO];
+    ecog_in{6,2}.data = [ecog_gO ecog_aO];
+    ecog_in{7,2}.data = [ecog_bbO ecog_gO ecog_aO];
+    
+    for bs = 1:nr_boot
+        %%%% reshuffle only non-blank conditions
+        % fmri_shuffle = [1 randperm(nr_stim-1)+1];
+        %           %%%% reshuffle all conditions
+        fmri_shuffle = randperm(nr_stim);
+                
+        fmri_d12_s = median(data{k}.allbootsS12(fmri_shuffle,:),2);
+        fmri_d34_s = median(data{k}.allbootsS34(fmri_shuffle,:),2);
         
-        ecog_in{1}.data = [ecog_bb];
-        ecog_in{2}.data = [ecog_g];
-        ecog_in{3}.data = [ecog_bb ecog_g];
-        ecog_in{4}.data = [ecog_a];
-        ecog_in{5}.data = [ecog_bb ecog_a];
-        ecog_in{6}.data = [ecog_g ecog_a];
-        ecog_in{7}.data = [ecog_bb ecog_g ecog_a];
-        
-        for m=1:length(ecog_in)
-            stats1 = regstats(fmri_d,ecog_in{m}.data); % stats.beta, first one is intercept
+        for m=1:size(ecog_in,1)
+            stats1 = regstats(fmri_d12_s,ecog_in{m,1}.data); % stats.beta, first one is intercept
+            stats2 = regstats(fmri_d34_s,ecog_in{m,2}.data); % stats.beta, first one is intercept
+            
             if ~isnan(stats1.rsquare) % nans if alpha all zeros
-                reg_outShuff(m).stats(k,bs,1)=stats1.rsquare;
-                reg_outShuff(m).stats(k,bs,2)=stats1.adjrsquare;
-                reg_outShuff(m).stats(k,bs,3:2+length(stats1.beta))=stats1.beta; % 1 is the intercept
+                reg_outShuff(m,1).stats(k,bs,1)=stats1.rsquare;
+                reg_outShuff(m,1).stats(k,bs,2)=stats1.adjrsquare;
+                reg_outShuff(m,1).stats(k,bs,3:2+length(stats1.beta))=stats1.beta; % 1 is the intercept
+                reg_outShuff(m,2).stats(k,bs,1)=stats2.rsquare;
+                reg_outShuff(m,2).stats(k,bs,2)=stats2.adjrsquare;
+                reg_outShuff(m,2).stats(k,bs,3:2+length(stats2.beta))=stats2.beta; % 1 is the intercept
             else
-                reg_outShuff(m).stats(k,bs,1) = NaN;
-                reg_outShuff(m).stats(k,bs,2) = NaN;
-                reg_outShuff(m).stats(k,bs,3:2+length(stats1.beta)) = NaN;
+                reg_outShuff(m,1).stats(k,bs,1) = NaN;
+                reg_outShuff(m,1).stats(k,bs,2) = NaN;
+                reg_outShuff(m,1).stats(k,bs,3:2+length(stats1.beta)) = NaN;
+                reg_outShuff(m,2).stats(k,bs,1) = NaN;
+                reg_outShuff(m,2).stats(k,bs,2) = NaN;
+                reg_outShuff(m,2).stats(k,bs,3:2+length(stats2.beta)) = NaN;
             end
-            clear stats1
-        end
-        clear ecog_in
+            clear stats1 stats2
+        end        
     end
     
     %%%%% now test the models from reshuffling
     % test model on fmri S34, odd repeats ECoG
-%     fmri_d = median(data{k}.allbootsS34,2);
-    %         %%%% reshuffle only non-blank conditions
-    fmri_shuffle = [1 randperm(size(data{k}.bb_all,1)-1,size(data{k}.bb_all,1)-1)+1];
-    %%%% reshuffle all conditions
-%         fmri_shuffle = randperm(size(data{k}.bb_even,1),size(data{k}.bb_even,1));
-    fmri_d = median(data{k}.allbootsS34(fmri_shuffle,:),2);
-
-    ecog_bb = median(data{k}.bb_odd,2);
-    ecog_g = median(data{k}.gamma_odd,2);
-    ecog_a = median(data{k}.alpha_odd,2);
-
-%     % vector length normalize:
-%     ecog_bb = ecog_bb/sqrt(sum(ecog_bb.^2));
-%     ecog_g = ecog_g/sqrt(sum(ecog_g.^2));
-%     ecog_a = ecog_a/sqrt(sum(ecog_a.^2));
-
-    ecog_in{1}.data = [ecog_bb];
-    ecog_in{2}.data = [ecog_g];
-    ecog_in{3}.data = [ecog_bb ecog_g];
-    ecog_in{4}.data = [ecog_a];
-    ecog_in{5}.data = [ecog_bb ecog_a];
-    ecog_in{6}.data = [ecog_g ecog_a];
-    ecog_in{7}.data = [ecog_bb ecog_g ecog_a];
+    % %         %%%% reshuffle only non-blank conditions
+    % fmri_shuffle = [1 randperm(size(data{k}.bb_all,1)-1,size(data{k}.bb_all,1)-1)+1];
+    % %%%% reshuffle all conditions
+    % %         fmri_shuffle = randperm(size(data{k}.bb_even,1),size(data{k}.bb_even,1));
+    % fmri_d = median(data{k}.allbootsS34(fmri_shuffle,:),2);
+    
 
     for bs = 1:nr_boot
-        for m = 1:length(ecog_in)
-            reg_parms = squeeze(reg_outShuff(m).stats(k,bs,3:end));
-            pred_fmri = reg_parms(1)+ecog_in{m}.data*reg_parms(2:end);
+        for m = 1:size(ecog_in,1)
+            reg_parms = squeeze(reg_outShuff(m,2).stats(k,bs,3:end));
+            pred_fmri12 = reg_parms(1)+ecog_in{m,1}.data*reg_parms(2:end);
+            
+            reg_parms = squeeze(reg_outShuff(m,1).stats(k,bs,3:end));
+            pred_fmri34 = reg_parms(1)+ecog_in{m,2}.data*reg_parms(2:end);
+            
+            pred_fmri = [pred_fmri12; pred_fmri34];
+            fmri_d    = [fmri_d12; fmri_d34];
             r2_crossval_outShuff(k,m,bs) = sign(corr(pred_fmri,fmri_d)) * corr(pred_fmri,fmri_d).^2;
             cod_crossval_outShuff(k,m,bs) = ns_cod(pred_fmri,fmri_d); % rescale not necessary, same units
         end
@@ -235,7 +265,7 @@ for k = 1:length(data)
 
 end
 
-%%
+
 %% PLOT cross-validated COD-R2 across electrodes
 % plot reshuffled R2 as an indication of baseline
 %
@@ -260,24 +290,17 @@ for whichAreas = 1:2
         whichElectrodes = v_area==2 | v_area==3;
     end
     
-    boxplot(cod_crossval_out(whichElectrodes==1,1:7),'Colors', box_colors);
+    boxplot(cod_crossval_out(whichElectrodes==1,1:7),'Colors', box_colors);%, 'PlotStyle', 'compact');
     for k=1:length(reg_out)-2
-        %bar(k,median(r2_crossval_out(v_area==1,k),1),'FaceColor',bar_colors{k})
-        %boxplot(r2_crossval_out(v_area==1,k),'Colors', bar_colors{k}, 'PlotStyle', 'compact')
         
         % plot R2 from reshuffeling
-        plot([k-.4 k+.4],[median(median(cod_crossval_outShuff(v_area==1,k,:),3),1) ...
-            median(median(cod_crossval_outShuff(v_area==1,k,:),3),1)],':','Color',[.5 .5 .5],'LineWidth',2)
+        plot([k-.4 k+.4],[median(median(cod_crossval_outShuff(whichElectrodes,k,:),3),1) ...
+            median(median(cod_crossval_outShuff(whichElectrodes,k,:),3),1)],':','Color',[.5 .5 .5],'LineWidth',2)
         
         % plot R2 from test-retest
         plot([k-.4 k+.4],[median(cod_crossval_out(whichElectrodes,9),1) ...
             median(cod_crossval_out(whichElectrodes,9),1)],'-','Color',[.5 .5 .5],'LineWidth',2)
         
-        % standard error
-        %mean_resp = median(r2_crossval_out(whichElectrodes,k),1);
-        %st_err = std(r2_crossval_out(whichElectrodes,k))./sqrt(sum(whichElectrodes));
-        %plotted_r2(k,1) = mean_resp;
-        %plot([k k],[mean_resp-st_err mean_resp+st_err],'k')
     end
     
     clear mean_resp st_err
@@ -310,8 +333,8 @@ for k = 1:length(reg_out)-2
     bar(k,median(cod_crossval_out(v_area==1,k),1),'FaceColor',bar_colors{k})
     
     % plot R2 from reshuffeling
-    plot([k-.4 k+.4],[mean(median(cod_crossval_outShuff(v_area==1,k,:),3),1) ...
-        mean(median(cod_crossval_outShuff(v_area==1,k,:),3),1)],':','Color',[.5 .5 .5],'LineWidth',2)
+    plot([k-.4 k+.4],[median(median(cod_crossval_outShuff(v_area==1,k,:),3),1) ...
+        median(median(cod_crossval_outShuff(v_area==1,k,:),3),1)],':','Color',[.5 .5 .5],'LineWidth',2)
      
     % plot R2 from test-retest
     plot([k-.4 k+.4],[median(cod_crossval_out(v_area==1,9),1) ...
@@ -336,8 +359,8 @@ for k = 1:length(reg_out)-2
     bar(k,median(cod_crossval_out(v_area==2 | v_area==3,k),1),'FaceColor',bar_colors{k})
     
     % plot R2 from reshuffeling
-    plot([k-.4 k+.4],[mean(median(cod_crossval_outShuff(v_area==2 | v_area==3,k,:),3),1) ...
-        mean(median(cod_crossval_outShuff(v_area==2 | v_area==3,k,:),3),1)],':','Color',[.5 .5 .5],'LineWidth',2)
+    plot([k-.4 k+.4],[median(median(cod_crossval_outShuff(v_area==2 | v_area==3,k,:),3),1) ...
+        median(median(cod_crossval_outShuff(v_area==2 | v_area==3,k,:),3),1)],':','Color',[.5 .5 .5],'LineWidth',2)
 
     % plot R2 from test-retest
     plot([k-.4 k+.4],[median(cod_crossval_out(v_area==2 | v_area==3,9),1) ...
@@ -345,7 +368,7 @@ for k = 1:length(reg_out)-2
 
     % standard error
     mean_resp = median(cod_crossval_out(v_area==2 | v_area==3,k),1);
-    st_err = [quantile(cod_crossval_out(v_area==2 | v_area==3,k),.16) quantile(cod_crossval_out(v_area==2 | v_area==3,k),.84)];
+    st_err = [quantile(cod_crossval_out(v_area==2 | v_area==3,k),lb) quantile(cod_crossval_out(v_area==2 | v_area==3,k),ub)];
     plotted_r2(k,2) = mean_resp;
     plot([k k],[st_err],'k')
 end
@@ -458,20 +481,20 @@ for k=1:length(data)
         % multiply by the norm to get estimated percent signal change
         fmri_d=median(nanmean(data{k}.allboots,2),3) * mean(data{k}.norm);
         fmri_ci=data{k}.se * mean(data{k}.norm);
-        ecog_bb=median(data{k}.bb_all,2);
-        ecog_g=median(data{k}.gamma_all,2);
+        ecog_bbE=median(data{k}.bb_all,2);
+        ecog_gE=median(data{k}.gamma_all,2);
         ecog_a=median(data{k}.alpha_all,2);
         
-        ecog_in{1}.data=[ecog_bb];
-        ecog_in{1}.ci=[quantile(data{k}.bb_all,.16,2) quantile(data{k}.bb_all,.84,2)];
-        ecog_in{2}.data=[ecog_g];
-        ecog_in{2}.ci=[quantile(data{k}.gamma_all,.16,2) quantile(data{k}.gamma_all,.84,2)];
-        ecog_in{3}.data=[ecog_bb ecog_g];
+        ecog_in{1}.data=[ecog_bbE];
+        ecog_in{1}.ci=[quantile(data{k}.bb_all,lb,2) quantile(data{k}.bb_all,ub,2)];
+        ecog_in{2}.data=[ecog_gE];
+        ecog_in{2}.ci=[quantile(data{k}.gamma_all,lb,2) quantile(data{k}.gamma_all,ub,2)];
+        ecog_in{3}.data=[ecog_bbE ecog_gE];
         ecog_in{4}.data=[ecog_a];
-        ecog_in{4}.ci=[quantile(data{k}.alpha_all,.16,2) quantile(data{k}.alpha_all,.84,2)];
-        ecog_in{5}.data=[ecog_bb ecog_a];
-        ecog_in{6}.data=[ecog_g ecog_a];
-        ecog_in{7}.data=[ecog_bb ecog_g ecog_a];
+        ecog_in{4}.ci=[quantile(data{k}.alpha_all,lb,2) quantile(data{k}.alpha_all,ub,2)];
+        ecog_in{5}.data=[ecog_bbE ecog_a];
+        ecog_in{6}.data=[ecog_gE ecog_a];
+        ecog_in{7}.data=[ecog_bbE ecog_gE ecog_a];
     
         stats1 = regstats(fmri_d,ecog_in{e_in}.data); % stats.beta, first one is intercept
         % predicted BOLD
@@ -520,8 +543,9 @@ p = signtest(spearmanRhovals);
 disp(['sign test on Spearman rho = ' num2str(p)])
 
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['./figures/paper_V03/ecogBold_V_' int2str(v(1)) '_' ecog_names{e_in} '_nolabels'])
-print('-depsc','-r300',['./figures/paper_V03/ecogBold_V_' int2str(v(1)) '_' ecog_names{e_in} '_nolabels'])
+fname = fullfile(BOLD_LFPRootPath, 'figures', sprintf('ecogBold_V_%d_%s_nolabels', v(1), ecog_names{e_in}));
+print('-dpng','-r300',fname)
+print('-depsc','-r300',fname)
 
 
 %%
@@ -546,17 +570,17 @@ for k=1:length(data)
         
         fmri_d=median(nanmean(data{k}.allboots,2),3) * mean(data{k}.norm);
         fmri_ci=data{k}.se * mean(data{k}.norm);       
-        ecog_bb=median(data{k}.bb_all,2);
-        ecog_g=median(data{k}.gamma_all,2);
+        ecog_bbE=median(data{k}.bb_all,2);
+        ecog_gE=median(data{k}.gamma_all,2);
         ecog_a=median(data{k}.alpha_all,2);
         
-        ecog_in{1}.data=[ecog_bb];
-        ecog_in{2}.data=[ecog_g];
-        ecog_in{3}.data=[ecog_bb ecog_g];
+        ecog_in{1}.data=[ecog_bbE];
+        ecog_in{2}.data=[ecog_gE];
+        ecog_in{3}.data=[ecog_bbE ecog_gE];
         ecog_in{4}.data=[ecog_a];
-        ecog_in{5}.data=[ecog_bb ecog_a];
-        ecog_in{6}.data=[ecog_g ecog_a];
-        ecog_in{7}.data=[ecog_bb ecog_g ecog_a];
+        ecog_in{5}.data=[ecog_bbE ecog_a];
+        ecog_in{6}.data=[ecog_gE ecog_a];
+        ecog_in{7}.data=[ecog_bbE ecog_gE ecog_a];
     
         stats1 = regstats(fmri_d,ecog_in{e_in}.data); % stats.beta, first one is intercept
         % predicted BOLD
@@ -594,8 +618,9 @@ for k=1:length(data)
 end
 
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['./figures/paper_V03/predBold_V_' int2str(v(1)) '_' ecog_names{e_in} '_nolabels'])
-print('-depsc','-r300',['./figures/paper_V03/predBold_V_' int2str(v(1)) '_' ecog_names{e_in} '_nolabels'])
+fname = fullfile(BOLD_LFPRootPath, 'figures', sprintf('predBold_V_%d_%s_nolabels', v(1), ecog_names{e_in}));
+print('-dpng','-r300',fname)
+print('-depsc','-r300',fname)
 
 
 %% test whether the explained variance is related to the size of the ECoG response
@@ -673,8 +698,9 @@ ylim([0 .9])
 box off
 
 set(gcf,'PaperPositionMode','auto')
-print('-dpng','-r300',['./figures/paper_V03/R2_BOLDECoG_ECoGchange'])
-print('-depsc','-r300',['./figures/paper_V03/R2_BOLDECoG_ECoGchange'])
+fname = fullfile(BOLD_LFPRootPath, 'figures', 'R2_BOLDECoG_ECoGchange');
+print('-dpng','-r300',fname)
+print('-depsc','-r300',fname)
 
 %% BOLD, bb, gamma, alpha change V1 and V2V3
 
