@@ -31,21 +31,25 @@ title('%change')
 clear y
 
 %% Regression analysis ECoG data
-%% predict ECoGodd/fMRIsubj34 from ECoGeven/fMRIsubj12
+%% predict ECoGodd/fMRIsubj34 OR ECoGeven/fMRIsubj12 from other set
+
+% calculates the coefficient of determination R^2 across all predictions
 
 clear reg_out
 
 % loop regression over electrodes 
 v_area=zeros(length(data),1);
-reg_out(1).stats=NaN(length(data),4); 
-reg_out(2).stats=NaN(length(data),4); 
-reg_out(3).stats=NaN(length(data),5); 
-reg_out(4).stats=NaN(length(data),4); 
-reg_out(5).stats=NaN(length(data),5); 
-reg_out(6).stats=NaN(length(data),5); 
-reg_out(7).stats=NaN(length(data),6); 
-reg_out(8).stats=NaN(length(data),4); 
-reg_out(9).stats=NaN(length(data),4); 
+% define regression out parms for 9 models:
+% stats = NaN(electrodes X stats(r2,r2adjusted,betas)_
+reg_out(1).stats=NaN(length(data),4,2);
+reg_out(2).stats=NaN(length(data),4,2); 
+reg_out(3).stats=NaN(length(data),5,2); 
+reg_out(4).stats=NaN(length(data),4,2); 
+reg_out(5).stats=NaN(length(data),5,2); 
+reg_out(6).stats=NaN(length(data),5,2); 
+reg_out(7).stats=NaN(length(data),6,2); 
+reg_out(8).stats=NaN(length(data),4,2); 
+reg_out(9).stats=NaN(length(data),4,2); 
 
 % cross-validated squared Pearson:
 r2_crossval_out=NaN(length(data),length(reg_out)); 
@@ -56,96 +60,61 @@ cod_crossval_out=NaN(length(data),length(reg_out));
 for k = 1:length(data)
     disp(['el ' int2str(k) ' of ' int2str(length(data))])
     v_area(k) = data{k}.v_area;
-    % FIT THE MODEL:
-    % fit model on fmri S12, even repeats ECoG
-    fmri_d = median(data{k}.allbootsS12,2);
-    ecog_bb = median(data{k}.bb_even,2);
-    ecog_g = median(data{k}.gamma_even,2);
-    ecog_a = median(data{k}.alpha_even,2);
-    
-    % vector length normalize - to make sure beta values are comparable:
-%     ecog_bb_ = ecog_bb/sqrt(sum(ecog_bb.^2));
-%     ecog_g = ecog_g/sqrt(sum(ecog_g.^2));
-%     ecog_a = ecog_a/sqrt(sum(ecog_a.^2));
-        
-    ecog_in{1}.data = [ecog_bb];
-    ecog_in{2}.data = [ecog_g];
-    ecog_in{3}.data = [ecog_bb ecog_g];
-    ecog_in{4}.data = [ecog_a];
-    ecog_in{5}.data = [ecog_bb ecog_a];
-    ecog_in{6}.data = [ecog_g ecog_a];
-    ecog_in{7}.data = [ecog_bb ecog_g ecog_a];
-    % check uniform model
-    ecog_in{8}.data = [0; ones(size(data{k}.labels,2)-1,1)];
-    % check for fmri_data test-retest
-    ecog_in{9}.data = [fmri_d];
-        
-    for m=1:length(ecog_in)
-        stats1 = regstats(fmri_d,ecog_in{m}.data); % stats.beta, first one is intercept
-        if ~isnan(stats1.rsquare) % nans if alpha all zeros
-            reg_out(m).stats(k,1)=stats1.rsquare;
-            reg_out(m).stats(k,2)=stats1.adjrsquare;
-            reg_out(m).stats(k,3:2+length(stats1.beta))=stats1.beta; % 1 is the intercept
-        else
-            reg_out(m).stats(k,1) = 0;
-            reg_out(m).stats(k,2) = 0;
-            reg_out(m).stats(k,3:2+length(stats1.beta)) = 0;
+
+    % training set
+    fmri_tr = median(data{k}.allbootsS12,2);
+    ecog_bb_tr = median(data{k}.bb_even,2);
+    ecog_g_tr = median(data{k}.gamma_even,2);
+    ecog_a_tr = median(data{k}.alpha_even,2);   
+    % testing set
+    fmri_te = median(data{k}.allbootsS34,2);
+    ecog_bb_te = median(data{k}.bb_odd,2);
+    ecog_g_te = median(data{k}.gamma_odd,2);
+    ecog_a_te = median(data{k}.alpha_odd,2);
+
+    for data_set = 1:2
+        if data_set==1
+        [reg_out1,cod_crossval_out1,r2_crossval_out1] = ...
+            ns_regress_crossval(fmri_tr,ecog_bb_tr,ecog_g_tr,ecog_a_tr,...
+            fmri_te,ecog_bb_te,ecog_g_te,ecog_a_te);
+        elseif data_set==2
+        [reg_out2,cod_crossval_out2,r2_crossval_out2] = ...
+            ns_regress_crossval(fmri_te,ecog_bb_te,ecog_g_te,ecog_a_te,...
+            fmri_tr,ecog_bb_tr,ecog_g_tr,ecog_a_tr);
         end
-        clear stats1
     end
-    clear ecog_in
-
-
-    % TEST THE MODEL:
-    % CALCULATE PREDICTIONS HERE for each bootstraps
-    % test model on fmri S34, odd repeats ECoG
-    fmri_d = median(data{k}.allbootsS34,2);
-    ecog_bb = median(data{k}.bb_odd,2);
-    ecog_g = median(data{k}.gamma_odd,2);
-    ecog_a = median(data{k}.alpha_odd,2);
-
-    % vector length normalize - to make sure beta values are comparable:
-%     ecog_bb = ecog_bb/sqrt(sum(ecog_bb.^2));
-%     ecog_g = ecog_g/sqrt(sum(ecog_g.^2));
-%     ecog_a = ecog_a/sqrt(sum(ecog_a.^2));
-
-    ecog_in{1}.data = [ecog_bb];
-    ecog_in{2}.data = [ecog_g];
-    ecog_in{3}.data = [ecog_bb ecog_g];
-    ecog_in{4}.data = [ecog_a];
-    ecog_in{5}.data = [ecog_bb ecog_a];
-    ecog_in{6}.data = [ecog_g ecog_a];
-    ecog_in{7}.data = [ecog_bb ecog_g ecog_a];
-    % check uniform model
-    ecog_in{8}.data = [0; ones(size(data{k}.labels,2)-1,1)];
-    % check fMRI data test-retest
-    ecog_in{9}.data = median(data{k}.allbootsS12,2);
-
-    for m = 1:length(ecog_in)
-        reg_parms = reg_out(m).stats(k,3:end);
-        pred_fmri = reg_parms(1)+ecog_in{m}.data*reg_parms(2:end)';
-        r2_crossval_out(k,m) = sign(corr(pred_fmri,fmri_d)) * corr(pred_fmri,fmri_d).^2;
-        cod_crossval_out(k,m) = ns_cod(pred_fmri,fmri_d,1); % rescale not necessary, same units
+    for m = 1:length(reg_out1)
+        % now we concatenate all data sets so we can get an overall fit
+        % estimate
+        x = [reg_out1(m).fmri_pred; reg_out2(m).fmri_pred];
+        y = [fmri_te; fmri_tr];
+        r2_crossval_out(k,m) = sign(corr(x,y)) * corr(x,y).^2;
+        cod_crossval_out(k,m) = ns_cod(x,y); % rescale not necessary, same units
+        
+        reg_out(m).stats(k,:,1) = reg_out1(m).stats;
+        reg_out(m).stats(k,:,2) = reg_out2(m).stats;
     end
     clear ecog_in
 end
 
-%%
-%%
 %% Reshuffled regression analysis
+%% Regression analysis ECoG data
+%% predict ECoGodd/fMRIsubj34 OR ECoGeven/fMRIsubj12 from other set
+
+% calculates the coefficient of determination R^2 across all predictions
 
 clear reg_outShuff
-
 nr_boot=100; % number of reshuffles 
 
-% loop regression over electrodes and bootstraps
-reg_outShuff(1).stats=NaN(length(data),4); 
-reg_outShuff(2).stats=NaN(length(data),4); 
-reg_outShuff(3).stats=NaN(length(data),5); 
-reg_outShuff(4).stats=NaN(length(data),4); 
-reg_outShuff(5).stats=NaN(length(data),5); 
-reg_outShuff(6).stats=NaN(length(data),5); 
-reg_outShuff(7).stats=NaN(length(data),6); 
+% define regression out parms for 7 models:
+% stats = NaN(electrodes X stats(r2,r2adjusted,betas)_
+reg_outShuff(1).stats=NaN(length(data),4,2,nr_boot);
+reg_outShuff(2).stats=NaN(length(data),4,2,nr_boot); 
+reg_outShuff(3).stats=NaN(length(data),5,2,nr_boot); 
+reg_outShuff(4).stats=NaN(length(data),4,2,nr_boot); 
+reg_outShuff(5).stats=NaN(length(data),5,2,nr_boot); 
+reg_outShuff(6).stats=NaN(length(data),5,2,nr_boot); 
+reg_outShuff(7).stats=NaN(length(data),6,2,nr_boot); 
 
 % for cross-validated R2 and coefficient of determination (takes mean):
 r2_crossval_outShuff = NaN(length(data),length(reg_outShuff),nr_boot); 
@@ -154,77 +123,48 @@ cod_crossval_outShuff = NaN(length(data),length(reg_outShuff),nr_boot);
 % fit regression model
 for k = 1:length(data)
     disp(['el ' int2str(k) ' of ' int2str(length(data))])
-    v_area(k) = data{k}.v_area;
-    % FIT THE MODEL:
-    % fit model on fmri S12, even repeats ECoG
-    fmri_d = median(data{k}.allbootsS12,2);
-    ecog_bb = median(data{k}.bb_even,2);
-    ecog_g = median(data{k}.gamma_even,2);
-    ecog_a = median(data{k}.alpha_even,2);
 
-%         % vector length normalize:
-%         ecog_bb = ecog_bb/sqrt(sum(ecog_bb.^2));
-%         ecog_g = ecog_g/sqrt(sum(ecog_g.^2));
-%         ecog_a = ecog_a/sqrt(sum(ecog_a.^2));
+for bs = 1:nr_boot
 
-    ecog_in{1}.data = [ecog_bb];
-    ecog_in{2}.data = [ecog_g];
-    ecog_in{3}.data = [ecog_bb ecog_g];
-    ecog_in{4}.data = [ecog_a];
-    ecog_in{5}.data = [ecog_bb ecog_a];
-    ecog_in{6}.data = [ecog_g ecog_a];
-    ecog_in{7}.data = [ecog_bb ecog_g ecog_a];
+    % training set
+    fmri_tr = median(data{k}.allbootsS12,2);
+    ecog_bb_tr = median(data{k}.bb_even,2);
+    ecog_g_tr = median(data{k}.gamma_even,2);
+    ecog_a_tr = median(data{k}.alpha_even,2);   
+    % testing set
+    fmri_te = median(data{k}.allbootsS34,2);
+    ecog_bb_te = median(data{k}.bb_odd,2);
+    ecog_g_te = median(data{k}.gamma_odd,2);
+    ecog_a_te = median(data{k}.alpha_odd,2);
 
-    for m=1:length(ecog_in)
-        stats1 = regstats(fmri_d,ecog_in{m}.data); % stats.beta, first one is intercept
-        if ~isnan(stats1.rsquare) % nans if alpha all zeros
-            reg_outShuff(m).stats(k,1)=stats1.rsquare;
-            reg_outShuff(m).stats(k,2)=stats1.adjrsquare;
-            reg_outShuff(m).stats(k,3:2+length(stats1.beta))=stats1.beta; % 1 is the intercept
-        else
-            reg_outShuff(m).stats(k,1) = NaN;
-            reg_outShuff(m).stats(k,2) = NaN;
-            reg_outShuff(m).stats(k,3:2+length(stats1.beta)) = NaN;
-        end
-        clear stats1
-    end
-    clear ecog_in
-    
-    for bs = 1:nr_boot
-        %%%%% now test the models from reshuffling
-        % test model on fmri S34, odd repeats ECoG
-        % train model on fmri S12, odd repeats ECoG
-        %%%% reshuffle only non-blank conditions
-        fmri_shuffle = [1 randperm(size(data{k}.bb_all,1)-1,size(data{k}.bb_all,1)-1)+1];
-        %%% reshuffle all conditions
-%         fmri_shuffle = randperm(size(data{k}.bb_even,1),size(data{k}.bb_even,1));   
-        fmri_d = median(data{k}.allbootsS34(fmri_shuffle,:),2);
-        ecog_bb = median(data{k}.bb_odd,2);
-        ecog_g = median(data{k}.gamma_odd,2);
-        ecog_a = median(data{k}.alpha_odd,2);
-
-    %     % vector length normalize:
-    %     ecog_bb = ecog_bb/sqrt(sum(ecog_bb.^2));
-    %     ecog_g = ecog_g/sqrt(sum(ecog_g.^2));
-    %     ecog_a = ecog_a/sqrt(sum(ecog_a.^2));
-
-        ecog_in{1}.data = [ecog_bb];
-        ecog_in{2}.data = [ecog_g];
-        ecog_in{3}.data = [ecog_bb ecog_g];
-        ecog_in{4}.data = [ecog_a];
-        ecog_in{5}.data = [ecog_bb ecog_a];
-        ecog_in{6}.data = [ecog_g ecog_a];
-        ecog_in{7}.data = [ecog_bb ecog_g ecog_a];
-    
-        for m = 1:length(ecog_in)
-            reg_parms = squeeze(reg_outShuff(m).stats(k,3:end));
-            pred_fmri = reg_parms(1)+ecog_in{m}.data*reg_parms(2:end)';
-            r2_crossval_outShuff(k,m,bs) = sign(corr(pred_fmri,fmri_d)) * corr(pred_fmri,fmri_d).^2;
-            cod_crossval_outShuff(k,m,bs) = ns_cod(pred_fmri,fmri_d,1); % rescale not necessary, same units
+    %%% reshuffle only non-blank conditions
+    fmri_shuffle = [1 randperm(size(data{k}.bb_all,1)-1,size(data{k}.bb_all,1)-1)+1];
+%     %%% reshuffle all conditions
+%     fmri_shuffle = randperm(size(data{k}.bb_even,1),size(data{k}.bb_even,1));   
+    for data_set = 1:2
+        if data_set==1
+        [reg_out1,cod_crossval_out1,r2_crossval_out1] = ...
+            ns_regress_crossval(fmri_tr(fmri_shuffle),ecog_bb_tr,ecog_g_tr,ecog_a_tr,...
+            fmri_te,ecog_bb_te,ecog_g_te,ecog_a_te);
+        elseif data_set==2
+        [reg_out2,cod_crossval_out2,r2_crossval_out2] = ...
+            ns_regress_crossval(fmri_te(fmri_shuffle),ecog_bb_te,ecog_g_te,ecog_a_te,...
+            fmri_tr,ecog_bb_tr,ecog_g_tr,ecog_a_tr);
         end
     end
+    for m = 1:length(reg_out1)
+        % now we concatenate all data sets so we can get an overall fit
+        % estimate
+        x = [reg_out1(m).fmri_pred; reg_out2(m).fmri_pred];
+        y = [fmri_te; fmri_tr];
+        r2_crossval_out(k,m,bs) = sign(corr(x,y)) * corr(x,y).^2;
+        cod_crossval_out(k,m,bs) = ns_cod(x,y); % rescale not necessary, same units
+        
+        reg_out(m).stats(k,:,1,bs) = reg_out1(m).stats;
+        reg_out(m).stats(k,:,2,bs) = reg_out2(m).stats;
+    end
     clear ecog_in
-
+end
 end
 
 %%
@@ -257,9 +197,9 @@ for whichAreas = 1:2
         %bar(k,median(r2_crossval_out(v_area==1,k),1),'FaceColor',bar_colors{k})
         %boxplot(r2_crossval_out(v_area==1,k),'Colors', bar_colors{k}, 'PlotStyle', 'compact')
         
-        % plot R2 from reshuffeling
-        plot([k-.4 k+.4],[median(median(cod_crossval_outShuff(v_area==1,k,:),3),1) ...
-            median(median(cod_crossval_outShuff(v_area==1,k,:),3),1)],':','Color',[.5 .5 .5],'LineWidth',2)
+%         % plot R2 from reshuffeling
+%         plot([k-.4 k+.4],[median(median(cod_crossval_outShuff(v_area==1,k,:),3),1) ...
+%             median(median(cod_crossval_outShuff(v_area==1,k,:),3),1)],':','Color',[.5 .5 .5],'LineWidth',2)
         
         % plot R2 from test-retest
         plot([k-.4 k+.4],[median(cod_crossval_out(whichElectrodes,9),1) ...
