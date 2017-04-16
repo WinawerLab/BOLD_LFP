@@ -6,15 +6,18 @@
 % that are fit to ECoG data and plot results
 %
 % DH 2016
+clear all
+
+BOLD_LFPRootPath = '/Volumes/DoraBigDrive/github/neural_sim_output/';
 
 %% now load simulations fitted to electrodes
 
-clear all
 sim_nr = 2;
 els = 1:1:22;
 
 %%% OUTPUTS:
 v_area = NaN(length(els),1); %visual area per electrode
+
 r2_data_fit   = NaN(8,length(els)); % R2 between BOLD data and fit for each model:
 r2_data_fit_s = NaN(8,length(els)); % R2 from scambling predictions
 r2_data_data  = NaN(1,length(els));% % R2 from BOLD12 to BOLD34
@@ -41,7 +44,6 @@ for l = 1:length(els)
     data_g = median(data{elec}.gamma_all,2);
     data_a = median(data{elec}.alpha_all,2);
     data_bold = data{elec}.betas * mean(data{elec}.norm);
-    % data_bold = median(data{elec}.allbootsS34,2)' * mean(data{elec}.norm);
     
     all_data(1,l,1:length(data_bb))=data_bb;
     all_data(2,l,1:length(data_g))=data_g;
@@ -64,7 +66,6 @@ for l = 1:length(els)
         all_simulation(4,l,[1:size(simulation_outputs,1)],k) = simulation_outputs(:,k,4);
         
         fitted_bold = simulation_outputs(:,k,4);        
-        %r2_data_fit(k,l) = corr(fitted_bold,data_bold').^2;
         r2_data_fit(k,l) = ns_cod(fitted_bold,data_bold', true);
                 
         tmp = NaN(1,100);
@@ -243,6 +244,29 @@ set(gcf,'PaperPositionMode','auto')
 fname = fullfile(BOLD_LFPRootPath, 'figures', sprintf('Model%d_r2box', model_plot));
  print('-depsc','-r300',fname)
  print('-dpng','-r300',fname)
+
+%% Make Figure 7C: for one model all COD R2 simulated versus measured BOLD
+
+figure('Position',[0 0 150 100]),hold on
+model_plot = 1;
+
+subplot(1,2,1),hold on
+y = cod_data_fit(model_plot,v_area==1);
+boxplot(y,'Width',.4);
+plot([1-.1:.2./(length(y)-1):1+.1],y,'k.','MarkerSize',20)
+plot([1-.1:.2./(length(y)-1):1+.1],y,'y.','MarkerSize',10)
+
+ylim([-1 1])
+subplot(1,2,2),hold on
+y = cod_data_fit(model_plot,v_area==2 | v_area==3);
+boxplot(y,'Width',.4);
+plot([1-.1:.2./(length(y)-1):1+.1],y,'k.','MarkerSize',20)
+plot([1-.1:.2./(length(y)-1):1+.1],y,'y.','MarkerSize',10)
+ylim([-1 1])
+
+% set(gcf,'PaperPositionMode','auto')
+% print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/Model' int2str(model_plot) '_r2box'])
+% print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/Model' int2str(model_plot) '_r2box'])
 
 
 
