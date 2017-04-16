@@ -8,8 +8,6 @@
 % DH 2016
 clear all
 
-BOLD_LFPRootPath = '/Volumes/DoraBigDrive/github/neural_sim_output/';
-
 %% now load simulations fitted to electrodes
 
 sim_nr = 2;
