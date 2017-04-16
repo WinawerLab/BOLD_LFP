@@ -243,28 +243,5 @@ fname = fullfile(BOLD_LFPRootPath, 'figures', sprintf('Model%d_r2box', model_plo
  print('-depsc','-r300',fname)
  print('-dpng','-r300',fname)
 
-%% Make Figure 7C: for one model all COD R2 simulated versus measured BOLD
-
-figure('Position',[0 0 150 100]),hold on
-model_plot = 1;
-
-subplot(1,2,1),hold on
-y = cod_data_fit(model_plot,v_area==1);
-boxplot(y,'Width',.4);
-plot([1-.1:.2./(length(y)-1):1+.1],y,'k.','MarkerSize',20)
-plot([1-.1:.2./(length(y)-1):1+.1],y,'y.','MarkerSize',10)
-
-ylim([-1 1])
-subplot(1,2,2),hold on
-y = cod_data_fit(model_plot,v_area==2 | v_area==3);
-boxplot(y,'Width',.4);
-plot([1-.1:.2./(length(y)-1):1+.1],y,'k.','MarkerSize',20)
-plot([1-.1:.2./(length(y)-1):1+.1],y,'y.','MarkerSize',10)
-ylim([-1 1])
-
-% set(gcf,'PaperPositionMode','auto')
-% print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/Model' int2str(model_plot) '_r2box'])
-% print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/Model' int2str(model_plot) '_r2box'])
-
-
+ dis
 

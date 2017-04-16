@@ -477,7 +477,7 @@ print('-depsc','-r300',fname)
 figure('Position',[0 0 350 650])
 
 % choose visual area
-v=[1]; % can be a number [1] or more [2 3]
+v=1;%[2 3]; % can be a number [1] or more [2 3]
 
 % choose ECoG input {1:7} = {bb, g, [bb g], a, [bb a], [g a], [bb g a]};
 e_in=5;
@@ -492,17 +492,17 @@ for k=1:length(data)
         
         fmri_d=median(nanmean(data{k}.allboots,2),3) * mean(data{k}.norm);
         fmri_ci=data{k}.se * mean(data{k}.norm);       
-        ecog_bbE=median(data{k}.bb_all,2);
-        ecog_gE=median(data{k}.gamma_all,2);
+        ecog_bb=median(data{k}.bb_all,2);
+        ecog_g=median(data{k}.gamma_all,2);
         ecog_a=median(data{k}.alpha_all,2);
         
-        ecog_in{1}.data=[ecog_bbE];
-        ecog_in{2}.data=[ecog_gE];
-        ecog_in{3}.data=[ecog_bbE ecog_gE];
+        ecog_in{1}.data=[ecog_bb];
+        ecog_in{2}.data=[ecog_g];
+        ecog_in{3}.data=[ecog_bb ecog_g];
         ecog_in{4}.data=[ecog_a];
-        ecog_in{5}.data=[ecog_bbE ecog_a];
-        ecog_in{6}.data=[ecog_gE ecog_a];
-        ecog_in{7}.data=[ecog_bbE ecog_gE ecog_a];
+        ecog_in{5}.data=[ecog_bb ecog_a];
+        ecog_in{6}.data=[ecog_g ecog_a];
+        ecog_in{7}.data=[ecog_bb ecog_g ecog_a];
     
         stats1 = regstats(fmri_d,ecog_in{e_in}.data); % stats.beta, first one is intercept
         % predicted BOLD
@@ -523,7 +523,7 @@ for k=1:length(data)
                 'MarkerSize',20)
         end
         
-%         axis tight % we lose one datapoint at the edge...
+        %  axis tight % we lose one datapoint at the edge...
         xlim([min([0; fmri_pred])-.2 max([0; fmri_pred])+.2]);
         ylim([min([0; fmri_d])-.2 max([0; fmri_d])+.2]);
         
@@ -534,13 +534,82 @@ for k=1:length(data)
         end
         
         % cross-validated R2
-%         title(['el ' int2str(data{k}.channel) ' R^2 = ' num2str(median(r2_crossval_out(k,e_in,:),3),2)])
-        title(['r^2 = ' num2str(median(cod_crossval_out(k,e_in,:),3),2)])
+        title(['R^2 = ' num2str(median(cod_crossval_out(k,e_in,:),3),2)])
     end
 end
 
 set(gcf,'PaperPositionMode','auto')
 fname = fullfile(BOLD_LFPRootPath, 'figures', sprintf('predBold_V_%d_%s_nolabels', v(1), ecog_names{e_in}));
+print('-dpng','-r300',fname)
+print('-depsc','-r300',fname)
+
+
+%% plot ECoG versus BOLD for all electrodes:
+
+
+figure('Position',[0 0 350 650])
+
+% choose visual area
+v=[2 3]; % can be a number [1] or more [2 3]
+
+% choose ECoG input {1,2 4} = {bb, g, [bb g], a, [bb a], [g a], [bb g a]};
+e_in=4;
+ecog_names={'bb','g','bb_g','a','bb_a','g_a','bb_g_a'};
+
+v_count=0;
+for k=1:length(data)
+    disp(['el ' int2str(k) ' of ' int2str(length(data))])
+    v_area(k)=data{k}.v_area;
+    if ismember(v_area(k),v)
+        v_count=v_count+1;
+        
+        fmri_d=median(nanmean(data{k}.allboots,2),3) * mean(data{k}.norm);
+        fmri_ci=data{k}.se * mean(data{k}.norm);       
+        ecog_bb=median(data{k}.bb_all,2);
+        ecog_g=median(data{k}.gamma_all,2);
+        ecog_a=median(data{k}.alpha_all,2);
+        
+        ecog_in{1}.data=[ecog_bb];
+        ecog_in{2}.data=[ecog_g];
+        ecog_in{3}.data=[ecog_bb ecog_g];
+        ecog_in{4}.data=[ecog_a];
+        ecog_in{5}.data=[ecog_bb ecog_a];
+        ecog_in{6}.data=[ecog_g ecog_a];
+        ecog_in{7}.data=[ecog_bb ecog_g ecog_a];
+    
+        stats1 = regstats(fmri_d,ecog_in{e_in}.data); % stats.beta, first one is intercept
+        
+        % regression line, sort values just to get them in order
+        x=[min(ecog_in{e_in}.data) max(ecog_in{e_in}.data)];
+        y=x*stats1.beta(2)+stats1.beta(1);
+               
+        subplot(5,3,v_count),hold on
+        
+        % regression line
+        plot(x,y,'k')
+        for s=1:length(fmri_d)
+            % plot data points
+            plot(ecog_in{e_in}.data(s),fmri_d(s),'.','Color',data{k}.colors{s},...
+                'MarkerSize',20)
+        end
+        
+        %  axis tight % we lose one datapoint at the edge...
+        xlim([min([ecog_in{e_in}.data])-.2 max([ecog_in{e_in}.data])+.2]);
+        ylim([min([0; fmri_d])-.2 max([0; fmri_d])+.2]);
+        
+        if max(ecog_in{e_in}.data)<1.5
+            set(gca,'Xtick',[-5:.5:5]);%,'YTick',[0:.5:5])
+        else
+            set(gca,'Xtick',[-5:1:5]);%,'YTick',[0:1:5])
+        end
+        
+        % cross-validated R2
+        title(['R^2 = ' num2str(median(cod_crossval_out(k,e_in,:),3),2)])
+    end
+end
+
+set(gcf,'PaperPositionMode','auto')
+fname = fullfile(BOLD_LFPRootPath, 'figures', sprintf('ecog_V_%d_%s_nolabels', v(1), ecog_names{e_in}));
 print('-dpng','-r300',fname)
 print('-depsc','-r300',fname)
 
