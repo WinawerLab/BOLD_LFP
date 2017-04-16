@@ -12,8 +12,7 @@ v_area = NaN(length(els),1); %visual area per electrode
 all_simulation = NaN(4,length(els),10,8); % BOLD simulation
 
 % SIMULATION output regression models
-cod_crossval_out = NaN(length(els),7); % r2 for regression models
-cod_crossval_outShuff = NaN(length(els),7); % r2 for regression models
+all_regressmodels = NaN(length(els),7); % r2 for regression models
 all_regressbeta   = NaN(length(els),7,4); % betas for regression models
 
 load(fullfile(BOLD_LFPRootPath, 'data', 'boldecog_structure_final'));
@@ -36,14 +35,9 @@ for l = 1:nr_elec
     % load output from the first model (BB - level, G - coh, A - level)
     prm_set = 1;
     load(fullfile(BOLD_LFPRootPath, 'data', sprintf('NS_simnr%d_elec%d_NS_prmset%d',sim_nr,elec,prm_set)),'NS')
-    
-    % make sure we are using COD rather than r2 for accuracy measure
-    NS = ns_summary_statistics(NS); %disp(NS.stats) 
-    
     for k = 1:length(NS.stats)
-        % cross validated R2:
-        cod_crossval_out(l,k) = median(NS.stats(k).stats(:,3));
-        cod_crossval_outShuff(l,k) = median(NS.stats(k).stats_shuffled(:,3));
+        % cross validated R3:
+        all_regressmodels(l,k) = median(NS.stats(k).stats(:,3));
         % beta values:
         temp_beta = median(NS.stats(k).beta(:,2:end),1);
         all_regressbeta(l,k,1:length(temp_beta)) = temp_beta;
@@ -54,69 +48,15 @@ end
 %% R2 plots averaged for V1 and V2 simulations
 
 bar_colors={[1 0 0],[1 1 0],[1 .5 0],[0 .2 1],[.5 0 1],[0 .5 0],[.4 .2 .1]};
-box_colors = zeros(length(bar_colors),3);
-for ii = 1:length(bar_colors), box_colors(ii,:) = bar_colors{ii}; end
 
 figure('Position',[0 0 580 200])
-% ----------------
-
-
-% CROSS-VALIDATED R^2 when taking all boots
-for whichAreas = 1:2
-    
-    subplot(1,2,whichAreas),hold on % plot V1
-    if whichAreas == 1
-        whichElectrodes = v_area==1;
-    else
-        whichElectrodes = v_area==2 | v_area==3;
-    end
-    
-    boxplot(cod_crossval_out(whichElectrodes==1,1:7),'Colors', box_colors);%, 'PlotStyle', 'compact');
-    for k=1:size(cod_crossval_out,2)
-        
-        % plot R2 from reshuffling
-        plot([k-.4 k+.4],[median(median(cod_crossval_outShuff(whichElectrodes,k,:),3),1) ...
-            median(median(cod_crossval_outShuff(whichElectrodes,k,:),3),1)],':','Color',[.5 .5 .5],'LineWidth',2)
-%         
-%         % plot R2 from test-retest
-%         plot([k-.4 k+.4],[median(cod_crossval_out(whichElectrodes,9),1) ...
-%             median(cod_crossval_out(whichElectrodes,9),1)],'-','Color',[.5 .5 .5],'LineWidth',2)
-        
-    end
-    
-    clear mean_resp st_err
-    xlim([0 8]),ylim([-.8 1])
-    set(gca,'XTick',[1:7],'XTickLabel',{'bb','g','bb_g','a','bb_a','g_a','bb_g_a'})
-    set(gca,'YTick',[-1:.2:1])
-    
-    if whichAreas == 1, title('V1 R^2 cross-val')
-    else, title('V2/V3 R^2 cross-val'); end
-    
-end
-
-
-set(gcf,'PaperPositionMode','auto')
-fname = fullfile(BOLD_LFPRootPath, 'figures', sprintf('sim%d_r2_plotsV1V23', sim_nr));
-print('-dpng','-r300',fname)
-print('-depsc','-r300',fname) 
-
-disp(['R^2: ' num2str(median(cod_crossval_out(v_area==1,:),1))]);
-disp(['R^2: ' num2str(median(cod_crossval_out(v_area==2 | v_area==3,:),1))]);
-
-%%
-
-
-
-
-
-% ---------------
 % CROSS-VALIDATED R^2 when taking all boots
 subplot(1,2,1),hold on % plot V1
-for k=1:size(cod_crossval_out,2)
-    bar(k,mean(cod_crossval_out(v_area==1,k),1),'FaceColor',bar_colors{k})
+for k=1:size(all_regressmodels,2)
+    bar(k,mean(all_regressmodels(v_area==1,k),1),'FaceColor',bar_colors{k})
     % standard error
-    mean_resp = mean(cod_crossval_out(v_area==1,k),1);
-    st_err = std(cod_crossval_out(v_area==1,k))./sqrt(sum(ismember(v_area,1)));
+    mean_resp = mean(all_regressmodels(v_area==1,k),1);
+    st_err = std(all_regressmodels(v_area==1,k))./sqrt(sum(ismember(v_area,1)));
     plot([k k],[mean_resp-st_err mean_resp+st_err],'k')
 end
 clear mean_resp st_err
@@ -126,11 +66,11 @@ set(gca,'YTick',0:.2:1)
 title('V1 R^2 cross-val')
 
 subplot(1,2,2),hold on % plot V2/V3
-for k=1:size(cod_crossval_out,2)
-    bar(k,mean(cod_crossval_out(v_area==2 | v_area==3,k),1),'FaceColor',bar_colors{k})
+for k=1:size(all_regressmodels,2)
+    bar(k,mean(all_regressmodels(v_area==2 | v_area==3,k),1),'FaceColor',bar_colors{k})
     % standard error
-    mean_resp = mean(cod_crossval_out(v_area==2 | v_area==3,k),1);
-    st_err = std(cod_crossval_out(v_area==2 | v_area==3,k))./sqrt(sum(ismember(v_area,[2 3])));
+    mean_resp = mean(all_regressmodels(v_area==2 | v_area==3,k),1);
+    st_err = std(all_regressmodels(v_area==2 | v_area==3,k))./sqrt(sum(ismember(v_area,[2 3])));
     plot([k k],[mean_resp-st_err mean_resp+st_err],'k')
 end
 clear mean_resp st_err
@@ -143,8 +83,8 @@ set(gcf,'PaperPositionMode','auto')
 % print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/r2_plotsV1V23'])
 % print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/r2_plotsV1V23']) 
 
-disp(['V1 R^2:' num2str(mean(cod_crossval_out(v_area==1,:),1))])
-disp(['V2 R^2:' num2str(mean(cod_crossval_out(v_area==2 | v_area==3,:),1))])
+disp(['V1 R^2:' num2str(mean(all_regressmodels(v_area==1,:),1))])
+disp(['V2 R^2:' num2str(mean(all_regressmodels(v_area==2 | v_area==3,:),1))])
 
 %% BETA plots averaged for V1 and V2 simulations
 

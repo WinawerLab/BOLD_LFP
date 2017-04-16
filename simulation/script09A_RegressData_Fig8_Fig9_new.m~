@@ -50,8 +50,7 @@ reg_out(8).stats=zeros(length(data),4);
 reg_out(9).stats=zeros(length(data),4); 
 
 % cross-validated squared Pearson:
-% r2_crossval_out=zeros(length(data),9); 
-
+r2_crossval_out=zeros(length(data),9); 
 % cross-validated coefficient of determination
 cod_crossval_out=zeros(length(data),9); 
 
@@ -135,19 +134,15 @@ for k = 1:nr_elec
 
     for m = 1:size(ecog_in,1)
         % Note that for x-validation, we use reg_out(m,2) with ecog_in{m,1}
-        % and vice versa
         reg_parms   = reg_out(m,2).stats(k,3:end);
         pred_fmri12 = reg_parms(1)+ecog_in{m,1}.data*reg_parms(2:end)';
-                        
+
         reg_parms   = reg_out(m,1).stats(k,3:end);
         pred_fmri34 = reg_parms(1)+ecog_in{m,2}.data*reg_parms(2:end)';
-               
+        
         pred_fmri = [pred_fmri12; pred_fmri34];
-        
-        if m == 9, pred_fmri = [ecog_in{m,1}.data; ecog_in{m,2}.data]; end
-        
         fmri_d    = [fmri_d12; fmri_d34];
-        %r2_crossval_out(k,m) = sign(corr(pred_fmri,fmri_d)) * corr(pred_fmri,fmri_d).^2;
+        r2_crossval_out(k,m) = sign(corr(pred_fmri,fmri_d)) * corr(pred_fmri,fmri_d).^2;
         cod_crossval_out(k,m) = ns_cod(pred_fmri,fmri_d); % rescale not necessary, same units
     end
     clear ecog_in
@@ -380,14 +375,14 @@ end
 % print('-dpng','-r300',['./figures/paper_V03/betas_plot'])
 % print('-depsc','-r300',['./figures/paper_V03/betas_plot'])
 
-
+%%
 %% plot data versus BOLD for all electrodes:
-
+%%
 
 figure('Position',[0 0 350 650])
 
 % choose visual area
-v=1;%[2 3]; % can be a number [1] or more [2 3]
+v=[2 3]; % can be a number [1] or more [2 3]
 
 % choose ECoG input {1:7} = {bb, g, [bb g], a, [bb a], [g a], [bb g a]};
 e_in=4;
@@ -450,12 +445,16 @@ for k=1:length(data)
         xlim([min([0; min(ecog_in{e_in}.ci(:))])-.1 max([0; max(ecog_in{e_in}.ci(:))])+.1])
         ylim([min([0; min(fmri_ci(:))])-.1 max([0; max(fmri_ci(:))])+.1]);
         
-        title(['R^2 = ' num2str(median(cod_crossval_out(k,e_in,:),3),2)])
+        % title electrode name + cross-validated r2
+%         title(['el ' int2str(data{k}.channel) ' R^2 = ' num2str(median(r2_crossval_out(k,e_in,:),3),2)])
+        % title cross-validated r2
+        title(['r^2 = ' num2str(median(r2_crossval_out(k,e_in,:),3),2)])
         
         % Spearman's rho
         [spearmanRho,spearmanP] = corr(ecog_in{e_in}.data,fmri_d,'Type','Spearman');
         spearmanRhovals(k) = spearmanRho;
         spearmanPvals(k) = spearmanP;
+%         title(['{\rho} = ' num2str(spearmanRho,2)])
         
     end
 end
@@ -469,9 +468,9 @@ print('-dpng','-r300',fname)
 print('-depsc','-r300',fname)
 
 
-
+%%
 %% plot prediction versus BOLD for all electrodes:
-
+%%
 
 figure('Position',[0 0 350 650])
 
@@ -534,7 +533,7 @@ for k=1:length(data)
         
         % cross-validated R2
 %         title(['el ' int2str(data{k}.channel) ' R^2 = ' num2str(median(r2_crossval_out(k,e_in,:),3),2)])
-        title(['r^2 = ' num2str(median(cod_crossval_out(k,e_in,:),3),2)])
+        title(['r^2 = ' num2str(median(r2_crossval_out(k,e_in,:),3),2)])
     end
 end
 
@@ -574,7 +573,7 @@ for k=1:length(data)
     data_var(k,3) = mean(abs_response(2:end));
 
     %%%% R2 for model BB / A / BB&A
-    model_r2(k,:) = median(cod_crossval_out(k,[1 2 4 5],:),3);
+    model_r2(k,:) = median(r2_crossval_out(k,[1 2 4 5],:),3);
 
 end
 
@@ -710,8 +709,8 @@ for elec = 1:length(data)
     % get the data
     data_bold = data{elec}.betas * mean(data{elec}.norm);   
     % load the simulation outputs 
-    fname = fullfile(BOLD_LFPRootPath, 'data', sprintf('NS_simnr%d_elec%d_simulation_outputs', sim_nr, elec));
-    load(fname,'simulation_outputs')   
+    
+    load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_elec' int2str(elec) '_simulation_outputs'],'simulation_outputs')   
     for k=1:8 % run across models
         fitted_bold = simulation_outputs(:,k,4);
         r2_data_fit(k,elec) = corr(fitted_bold,data_bold').^2;
@@ -727,9 +726,9 @@ for elec = 1:length(data)
 end
 
 %%
-r2_uniform = squeeze(median(cod_crossval_out(:,8,:),3));
-r2_testretest = squeeze(median(cod_crossval_out(:,9,:),3));
-r2_model5 = squeeze(median(cod_crossval_out(:,5,:),3));
+r2_uniform = squeeze(median(r2_crossval_out(:,8,:),3));
+r2_testretest = squeeze(median(r2_crossval_out(:,9,:),3));
+r2_model5 = squeeze(median(r2_crossval_out(:,5,:),3));
 r2_simulation = r2_data_fit(1,:);
 el_nrs = [1:length(data)];
 
@@ -762,9 +761,8 @@ title('V2/V3')
 set(gca,'XTick',[1:length(find(v_area==2 | v_area==3))],'XTickLabel',el_nrs(v_area==2 | v_area==3))
 
 set(gcf,'PaperPositionMode','auto')
-fname = fullfile(BOLD_LFPRootPath, 'figures', sprintf('test_uniform_r2_V1V23'));
-print('-painters','-r300','-dpng',fname);
-print('-painters','-r300','-depsc',fname);
+print('-painters','-r300','-dpng',strcat(['../figures/test_uniform/r2_V1V23']));
+print('-painters','-r300','-depsc',strcat(['../figures/test_uniform/r2_V1V23']));
 
 %% exclude some electrodes with small mean signal change
 

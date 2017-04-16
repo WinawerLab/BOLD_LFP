@@ -21,7 +21,7 @@ load(fullfile(BOLD_LFPRootPath, 'data', 'boldecog_structure_final'));
 
 %% settings to run the calibrated simulations:
 
-% create table for 8 simulations (orde of this table is g/a/bb)
+% create table for 8 simulations (order of this table is g/a/bb)
 lookup_combs=[...
     2 3 5
     2 4 5
@@ -169,7 +169,7 @@ end
 
 clear all
 sim_nr = 2;
-elec = 18;%1:22
+elec = 21;%1:22
 
 % load the simulation outputs 
 load(fullfile(BOLD_LFPRootPath, 'data', sprintf('NS_simnr%d_elec%d_simulation_outputs', sim_nr,elec)),'simulation_outputs')
@@ -200,10 +200,11 @@ for k=1:8
         plot(fitted_bold(m),data_bold(m),'.','Color',data{elec}.colors{m},'MarkerSize',20)
     end
     corr_data_fit(k) = corr(fitted_bold,data_bold');
+    R2_data_fit(k) = ns_cod(fitted_bold,data_bold', true);
     p = polyfit(fitted_bold,data_bold',1);
     x_line=[min(fitted_bold):0.001:max(fitted_bold)];
     plot(x_line,p(1)*x_line + p(2),'k')
-    title(['R^2 = ' num2str(corr_data_fit(k).^2,2)]);
+    title(['R^2 = ' num2str(R2_data_fit(k),2)]);
     xlim([min(min(simulation_outputs(:,:,4)))-.1 max(max(simulation_outputs(:,:,4)))+.1])
     ylim([min(data_bold) max(data_bold)])
     ylabel('measured bold')

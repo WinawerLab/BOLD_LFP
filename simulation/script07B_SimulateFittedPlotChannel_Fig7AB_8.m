@@ -10,7 +10,7 @@
 
 clear all
 sim_nr = 2; % simulation number 2 for paper
-elec = 18;%1:22 % examples electrode V1 - 21, V2 - 18
+elec = 21;%1:22 % examples electrode V1 - 21, V2 - 18
 
 % load the simulation outputs 
 %load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_elec' int2str(elec) '_simulation_outputs'],'simulation_outputs')
@@ -118,11 +118,11 @@ for m = 1:length(bold_avg)
     % plot data errorbar (y-axis variance)
     plot([bold_avg(m) bold_avg(m)],data_bold_ci(m,:),'-','Color',[.5 .5 .5])
 end
-r = corr(bold_avg,data_bold');
+r = ns_cod(bold_avg,data_bold', true);
 p = polyfit(bold_avg,data_bold',1);
 x_line=[min(bold_avg):0.001:max(bold_avg)];
 plot(x_line,p(1)*x_line + p(2),'k')
-title(['R^2 = ' num2str(r.^2,2)]);
+title(['R^2 = ' num2str(r,2)]);
 xlim([9.5 15.5]),ylim([-.2 2.2])%ylim([min(data_bold_ci(:))-.2 max(data_bold_ci(:))+.2])
 ylabel('measured bold')
 xlabel('simulated bold')
@@ -141,8 +141,10 @@ for ii = 1:length(x_data)
     plot(error_x',[bold_avg bold_avg]','-','Color',[.5 .5 .5]);
     scatter(x_data{ii}, bold_avg,40,plot_colors), axis tight square
     hold on; plot(x_data{ii}, polyval(p, x_data{ii}), 'k-', 'LineWidth', 1)
+    reg_out = regstats(bold_avg, x_data{ii});
+    pred_bold = reg_out.beta(1)+x_data{ii}*reg_out.beta(2:end)';
     xlabel(xl{ii},'FontSize',10), ylabel('BOLD','FontSize',10)
-    title(sprintf('r = %4.2f', corr(x_data{ii}, bold_avg)));
+    title(sprintf('R^2 = %4.2f', ns_cod(pred_bold, bold_avg, false)));
 end
 
 % ---- Plot BOLD and ECoG measures as function of simulation inputs -----

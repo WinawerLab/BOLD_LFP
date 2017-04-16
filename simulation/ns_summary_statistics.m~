@@ -88,9 +88,9 @@ for bs=1:size(NS.data.bold_bs,2) % number of bootstraps
         %reg_out(m).stats(bs,3)=corr(pred_bold,bold_odd).^2;
         reg_out(m).stats(bs,3)=ns_cod(pred_bold,bold_odd, false);
         
-        reg_parms=reg_out(m).beta_shuffled(bs,:); 
+        reg_parms=reg_out_shuffled(m).beta(bs,:); 
         pred_bold=reg_parms(1) + lfp_in{m}.data*reg_parms(2:end)';
-        reg_out(m).stats_shuffled(bs,3)=ns_cod(pred_bold,bold_odd, false);
+        reg_out_shuffled(m).stats(bs,3)=ns_cod(pred_bold,bold_odd, false);
         
     end
     clear lfp_in

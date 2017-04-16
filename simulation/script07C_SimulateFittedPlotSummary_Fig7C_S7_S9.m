@@ -15,7 +15,10 @@ els = 1:1:22;
 
 %%% OUTPUTS:
 v_area = NaN(length(els),1); %visual area per electrode
-r2_data_fit = NaN(8,length(els)); % R2 between BOLD data and fit for each model:
+r2_data_fit   = NaN(8,length(els)); % R2 between BOLD data and fit for each model:
+r2_data_fit_s = NaN(8,length(els)); % R2 from scambling predictions
+r2_data_data  = NaN(1,length(els));% % R2 from BOLD12 to BOLD34
+
 % DATA: 4:bb,g,a,bold, nr els, up to 10 conditions, 8 simulations
 all_data = NaN(4,length(els),10); % ECoG / BOLD data
 % SIMULATION: 4:bb,g,a,bold, nr els, up to 10 conditions, 8 simulations
@@ -37,8 +40,8 @@ for l = 1:length(els)
     data_bb = median(data{elec}.bb_all,2);
     data_g = median(data{elec}.gamma_all,2);
     data_a = median(data{elec}.alpha_all,2);
-%     data_bold = data{elec}.betas * mean(data{elec}.norm);
-    data_bold = median(data{elec}.allbootsS34,2)' * mean(data{elec}.norm);
+    data_bold = data{elec}.betas * mean(data{elec}.norm);
+    % data_bold = median(data{elec}.allbootsS34,2)' * mean(data{elec}.norm);
     
     all_data(1,l,1:length(data_bb))=data_bb;
     all_data(2,l,1:length(data_g))=data_g;
@@ -60,9 +63,21 @@ for l = 1:length(els)
         % BOLD, raw from simulation:
         all_simulation(4,l,[1:size(simulation_outputs,1)],k) = simulation_outputs(:,k,4);
         
-        fitted_bold = simulation_outputs(:,k,4);
-        r2_data_fit(k,l) = corr(fitted_bold,data_bold').^2;
+        fitted_bold = simulation_outputs(:,k,4);        
+        %r2_data_fit(k,l) = corr(fitted_bold,data_bold').^2;
+        r2_data_fit(k,l) = ns_cod(fitted_bold,data_bold', true);
+                
+        tmp = NaN(1,100);
+        for ii = 1:100
+            tmp(ii) = ns_cod(fitted_bold(randperm(length(fitted_bold))),data_bold', true);
+            r2_data_fit_s(k,l) = median(tmp);
+        end
+        
     end
+    bold12 = median(data{elec}.allbootsS12,2);
+    bold34 = median(data{elec}.allbootsS34,2);
+    r2_data_data(l) = ns_cod(bold34,bold12, true);
+
 end
 
 %% V1: now plot simulation LFP and BOLD output versus data for all electrodes
@@ -89,7 +104,7 @@ for k = 1:8
 %         plot(x(:,m),y(:,m),'.','MarkerSize',10,'Color',data{10}.colors{m})
 %     end
     xlim([min(x(:)) max(x(:))]),ylim([min(y(:)) max(y(:))])
-    title(['mean R^2 = ' num2str(mean(r2_data_fit(k,ismember(v_area,[1]))),2)])
+    title(['mean R^2 = ' num2str(median(r2_data_fit(k,ismember(v_area,[1]))),2)])
     xlabel('simulated bold'),ylabel('measured bold')   
 end
 set(gcf,'PaperPositionMode','auto')
@@ -129,7 +144,7 @@ for k = 1:8
         clear x_el y_el % housekeeping
     end
     xlim([min(x(:)) max(x(:))]),ylim([min(y(:)) max(y(:))])
-    title(['mean R^2 = ' num2str(mean(r2_data_fit(k,ismember(v_area,[2 3]))),2)])
+    title(['Median R^2 = ' num2str(median(r2_data_fit(k,ismember(v_area,[2 3]))),2)])
     xlabel('simulated bold'),ylabel('measured bold')   
 end
 set(gcf,'PaperPositionMode','auto')
@@ -158,8 +173,8 @@ subplot(2,1,1),hold on
 for k = [.25 .5 .75]
     plot([0 5],[k k],'Color',[.5 .5 .5])
 end
-bar(mean(r2_data_fit(1:4,:),2),'FaceColor',[.8 .8 .9])
-errorbar([1:4],mean(r2_data_fit(1:4,:),2),std(r2_data_fit(1:4,:),[],2)/sqrt(6),'k.')
+bar(median(r2_data_fit(1:4,:),2),'FaceColor',[.8 .8 .9])
+errorbar([1:4],median(r2_data_fit(1:4,:),2),std(r2_data_fit(1:4,:),[],2)/sqrt(6),'k.')
 ylim([0 1.01])
 ylabel('r^2')
 xlim([0 5])
@@ -171,8 +186,8 @@ for k =[.25 .5 .75]
     plot([0 5],[k k],'Color',[.5 .5 .5])
 end
 
-bar(mean(r2_data_fit(5:8,:),2),'FaceColor',[.8 .8 .9])
-errorbar([1:4],mean(r2_data_fit(5:8,:),2),std(r2_data_fit(5:8,:),[],2)/sqrt(6),'k.')
+bar(median(r2_data_fit(5:8,:),2),'FaceColor',[.8 .8 .9])
+errorbar([1:4],median(r2_data_fit(5:8,:),2),std(r2_data_fit(5:8,:),[],2)/sqrt(6),'k.')
 % plot([1:8],corr_data_fit,'k.')
 ylim([0 1.01])
 ylabel('r^2')
@@ -192,20 +207,42 @@ model_plot = 1;
 subplot(1,2,1),hold on
 y = r2_data_fit(model_plot,v_area==1);
 boxplot(y,'Width',.4);
-plot([1-.1:.2./(length(y)-1):1+.1],y,'k.','MarkerSize',20)
-plot([1-.1:.2./(length(y)-1):1+.1],y,'y.','MarkerSize',10)
+hold on
 
-ylim([0 1])
+% plot R2 from reshuffeling
+plot([1-.4 1+.4],median(r2_data_fit_s(model_plot,v_area==1)) * [1 1], ...
+    ':','Color',[.5 .5 .5],'LineWidth',2)
+
+% plot R2 from test-retest
+plot([1-.4 1+.4],median(r2_data_data(v_area==1)) * [1 1], ...
+ '-','Color',[.5 .5 .5],'LineWidth',2)
+
+ plot([1-.1:.2./(length(y)-1):1+.1],y,'k.','MarkerSize',20)
+ plot([1-.1:.2./(length(y)-1):1+.1],y,'y.','MarkerSize',10)
+
+ylim([-1.1 1])
+set(gca, 'YTick',-1:.5:1);
+
 subplot(1,2,2),hold on
 y = r2_data_fit(model_plot,v_area==2 | v_area==3);
 boxplot(y,'Width',.4);
 plot([1-.1:.2./(length(y)-1):1+.1],y,'k.','MarkerSize',20)
 plot([1-.1:.2./(length(y)-1):1+.1],y,'y.','MarkerSize',10)
-ylim([0 1])
+ylim([-1.1 1])
 
-% set(gcf,'PaperPositionMode','auto')
-% print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/Model' int2str(model_plot) '_r2box'])
-% print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/Model' int2str(model_plot) '_r2box'])
+hold on
+% plot R2 from reshuffeling
+plot([1-.4 1+.4],median(r2_data_fit_s(model_plot,v_area==2 | v_area==3)) * [1 1], ...
+    ':','Color',[.5 .5 .5],'LineWidth',2)
+
+% plot R2 from test-retest
+plot([1-.4 1+.4],median(r2_data_data(v_area==2 | v_area==3)) * [1 1], ...
+ '-','Color',[.5 .5 .5],'LineWidth',2)
+
+set(gcf,'PaperPositionMode','auto')
+fname = fullfile(BOLD_LFPRootPath, 'figures', sprintf('Model%d_r2box', model_plot));
+ print('-depsc','-r300',fname)
+ print('-dpng','-r300',fname)
 
 
 
