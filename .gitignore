@@ -3,5 +3,5 @@
 
 *.DS_STORE
 *.mat
-
+*.m~
 
