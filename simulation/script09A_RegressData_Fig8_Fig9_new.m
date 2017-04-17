@@ -542,7 +542,7 @@ set(gcf,'PaperPositionMode','auto')
 fname = fullfile(BOLD_LFPRootPath, 'figures', sprintf('predBold_V_%d_%s_nolabels', v(1), ecog_names{e_in}));
 print('-dpng','-r300',fname)
 print('-depsc','-r300',fname)
-
+    
 
 %% plot ECoG versus BOLD for all electrodes:
 
@@ -552,7 +552,7 @@ figure('Position',[0 0 350 650])
 % choose visual area
 v=[2 3]; % can be a number [1] or more [2 3]
 
-% choose ECoG input {1,2 4} = {bb, g, [bb g], a, [bb a], [g a], [bb g a]};
+% choose ECoG inemput {1,2 4} = {bb, g, [bb g], a, [bb a], [g a], [bb g a]};
 e_in=4;
 ecog_names={'bb','g','bb_g','a','bb_a','g_a','bb_g_a'};
 
@@ -579,6 +579,7 @@ for k=1:length(data)
     
         stats1 = regstats(fmri_d,ecog_in{e_in}.data); % stats.beta, first one is intercept
         
+        b(k,1:2) = stats1.beta;
         % regression line, sort values just to get them in order
         x=[min(ecog_in{e_in}.data) max(ecog_in{e_in}.data)];
         y=x*stats1.beta(2)+stats1.beta(1);

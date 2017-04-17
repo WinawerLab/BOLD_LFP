@@ -33,7 +33,6 @@ for l = 1:length(els)
     elec = els(l);
        
     % load the simulation outputs 
-    %load(['/Volumes/DoraBigDrive/github/neural_sim_output/data/NS_simnr' int2str(sim_nr) '_elec' int2str(elec) '_simulation_outputs'],'simulation_outputs')
     load(fullfile(BOLD_LFPRootPath, 'data', sprintf('NS_simnr%d_elec%d_simulation_outputs', sim_nr, elec)),'simulation_outputs');
 
     v_area(l) = data{l}.v_area;
@@ -98,10 +97,6 @@ for k = 1:8
         clear x_el y_el % housekeeping
     end
     
-    % plot each dot with color for condition
-%     for m = 1:size(x,2) % plot each value across conditions
-%         plot(x(:,m),y(:,m),'.','MarkerSize',10,'Color',data{10}.colors{m})
-%     end
     xlim([min(x(:)) max(x(:))]),ylim([min(y(:)) max(y(:))])
     title(['mean R^2 = ' num2str(median(r2_data_fit(k,ismember(v_area,[1]))),2)])
     xlabel('simulated bold'),ylabel('measured bold')   
@@ -122,8 +117,9 @@ for k = 1:8
 end
 
 set(gcf,'PaperPositionMode','auto')
-% print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/simulatedVSdataLFP_BOLD_allV1electrodes_new'])
-% print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/simulatedVSdataLFP_BOLD_allV1electrodes_new'])
+fname = fullfile(BOLD_LFPRootPath, 'figures', sprintf('sim%d_simulatedVSdataLFP_BOLD_allV1electrodes_new', sim_nr));
+print('-depsc','-r300',fname)
+print('-dpng','-r300',fname)
 
 %% V2/V3: now plot simulation LFP and BOLD output versus data for all electrodes
 cm = lines(length(find(ismember(v_area,[2 3]))));
@@ -162,8 +158,10 @@ for k = 1:8
 end
 
 set(gcf,'PaperPositionMode','auto')
-% print('-depsc','-r300',['../figures/sim' int2str(sim_nr) '/simulatedVSdataLFP_BOLD_allV23electrodes_new'])
-% print('-dpng','-r300',['../figures/sim' int2str(sim_nr) '/simulatedVSdataLFP_BOLD_allV23electrodes_new'])
+fname = fullfile(BOLD_LFPRootPath, 'figures', sprintf('sim%d_simulatedVSdataLFP_BOLD_allV23electrodes_new', sim_nr));
+
+print('-painters', '-depsc','-r300',fname)
+print('-dpng','-r300',fname)
 
 %% Figure with R2 for all models
 
@@ -243,5 +241,5 @@ fname = fullfile(BOLD_LFPRootPath, 'figures', sprintf('Model%d_r2box', model_plo
  print('-depsc','-r300',fname)
  print('-dpng','-r300',fname)
 
- dis
+
 
