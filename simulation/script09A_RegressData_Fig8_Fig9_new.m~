@@ -1,3 +1,5 @@
+BOLD_LFPRootPath = '/Volumes/DoraBigDrive/github/neural_sim_output/';
+
 load(fullfile(BOLD_LFPRootPath, 'data', 'boldecog_structure_final'));
 
 nr_elec = length(data);
@@ -39,15 +41,17 @@ clear reg_out
 
 % loop regression over electrodes 
 v_area=zeros(length(data),1);
-reg_out(1).stats=NaN(length(data),4); 
-reg_out(2).stats=NaN(length(data),4); 
-reg_out(3).stats=NaN(length(data),5); 
-reg_out(4).stats=NaN(length(data),4); 
-reg_out(5).stats=NaN(length(data),5); 
-reg_out(6).stats=NaN(length(data),5); 
-reg_out(7).stats=NaN(length(data),6); 
-reg_out(8).stats=NaN(length(data),4); 
-reg_out(9).stats=NaN(length(data),4); 
+for k = 1:2
+    reg_out(1,k).stats=NaN(length(data),4); 
+    reg_out(2,k).stats=NaN(length(data),4); 
+    reg_out(3,k).stats=NaN(length(data),5); 
+    reg_out(4,k).stats=NaN(length(data),4); 
+    reg_out(5,k).stats=NaN(length(data),5); 
+    reg_out(6,k).stats=NaN(length(data),5); 
+    reg_out(7,k).stats=NaN(length(data),6); 
+    reg_out(8,k).stats=NaN(length(data),4); 
+    reg_out(9,k).stats=NaN(length(data),4); 
+end
 
 % cross-validated squared Pearson:
 
@@ -320,8 +324,6 @@ set(gcf,'PaperPositionMode','auto')
 print('-dpng','-r300',fname)
 print('-depsc','-r300',fname)
 
-
-
 %% make a figure of the betas per electrode
 
 labels_beta={{'bb','',''},{'','g',''},{'bb','g',''},{'','','a'},...
@@ -331,11 +333,11 @@ bb_g_a_color={[.9 .9 .9],[.6 .6 .6],[.3 .3 .3]};
 
 % plot V1
 figure('Position',[0 0 450 100])
-for k=1:length(reg_out)-2
+for k=1:7 % models to plot
     xl_ind=labels_index{k};
     subplot(1,length(reg_out)*2,k),hold on 
     
-    for m=1:size(reg_out(k).stats(v_area==1,4:end),2) % nr of betas
+    for m=1:size(reg_out(k,1).stats(v_area==1,4:end),2) % nr of betas
         % take the median across the bootstraps for each electrode
         temp_beta=reg_out(k).stats(v_area==1,3+m);
         % plot mean across electrodes
@@ -542,7 +544,7 @@ set(gcf,'PaperPositionMode','auto')
 fname = fullfile(BOLD_LFPRootPath, 'figures', sprintf('predBold_V_%d_%s_nolabels', v(1), ecog_names{e_in}));
 print('-dpng','-r300',fname)
 print('-depsc','-r300',fname)
-
+    
 
 %% plot ECoG versus BOLD for all electrodes:
 
@@ -550,10 +552,10 @@ print('-depsc','-r300',fname)
 figure('Position',[0 0 350 650])
 
 % choose visual area
-v=1;%[2 3]; % can be a number [1] or more [2 3]
+v=[2 3]; % can be a number [1] or more [2 3]
 
-% choose ECoG input {1,2 4} = {bb, g, [bb g], a, [bb a], [g a], [bb g a]};
-e_in=1;
+% choose ECoG inemput {1,2 4} = {bb, g, [bb g], a, [bb a], [g a], [bb g a]};
+e_in=4;
 ecog_names={'bb','g','bb_g','a','bb_a','g_a','bb_g_a'};
 
 v_count=0;
@@ -579,8 +581,9 @@ for k=1:length(data)
     
         stats1 = regstats(fmri_d,ecog_in{e_in}.data); % stats.beta, first one is intercept
         
+        b(k,1:2) = stats1.beta;
         % regression line, sort values just to get them in order
-        x=[min(ecog_in{1}.data) max(ecog_in{1}.data)];
+        x=[min(ecog_in{e_in}.data) max(ecog_in{e_in}.data)];
         y=x*stats1.beta(2)+stats1.beta(1);
                
         subplot(5,3,v_count),hold on
@@ -589,18 +592,18 @@ for k=1:length(data)
         plot(x,y,'k')
         for s=1:length(fmri_d)
             % plot data points
-            plot(ecog_in{1}.data(s),fmri_d(s),'.','Color',data{k}.colors{s},...
+            plot(ecog_in{e_in}.data(s),fmri_d(s),'.','Color',data{k}.colors{s},...
                 'MarkerSize',20)
         end
         
         %  axis tight % we lose one datapoint at the edge...
-        xlim([min([ecog_in{1}.data])-.2 max([ecog_in{1}.data])+.2]);
+        xlim([min([ecog_in{e_in}.data])-.2 max([ecog_in{e_in}.data])+.2]);
         ylim([min([0; fmri_d])-.2 max([0; fmri_d])+.2]);
         
-        if max(ecog_in{1}.data)<1.5
-            set(gca,'Xtick',[0:.5:5]);%,'YTick',[0:.5:5])
+        if max(ecog_in{e_in}.data)<1.5
+            set(gca,'Xtick',[-5:.5:5]);%,'YTick',[0:.5:5])
         else
-            set(gca,'Xtick',[0:1:5]);%,'YTick',[0:1:5])
+            set(gca,'Xtick',[-5:1:5]);%,'YTick',[0:1:5])
         end
         
         % cross-validated R2
@@ -610,8 +613,8 @@ end
 
 set(gcf,'PaperPositionMode','auto')
 fname = fullfile(BOLD_LFPRootPath, 'figures', sprintf('ecog_V_%d_%s_nolabels', v(1), ecog_names{e_in}));
-%print('-dpng','-r300',fname)
-%print('-depsc','-r300',fname)
+print('-dpng','-r300',fname)
+print('-depsc','-r300',fname)
 
 
 %% test whether the explained variance is related to the size of the ECoG response

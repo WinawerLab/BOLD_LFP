@@ -1,3 +1,5 @@
+BOLD_LFPRootPath = '/Volumes/DoraBigDrive/github/neural_sim_output/';
+
 load(fullfile(BOLD_LFPRootPath, 'data', 'boldecog_structure_final'));
 
 nr_elec = length(data);
@@ -39,15 +41,17 @@ clear reg_out
 
 % loop regression over electrodes 
 v_area=zeros(length(data),1);
-reg_out(1).stats=NaN(length(data),4); 
-reg_out(2).stats=NaN(length(data),4); 
-reg_out(3).stats=NaN(length(data),5); 
-reg_out(4).stats=NaN(length(data),4); 
-reg_out(5).stats=NaN(length(data),5); 
-reg_out(6).stats=NaN(length(data),5); 
-reg_out(7).stats=NaN(length(data),6); 
-reg_out(8).stats=NaN(length(data),4); 
-reg_out(9).stats=NaN(length(data),4); 
+for k = 1:2
+    reg_out(1,k).stats=NaN(length(data),4); 
+    reg_out(2,k).stats=NaN(length(data),4); 
+    reg_out(3,k).stats=NaN(length(data),5); 
+    reg_out(4,k).stats=NaN(length(data),4); 
+    reg_out(5,k).stats=NaN(length(data),5); 
+    reg_out(6,k).stats=NaN(length(data),5); 
+    reg_out(7,k).stats=NaN(length(data),6); 
+    reg_out(8,k).stats=NaN(length(data),4); 
+    reg_out(9,k).stats=NaN(length(data),4); 
+end
 
 % cross-validated squared Pearson:
 
@@ -320,8 +324,6 @@ set(gcf,'PaperPositionMode','auto')
 print('-dpng','-r300',fname)
 print('-depsc','-r300',fname)
 
-
-
 %% make a figure of the betas per electrode
 
 labels_beta={{'bb','',''},{'','g',''},{'bb','g',''},{'','','a'},...
@@ -330,14 +332,14 @@ labels_index={[1],[2],[1 2],[3],[1 3],[2 3],[1 2 3]};
 bb_g_a_color={[.9 .9 .9],[.6 .6 .6],[.3 .3 .3]};
 
 % plot V1
-figure('Position',[0 0 450 100])
-for k=1:length(reg_out)-2
+figure('Position',[0 0 550 100])
+for k=1:7 % models to plot
     xl_ind=labels_index{k};
     subplot(1,length(reg_out)*2,k),hold on 
     
-    for m=1:size(reg_out(k).stats(v_area==1,4:end),2) % nr of betas
-        % take the median across the bootstraps for each electrode
-        temp_beta=reg_out(k).stats(v_area==1,3+m);
+    for m=1:size(reg_out(k,1).stats(v_area==1,4:end),2) % nr of betas
+        % take the median across the 2 crossvals for each electrode
+        temp_beta=median([reg_out(k,1).stats(v_area==1,3+m) reg_out(k,2).stats(v_area==1,3+m)],2);
         % plot mean across electrodes
         bar(xl_ind(m),mean(temp_beta),.7,'FaceColor',bb_g_a_color{xl_ind(m)})
         % plot 2 x standard error as error bar
@@ -346,22 +348,22 @@ for k=1:length(reg_out)-2
         % test for significant difference from zero across electrodes using a t-test
         [~,p]=ttest(temp_beta);
         if p<=0.05
-            plot(xl_ind(m),-.4,'r*')
+            plot(xl_ind(m),-.5,'r*')
         end
     end
-    xlim([.5 3.5]),ylim([-.4 1])
-    set(gca,'XTick',[1:3],'XTickLabel',labels_beta{k},'YTick',[-0.4:.2:.8],'YTickLabel',[])
+    xlim([.5 3.5]),ylim([-.5 1])
+%     set(gca,'XTick',[1:3],'XTickLabel',labels_beta{k},'YTick',[-0.4:.2:.8],'YTickLabel',[])
 end
 
 
 % plot V2/V3
-for k=1:length(reg_out)-2
+for k=1:7 % models to plot
     xl_ind=labels_index{k};
     subplot(1,length(reg_out)*2,length(reg_out)+k),hold on 
 
     for m=1:size(reg_out(k).stats(v_area==2 | v_area==3,4:end),2) % nr of betas
-        % take the median across the bootstraps for each electrode
-        temp_beta=reg_out(k).stats(v_area==2 | v_area==3,3+m);
+        % take the median across the 2 crossvals for each electrode
+        temp_beta=median([reg_out(k,1).stats(v_area==2 | v_area==3,3+m) reg_out(k,2).stats(v_area==2 | v_area==3,3+m)],2);
         % plot mean across electrodes
         bar(xl_ind(m),mean(temp_beta),.7,'FaceColor',bb_g_a_color{xl_ind(m)})
         % plot 2 x standard error as error bar
@@ -370,16 +372,17 @@ for k=1:length(reg_out)-2
         % test for significant difference from zero across electrodes using a t-test
         [~,p]=ttest(temp_beta);
         if p<=0.05
-            plot(xl_ind(m),-.4,'r*')
+            plot(xl_ind(m),-.5,'r*')
         end
     end   
-    xlim([.5 3.5]),ylim([-.4 1])
-    set(gca,'XTick',[1:3],'XTickLabel',labels_beta{k},'YTick',[-0.4:.2:.8],'YTickLabel',[])
+    xlim([.5 3.5]),ylim([-.5 1])
+%     set(gca,'XTick',[1:3],'XTickLabel',labels_beta{k},'YTick',[-0.4:.2:.8],'YTickLabel',[])
 end
 
-% set(gcf,'PaperPositionMode','auto')
-% print('-dpng','-r300',['./figures/paper_V03/betas_plot'])
-% print('-depsc','-r300',['./figures/paper_V03/betas_plot'])
+fname = fullfile(BOLD_LFPRootPath, 'figures', 'betas_plot');
+set(gcf,'PaperPositionMode','auto')
+% print('-dpng','-r300',fname)
+% print('-depsc','-r300',fname)
 
 
 %% plot data versus BOLD for all electrodes:
