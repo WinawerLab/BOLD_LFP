@@ -339,20 +339,23 @@ for k=1:7 % models to plot
     
     for m=1:size(reg_out(k,1).stats(v_area==1,4:end),2) % nr of betas
         % take the median across the 2 crossvals for each electrode
-        temp_beta=median([reg_out(k,1).stats(v_area==1,3+m) reg_out(k,2).stats(v_area==1,3+m)],2);
+%         temp_beta=median([reg_out(k,1).stats(v_area==1,3+m) reg_out(k,2).stats(v_area==1,3+m)],2);
+        temp_beta=mean([reg_out(k,1).stats(v_area==1,3+m) reg_out(k,2).stats(v_area==1,3+m)],2);
         % plot mean across electrodes
         bar(xl_ind(m),mean(temp_beta),.7,'FaceColor',bb_g_a_color{xl_ind(m)})
         % plot 2 x standard error as error bar
         st_err = std(temp_beta)./sqrt(length(temp_beta));
         plot([xl_ind(m) xl_ind(m)],[mean(temp_beta)-st_err mean(temp_beta)+st_err],'k')
         % test for significant difference from zero across electrodes using a t-test
-        [~,p]=ttest(temp_beta);
+%         [~,p]=ttest(temp_beta);
+%         [p]=signtest(temp_beta);
+        p = 2*(.5-abs(.5-mean(bootstrp(10000, @median, temp_beta)>0)));
         if p<=0.05
             plot(xl_ind(m),-.5,'r*')
         end
     end
     xlim([.5 3.5]),ylim([-.5 1])
-%     set(gca,'XTick',[1:3],'XTickLabel',labels_beta{k},'YTick',[-0.4:.2:.8],'YTickLabel',[])
+    set(gca,'XTick',[1:3],'XTickLabel',labels_beta{k},'YTick',[-0.4:.2:.8],'YTickLabel',[])
 end
 
 
@@ -363,37 +366,41 @@ for k=1:7 % models to plot
 
     for m=1:size(reg_out(k).stats(v_area==2 | v_area==3,4:end),2) % nr of betas
         % take the median across the 2 crossvals for each electrode
-        temp_beta=median([reg_out(k,1).stats(v_area==2 | v_area==3,3+m) reg_out(k,2).stats(v_area==2 | v_area==3,3+m)],2);
+%         temp_beta=median([reg_out(k,1).stats(v_area==2 | v_area==3,3+m) reg_out(k,2).stats(v_area==2 | v_area==3,3+m)],2);
+        temp_beta=mean([reg_out(k,1).stats(v_area==2 | v_area==3,3+m) reg_out(k,2).stats(v_area==2 | v_area==3,3+m)],2);
         % plot mean across electrodes
         bar(xl_ind(m),mean(temp_beta),.7,'FaceColor',bb_g_a_color{xl_ind(m)})
         % plot 2 x standard error as error bar
         st_err = std(temp_beta)./sqrt(length(temp_beta));
         plot([xl_ind(m) xl_ind(m)],[mean(temp_beta)-st_err mean(temp_beta)+st_err],'k')
         % test for significant difference from zero across electrodes using a t-test
-        [~,p]=ttest(temp_beta);
+%         [~,p]=ttest(temp_beta);
+%         [p]=signtest(temp_beta);
+        p = 2*(.5-abs(.5-mean(bootstrp(10000, @median, temp_beta)>0)));
         if p<=0.05
             plot(xl_ind(m),-.5,'r*')
         end
     end   
     xlim([.5 3.5]),ylim([-.5 1])
-%     set(gca,'XTick',[1:3],'XTickLabel',labels_beta{k},'YTick',[-0.4:.2:.8],'YTickLabel',[])
+    set(gca,'XTick',[1:3],'XTickLabel',labels_beta{k},'YTick',[-0.4:.2:.8],'YTickLabel',[])
 end
 
 fname = fullfile(BOLD_LFPRootPath, 'figures', 'betas_plot');
 set(gcf,'PaperPositionMode','auto')
-% print('-dpng','-r300',fname)
-% print('-depsc','-r300',fname)
+print('-dpng','-r300',fname)
+print('-depsc','-r300',fname)
 
 
 %% plot data versus BOLD for all electrodes:
 
-
-figure('Position',[0 0 350 650])
+figure('Position',[0 0 300 550])
 
 % choose visual area
-v=1;%[2 3]; % can be a number [1] or more [2 3]
+v=[2 3];%[2 3]; % can be a number [1] or more [2 3]
 
 % choose ECoG input {1:7} = {bb, g, [bb g], a, [bb a], [g a], [bb g a]};
+% only plots pure data here, so only choose models with only
+% bb/gamma/alpha, models [1 2 4]
 e_in=4;
 ecog_names={'bb','g','bb_g','a','bb_a','g_a','bb_g_a'};
 
@@ -663,7 +670,7 @@ xlabel('size broadband response')
 ylabel('R^2 bold/bb')
 title(['r = ' num2str(r) ' p = ' num2str(p)])
 xlim([0 .5])
-ylim([0 .9])
+% ylim tight
 box off
 
 subplot(2,3,2),hold on
@@ -676,7 +683,7 @@ xlabel('size gamma response')
 ylabel('R^2 bold/g')
 title(['r = ' num2str(r) ' p = ' num2str(p)])
 xlim([0 .9])
-ylim([0 .9])
+% ylim([-0.5 1])
 box off
 
 subplot(2,3,3),hold on
@@ -689,7 +696,7 @@ xlabel('size alpha response')
 ylabel('R^2 bold/a')
 title(['r = ' num2str(r) ' p = ' num2str(p)])
 xlim([-.9 0])
-ylim([0 .9])
+% ylim([-0.5 1])
 box off
 
 set(gcf,'PaperPositionMode','auto')
@@ -770,6 +777,14 @@ fname = fullfile(BOLD_LFPRootPath, 'figures', 'BOLDchangeV123');
 print('-dpng','-r300',fname)
 print('-depsc','-r300',fname)
 
+
+%%
+%%
+%%
+%%
+%%
+%%
+%% NOW CHECKS, CAN BE REMOVED:
 %% plot R2 compared to fMRI test-retest and uniform model [0 1 1 1 1 1 1 1]
 
 % plot reshuffled R2 as an indication of baseline
